@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
 import { mockDashboardStats } from '@/data/mock-data';
-import { formatCurrency, formatNumber } from '@/lib/pos-utils';
-import { cn } from '@/lib/utils';
+import { useDataStore } from '@/stores/dataStore';
+import { formatCurrency, formatDateTime } from '@/lib/pos-utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,10 +32,20 @@ import {
   DollarSign,
   Receipt,
   Eye,
+  Plus,
 } from 'lucide-react';
+import { RecordSaleModal } from '@/components/modals';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Sale } from '@/types/pos';
 
-// Mock sales data
-const recentSales = [
+// Mock sales data (will be combined with store data)
+const mockRecentSales = [
   { id: '#1247', customer: 'Mwanza Construction Ltd', items: 5, total: 2450000, date: '2024-12-22 14:35', status: 'completed', payment: 'M-Pesa' },
   { id: '#1246', customer: 'Walk-in Customer', items: 2, total: 680000, date: '2024-12-22 13:12', status: 'completed', payment: 'Cash' },
   { id: '#1245', customer: 'Dar Hardware Store', items: 12, total: 4250000, date: '2024-12-22 11:48', status: 'completed', payment: 'Bank' },
@@ -46,15 +56,39 @@ const recentSales = [
 
 const Sales = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [recordSaleOpen, setRecordSaleOpen] = useState(false);
+  const [viewSaleOpen, setViewSaleOpen] = useState(false);
+  const [selectedSale, setSelectedSale] = useState<any>(null);
+  
+  const { sales } = useDataStore();
   const stats = mockDashboardStats;
 
+  // Combine mock sales with store sales
+  const allSales = useMemo(() => {
+    const storeSales = sales.map((sale, index) => ({
+      id: `#${sale.id}`,
+      customer: 'Walk-in Customer',
+      items: sale.items.reduce((sum, item) => sum + item.quantity, 0),
+      total: sale.total,
+      date: formatDateTime(sale.createdAt),
+      status: sale.status,
+      payment: sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1),
+      originalSale: sale,
+    }));
+    return [...storeSales, ...mockRecentSales];
+  }, [sales]);
+
   const filteredSales = useMemo(() => {
-    return recentSales.filter(
+    return allSales.filter(
       (sale) =>
         sale.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sale.customer.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [allSales, searchQuery]);
+
+  const todaysSales = useMemo(() => {
+    return sales.reduce((sum, sale) => sum + sale.total, 0) + 7435000;
+  }, [sales]);
 
   const getStatusBadge = (status: string) => {
     if (status === 'completed') {
@@ -64,6 +98,11 @@ const Sales = () => {
       return <Badge variant="destructive">Refunded</Badge>;
     }
     return <Badge variant="secondary">{status}</Badge>;
+  };
+
+  const handleViewSale = (sale: any) => {
+    setSelectedSale(sale);
+    setViewSaleOpen(true);
   };
 
   return (
@@ -78,6 +117,10 @@ const Sales = () => {
             <Download className="h-4 w-4" />
             Export
           </Button>
+          <Button className="gap-2" onClick={() => setRecordSaleOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Record Sale
+          </Button>
         </PageHeader>
 
         {/* Stats Cards */}
@@ -88,7 +131,7 @@ const Sales = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Today's Sales</p>
-              <p className="text-2xl font-bold text-foreground">{formatCurrency(7435000)}</p>
+              <p className="text-2xl font-bold text-foreground">{formatCurrency(todaysSales)}</p>
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
@@ -97,7 +140,7 @@ const Sales = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Today's Orders</p>
-              <p className="text-2xl font-bold text-foreground">23</p>
+              <p className="text-2xl font-bold text-foreground">{23 + sales.length}</p>
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
@@ -204,7 +247,7 @@ const Sales = () => {
                     <TableCell>{getStatusBadge(sale.status)}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{sale.date}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewSale(sale)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -212,9 +255,61 @@ const Sales = () => {
                 ))}
               </TableBody>
             </Table>
+            {filteredSales.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Receipt className="h-12 w-12 mb-4 opacity-50" />
+                <p>No sales found</p>
+              </div>
+            )}
           </div>
         </div>
       </PageContent>
+
+      <RecordSaleModal open={recordSaleOpen} onOpenChange={setRecordSaleOpen} />
+
+      {/* View Sale Modal */}
+      <Dialog open={viewSaleOpen} onOpenChange={setViewSaleOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sale Details</DialogTitle>
+            <DialogDescription>View transaction information</DialogDescription>
+          </DialogHeader>
+          {selectedSale && (
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Order ID</p>
+                  <p className="font-medium text-primary">{selectedSale.id}</p>
+                </div>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Customer</p>
+                  <p className="font-medium">{selectedSale.customer}</p>
+                </div>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Payment Method</p>
+                  <p className="font-medium">{selectedSale.payment}</p>
+                </div>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  {getStatusBadge(selectedSale.status)}
+                </div>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Items</p>
+                  <p className="font-medium">{selectedSale.items} items</p>
+                </div>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Date</p>
+                  <p className="font-medium">{selectedSale.date}</p>
+                </div>
+              </div>
+              <div className="rounded-lg bg-success-light p-4">
+                <p className="text-sm text-muted-foreground">Total Amount</p>
+                <p className="text-2xl font-bold text-success">{formatCurrency(selectedSale.total)}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };

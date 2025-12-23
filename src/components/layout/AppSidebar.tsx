@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth, canAccessRoute } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -22,18 +23,29 @@ interface SidebarProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Point of Sale', href: '/pos', icon: ShoppingCart },
-  { name: 'Inventory', href: '/inventory', icon: Package },
-  { name: 'Sales', href: '/sales', icon: FileText },
-  { name: 'Customers', href: '/customers', icon: Users },
-  { name: 'Employees', href: '/employees', icon: UserCircle },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard, route: 'dashboard' },
+  { name: 'Point of Sale', href: '/pos', icon: ShoppingCart, route: 'pos' },
+  { name: 'Inventory', href: '/inventory', icon: Package, route: 'inventory' },
+  { name: 'Sales', href: '/sales', icon: FileText, route: 'sales' },
+  { name: 'Customers', href: '/customers', icon: Users, route: 'customers' },
+  { name: 'Employees', href: '/employees', icon: UserCircle, route: 'employees' },
+  { name: 'Reports', href: '/reports', icon: BarChart3, route: 'reports' },
+  { name: 'Settings', href: '/settings', icon: Settings, route: 'settings' },
 ];
 
 export function AppSidebar({ className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth');
+  };
+
+  const filteredNav = navigation.filter(
+    (item) => user && canAccessRoute(user.role, item.route)
+  );
 
   return (
     <aside
@@ -43,7 +55,6 @@ export function AppSidebar({ className }: SidebarProps) {
         className
       )}
     >
-      {/* Logo */}
       <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
         {!collapsed && (
           <div className="flex items-center gap-3">
@@ -60,9 +71,8 @@ export function AppSidebar({ className }: SidebarProps) {
         </Button>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-        {navigation.map((item) => (
+        {filteredNav.map((item) => (
           <NavLink
             key={item.name}
             to={item.href}
@@ -82,26 +92,21 @@ export function AppSidebar({ className }: SidebarProps) {
         ))}
       </nav>
 
-      {/* User section */}
       <div className="border-t border-sidebar-border p-3">
-        <div
-          className={cn(
-            'flex items-center gap-3 rounded-lg px-3 py-2.5',
-            collapsed && 'justify-center px-2'
-          )}
-        >
+        <div className={cn('flex items-center gap-3 rounded-lg px-3 py-2.5', collapsed && 'justify-center px-2')}>
           <div className="h-9 w-9 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-semibold text-sm shrink-0">
-            AJ
+            {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">Amina Juma</p>
-              <p className="text-xs text-sidebar-foreground/60 truncate">Admin</p>
+              <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.name || 'User'}</p>
+              <p className="text-xs text-sidebar-foreground/60 truncate capitalize">{user?.role || 'Guest'}</p>
             </div>
           )}
         </div>
         <Button
           variant="ghost"
+          onClick={handleLogout}
           className={cn(
             'w-full mt-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
             collapsed ? 'justify-center px-2' : 'justify-start gap-3 px-3'

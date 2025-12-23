@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
-import { mockProducts } from '@/data/mock-data';
+import { useDataStore } from '@/stores/dataStore';
+import { Product } from '@/types/pos';
 import { formatCurrency, getStockStatus } from '@/lib/pos-utils';
-import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +24,6 @@ import {
 import {
   Search,
   Plus,
-  Filter,
   Download,
   Package,
   Edit,
@@ -32,7 +31,10 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
+  RefreshCw,
 } from 'lucide-react';
+import { ProductModal, StockAdjustmentModal, DeleteConfirmModal, RecordInventoryModal } from '@/components/modals';
+import { useToast } from '@/hooks/use-toast';
 
 const categoryLabels: Record<string, string> = {
   'construction-equipment': 'Construction Equipment',
@@ -46,12 +48,21 @@ const categoryLabels: Record<string, string> = {
 };
 
 const Inventory = () => {
+  const { products, deleteProduct } = useDataStore();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
 
+  // Modal states
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [stockModalOpen, setStockModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [recordInventoryOpen, setRecordInventoryOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
   const filteredProducts = useMemo(() => {
-    return mockProducts.filter((product) => {
+    return products.filter((product) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.sku.toLowerCase().includes(searchQuery.toLowerCase());
@@ -68,22 +79,22 @@ const Inventory = () => {
 
       return matchesSearch && matchesCategory && matchesStock;
     });
-  }, [searchQuery, categoryFilter, stockFilter]);
+  }, [products, searchQuery, categoryFilter, stockFilter]);
 
   const stats = useMemo(() => {
-    const total = mockProducts.length;
-    const lowStock = mockProducts.filter(
+    const total = products.length;
+    const lowStock = products.filter(
       (p) => getStockStatus(p.quantity, p.lowStockThreshold) === 'low-stock'
     ).length;
-    const outOfStock = mockProducts.filter(
+    const outOfStock = products.filter(
       (p) => getStockStatus(p.quantity, p.lowStockThreshold) === 'out-of-stock'
     ).length;
-    const totalValue = mockProducts.reduce(
+    const totalValue = products.reduce(
       (sum, p) => sum + p.sellingPrice * p.quantity,
       0
     );
     return { total, lowStock, outOfStock, totalValue };
-  }, []);
+  }, [products]);
 
   const getStockBadge = (quantity: number, threshold: number) => {
     const status = getStockStatus(quantity, threshold);
@@ -111,15 +122,46 @@ const Inventory = () => {
     );
   };
 
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setProductModalOpen(true);
+  };
+
+  const handleAdjustStock = (product: Product) => {
+    setSelectedProduct(product);
+    setStockModalOpen(true);
+  };
+
+  const handleDelete = (product: Product) => {
+    setSelectedProduct(product);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedProduct) {
+      deleteProduct(selectedProduct.id);
+      toast({ title: 'Product deleted', description: `${selectedProduct.name} has been removed.` });
+    }
+  };
+
+  const handleAddNew = () => {
+    setSelectedProduct(null);
+    setProductModalOpen(true);
+  };
+
   return (
     <MainLayout>
       <PageContent>
         <PageHeader title="Inventory" description="Manage your products and stock levels">
+          <Button variant="outline" className="gap-2" onClick={() => setRecordInventoryOpen(true)}>
+            <RefreshCw className="h-4 w-4" />
+            Record Movement
+          </Button>
           <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={handleAddNew}>
             <Plus className="h-4 w-4" />
             Add Product
           </Button>
@@ -245,19 +287,27 @@ const Inventory = () => {
                   <TableCell className="text-right font-medium">
                     {formatCurrency(product.sellingPrice)}
                   </TableCell>
-                  <TableCell className="text-center font-medium">
-                    {product.quantity} {product.unit}
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="font-medium"
+                      onClick={() => handleAdjustStock(product)}
+                    >
+                      {product.quantity} {product.unit}
+                    </Button>
                   </TableCell>
                   <TableCell>{getStockBadge(product.quantity, product.lowStockThreshold)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(product)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(product)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -275,6 +325,25 @@ const Inventory = () => {
           )}
         </div>
       </PageContent>
+
+      <ProductModal
+        open={productModalOpen}
+        onOpenChange={setProductModalOpen}
+        product={selectedProduct}
+      />
+      <StockAdjustmentModal
+        open={stockModalOpen}
+        onOpenChange={setStockModalOpen}
+        product={selectedProduct}
+      />
+      <DeleteConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Delete Product"
+        description={`Are you sure you want to delete "${selectedProduct?.name}"? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+      />
+      <RecordInventoryModal open={recordInventoryOpen} onOpenChange={setRecordInventoryOpen} />
     </MainLayout>
   );
 };
