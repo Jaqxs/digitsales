@@ -1,12 +1,22 @@
+import { useState, useMemo } from 'react';
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
-import { mockEmployees } from '@/data/mock-data';
-import { formatCurrency, formatPercent } from '@/lib/pos-utils';
+import { useDataStore } from '@/stores/dataStore';
+import { Employee } from '@/types/pos';
+import { formatCurrency } from '@/lib/pos-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useState, useMemo } from 'react';
-import { Search, Plus, UserCircle, Target, TrendingUp, Award, Edit, Eye } from 'lucide-react';
+import { Search, Plus, UserCircle, Target, TrendingUp, Award, Edit, Eye, Trash2 } from 'lucide-react';
+import { EmployeeModal, DeleteConfirmModal } from '@/components/modals';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 const roleColors: Record<string, string> = {
   admin: 'bg-primary text-primary-foreground',
@@ -17,22 +27,65 @@ const roleColors: Record<string, string> = {
 };
 
 const Employees = () => {
+  const { employees, deleteEmployee } = useDataStore();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Modal states
+  const [employeeModalOpen, setEmployeeModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+
   const filteredEmployees = useMemo(() => {
-    return mockEmployees.filter(
+    return employees.filter(
       (emp) =>
         emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         emp.role.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [employees, searchQuery]);
+
+  const topPerformer = useMemo(() => {
+    const salesStaff = employees.filter(e => e.salesTarget > 0);
+    if (salesStaff.length === 0) return null;
+    return salesStaff.reduce((top, emp) => 
+      (emp.totalSales / emp.salesTarget) > (top.totalSales / top.salesTarget) ? emp : top
+    );
+  }, [employees]);
+
+  const handleAddNew = () => {
+    setSelectedEmployee(null);
+    setEmployeeModalOpen(true);
+  };
+
+  const handleEdit = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setEmployeeModalOpen(true);
+  };
+
+  const handleView = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setViewModalOpen(true);
+  };
+
+  const handleDelete = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedEmployee) {
+      deleteEmployee(selectedEmployee.id);
+      toast({ title: 'Employee removed', description: `${selectedEmployee.name} has been removed.` });
+    }
+  };
 
   return (
     <MainLayout>
       <PageContent>
         <PageHeader title="Employees" description="Manage staff and track performance">
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={handleAddNew}>
             <Plus className="h-4 w-4" />
             Add Employee
           </Button>
@@ -46,7 +99,7 @@ const Employees = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Employees</p>
-              <p className="text-2xl font-bold text-foreground">{mockEmployees.length}</p>
+              <p className="text-2xl font-bold text-foreground">{employees.length}</p>
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
@@ -64,7 +117,7 @@ const Employees = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Top Performer</p>
-              <p className="text-lg font-bold text-foreground">John Mwanga</p>
+              <p className="text-lg font-bold text-foreground">{topPerformer?.name || 'N/A'}</p>
             </div>
           </div>
         </div>
@@ -144,20 +197,97 @@ const Employees = () => {
                 </div>
 
                 <div className="flex gap-2 mt-4 pt-4 border-t border-border">
-                  <Button variant="outline" size="sm" className="flex-1 gap-1">
+                  <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleView(employee)}>
                     <Eye className="h-4 w-4" />
                     View
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1 gap-1">
+                  <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleEdit(employee)}>
                     <Edit className="h-4 w-4" />
                     Edit
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-1 text-destructive hover:text-destructive"
+                    onClick={() => handleDelete(employee)}
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {filteredEmployees.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <UserCircle className="h-12 w-12 mb-4 opacity-50" />
+            <p>No employees found</p>
+          </div>
+        )}
       </PageContent>
+
+      <EmployeeModal
+        open={employeeModalOpen}
+        onOpenChange={setEmployeeModalOpen}
+        employee={selectedEmployee}
+      />
+      <DeleteConfirmModal
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
+        title="Remove Employee"
+        description={`Are you sure you want to remove "${selectedEmployee?.name}"? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+      />
+
+      {/* View Employee Modal */}
+      <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Employee Details</DialogTitle>
+            <DialogDescription>View employee information and performance</DialogDescription>
+          </DialogHeader>
+          {selectedEmployee && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl">
+                  {selectedEmployee.name.split(' ').map(n => n[0]).join('')}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">{selectedEmployee.name}</h3>
+                  <Badge className={roleColors[selectedEmployee.role]}>{selectedEmployee.role}</Badge>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium">{selectedEmployee.email}</p>
+                </div>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Phone</p>
+                  <p className="font-medium">{selectedEmployee.phone}</p>
+                </div>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Sales Target</p>
+                  <p className="font-medium">{formatCurrency(selectedEmployee.salesTarget)}</p>
+                </div>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Total Sales</p>
+                  <p className="font-medium">{formatCurrency(selectedEmployee.totalSales)}</p>
+                </div>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Commission Rate</p>
+                  <p className="font-medium">{selectedEmployee.commission}%</p>
+                </div>
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="text-sm text-muted-foreground">Member Since</p>
+                  <p className="font-medium">{new Date(selectedEmployee.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };

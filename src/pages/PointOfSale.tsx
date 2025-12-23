@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { MainLayout, PageContent } from '@/components/layout';
-import { mockProducts } from '@/data/mock-data';
+import { useDataStore } from '@/stores/dataStore';
 import { Product, CartItem, PaymentMethod } from '@/types/pos';
 import { formatCurrency, calculateVAT } from '@/lib/pos-utils';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ import {
   Package,
   X,
   Check,
+  Receipt,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -41,6 +42,7 @@ const paymentMethods: { id: PaymentMethod; name: string; icon: React.ElementType
 ];
 
 const PointOfSale = () => {
+  const { products, addSale } = useDataStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -48,24 +50,25 @@ const PointOfSale = () => {
   const { toast } = useToast();
 
   const filteredProducts = useMemo(() => {
-    return mockProducts.filter((product) => {
+    return products.filter((product) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.sku.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory =
         selectedCategory === 'all' || product.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesCategory && product.quantity > 0;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [products, searchQuery, selectedCategory]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
-        if (existing.quantity >= product.quantity) {
+        const currentProduct = products.find(p => p.id === product.id);
+        if (!currentProduct || existing.quantity >= currentProduct.quantity) {
           toast({
             title: 'Stock limit reached',
-            description: `Only ${product.quantity} units available`,
+            description: `Only ${currentProduct?.quantity || 0} units available`,
             variant: 'destructive',
           });
           return prev;
@@ -85,11 +88,12 @@ const PointOfSale = () => {
       prev
         .map((item) => {
           if (item.product.id === productId) {
+            const currentProduct = products.find(p => p.id === productId);
             const newQty = item.quantity + delta;
-            if (newQty > item.product.quantity) {
+            if (currentProduct && newQty > currentProduct.quantity) {
               toast({
                 title: 'Stock limit',
-                description: `Only ${item.product.quantity} units available`,
+                description: `Only ${currentProduct.quantity} units available`,
                 variant: 'destructive',
               });
               return item;
@@ -126,6 +130,22 @@ const PointOfSale = () => {
       });
       return;
     }
+
+    // Create sale and update stock
+    addSale({
+      items: cart.map(item => ({
+        product: item.product,
+        quantity: item.quantity,
+        discount: item.discount,
+      })),
+      subtotal,
+      discount: 0,
+      vat,
+      total,
+      paymentMethod: selectedPayment,
+      employeeId: '1',
+      status: 'completed',
+    });
 
     toast({
       title: 'Sale completed!',
@@ -216,6 +236,9 @@ const PointOfSale = () => {
               <div className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5 text-primary" />
                 <h2 className="font-semibold text-foreground">Current Sale</h2>
+                {cart.length > 0 && (
+                  <Badge variant="secondary">{cart.reduce((s, i) => s + i.quantity, 0)} items</Badge>
+                )}
               </div>
               {cart.length > 0 && (
                 <Button variant="ghost" size="sm" onClick={clearCart} className="text-muted-foreground">
@@ -320,15 +343,25 @@ const PointOfSale = () => {
                 </div>
               </div>
 
-              {/* Checkout Button */}
-              <Button
-                className="w-full h-12 text-lg font-semibold gap-2"
-                onClick={handleCheckout}
-                disabled={cart.length === 0}
-              >
-                <Check className="h-5 w-5" />
-                Complete Sale
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  disabled={cart.length === 0}
+                >
+                  <Receipt className="h-4 w-4" />
+                  Hold
+                </Button>
+                <Button
+                  className="flex-1 gap-2"
+                  onClick={handleCheckout}
+                  disabled={cart.length === 0}
+                >
+                  <Check className="h-4 w-4" />
+                  Complete Sale
+                </Button>
+              </div>
             </div>
           </div>
         </div>
