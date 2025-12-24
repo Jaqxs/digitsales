@@ -33,8 +33,10 @@ import {
   Receipt,
   Eye,
   Plus,
+  Printer,
 } from 'lucide-react';
 import { RecordSaleModal } from '@/components/modals';
+import { ReceiptModal } from '@/components/receipt';
 import {
   Dialog,
   DialogContent,
@@ -58,7 +60,9 @@ const Sales = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [recordSaleOpen, setRecordSaleOpen] = useState(false);
   const [viewSaleOpen, setViewSaleOpen] = useState(false);
+  const [receiptOpen, setReceiptOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any>(null);
+  const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
   
   const { sales } = useDataStore();
   const stats = mockDashboardStats;
@@ -103,6 +107,27 @@ const Sales = () => {
   const handleViewSale = (sale: any) => {
     setSelectedSale(sale);
     setViewSaleOpen(true);
+  };
+
+  const handlePrintReceipt = (sale: any) => {
+    if (sale.originalSale) {
+      setReceiptSale(sale.originalSale);
+    } else {
+      // Create a mock sale object for old sales
+      setReceiptSale({
+        id: sale.id,
+        items: [],
+        subtotal: sale.total / 1.18,
+        discount: 0,
+        vat: sale.total - (sale.total / 1.18),
+        total: sale.total,
+        paymentMethod: sale.payment.toLowerCase().replace('-', '-') as any,
+        employeeId: '1',
+        createdAt: new Date(sale.date),
+        status: sale.status as any,
+      });
+    }
+    setReceiptOpen(true);
   };
 
   return (
@@ -247,9 +272,14 @@ const Sales = () => {
                     <TableCell>{getStatusBadge(sale.status)}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{sale.date}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewSale(sale)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewSale(sale)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrintReceipt(sale)}>
+                          <Printer className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -306,10 +336,28 @@ const Sales = () => {
                 <p className="text-sm text-muted-foreground">Total Amount</p>
                 <p className="text-2xl font-bold text-success">{formatCurrency(selectedSale.total)}</p>
               </div>
+              <Button 
+                className="w-full gap-2" 
+                onClick={() => {
+                  setViewSaleOpen(false);
+                  handlePrintReceipt(selectedSale);
+                }}
+              >
+                <Printer className="h-4 w-4" />
+                Print Receipt
+              </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Receipt Modal */}
+      <ReceiptModal
+        open={receiptOpen}
+        onOpenChange={setReceiptOpen}
+        sale={receiptSale}
+        customerName={selectedSale?.customer}
+      />
     </MainLayout>
   );
 };
