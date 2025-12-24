@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { MainLayout, PageContent } from '@/components/layout';
 import { useDataStore } from '@/stores/dataStore';
-import { Product, CartItem, PaymentMethod } from '@/types/pos';
+import { Product, CartItem, PaymentMethod, Sale } from '@/types/pos';
 import { formatCurrency, calculateVAT } from '@/lib/pos-utils';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -21,11 +21,14 @@ import {
   X,
   Check,
   Receipt,
+  Printer,
+  ChevronUp,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ReceiptModal } from '@/components/receipt';
 
 const categories = [
-  { id: 'all', name: 'All Products' },
+  { id: 'all', name: 'All' },
   { id: 'construction-equipment', name: 'Construction' },
   { id: 'power-tools', name: 'Power Tools' },
   { id: 'hand-tools', name: 'Hand Tools' },
@@ -47,6 +50,9 @@ const PointOfSale = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
+  const [showCart, setShowCart] = useState(false);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [lastSale, setLastSale] = useState<Sale | null>(null);
   const { toast } = useToast();
 
   const filteredProducts = useMemo(() => {
@@ -131,8 +137,8 @@ const PointOfSale = () => {
       return;
     }
 
-    // Create sale and update stock
-    addSale({
+    // Create sale object
+    const saleData: Omit<Sale, 'id' | 'createdAt'> = {
       items: cart.map(item => ({
         product: item.product,
         quantity: item.quantity,
@@ -145,40 +151,56 @@ const PointOfSale = () => {
       paymentMethod: selectedPayment,
       employeeId: '1',
       status: 'completed',
-    });
+    };
+
+    // Add sale to store
+    addSale(saleData);
+
+    // Create a complete sale object for receipt
+    const completedSale: Sale = {
+      ...saleData,
+      id: `INV-${Date.now()}`,
+      createdAt: new Date(),
+    };
+
+    setLastSale(completedSale);
+    setReceiptOpen(true);
 
     toast({
       title: 'Sale completed!',
       description: `Total: ${formatCurrency(total)} via ${selectedPayment}`,
     });
     clearCart();
+    setShowCart(false);
   };
+
+  const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <MainLayout>
       <PageContent className="h-[calc(100vh-0px)] overflow-hidden p-0">
-        <div className="flex h-full">
+        <div className="flex h-full flex-col lg:flex-row">
           {/* Products Section */}
-          <div className="flex-1 flex flex-col border-r border-border">
+          <div className="flex-1 flex flex-col border-r border-border min-h-0">
             {/* Search & Categories */}
-            <div className="p-4 border-b border-border bg-card">
-              <div className="relative mb-4">
+            <div className="p-3 sm:p-4 border-b border-border bg-card">
+              <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search products by name or SKU..."
+                  placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-1 px-1">
                 {categories.map((cat) => (
                   <Button
                     key={cat.id}
                     variant={selectedCategory === cat.id ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setSelectedCategory(cat.id)}
-                    className="whitespace-nowrap"
+                    className="whitespace-nowrap text-xs sm:text-sm h-8 px-2 sm:px-3"
                   >
                     {cat.name}
                   </Button>
@@ -187,34 +209,34 @@ const PointOfSale = () => {
             </div>
 
             {/* Products Grid */}
-            <div className="flex-1 overflow-y-auto p-4 bg-background">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-background pb-20 lg:pb-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
                 {filteredProducts.map((product) => (
                   <button
                     key={product.id}
                     onClick={() => addToCart(product)}
                     className={cn(
-                      'flex flex-col p-4 rounded-xl border border-border bg-card text-left transition-all duration-200 hover:shadow-card-hover hover:border-primary/30',
+                      'flex flex-col p-3 sm:p-4 rounded-xl border border-border bg-card text-left transition-all duration-200 hover:shadow-card-hover hover:border-primary/30 active:scale-[0.98]',
                       product.quantity === 0 && 'opacity-50 cursor-not-allowed'
                     )}
                     disabled={product.quantity === 0}
                   >
-                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                      <Package className="h-6 w-6 text-primary" />
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-2 sm:mb-3">
+                      <Package className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                     </div>
-                    <h3 className="font-medium text-foreground text-sm truncate mb-1">
+                    <h3 className="font-medium text-foreground text-xs sm:text-sm truncate mb-0.5 sm:mb-1">
                       {product.name}
                     </h3>
-                    <p className="text-xs text-muted-foreground mb-2">{product.sku}</p>
-                    <div className="mt-auto flex items-center justify-between">
-                      <span className="font-bold text-foreground">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mb-1 sm:mb-2">{product.sku}</p>
+                    <div className="mt-auto flex items-center justify-between gap-1">
+                      <span className="font-bold text-foreground text-xs sm:text-sm">
                         {formatCurrency(product.sellingPrice)}
                       </span>
                       <Badge
                         variant={product.quantity <= product.lowStockThreshold ? 'destructive' : 'secondary'}
-                        className="text-xs"
+                        className="text-[9px] sm:text-xs px-1 sm:px-2"
                       >
-                        {product.quantity} {product.unit}
+                        {product.quantity}
                       </Badge>
                     </div>
                   </button>
@@ -229,64 +251,100 @@ const PointOfSale = () => {
             </div>
           </div>
 
-          {/* Cart Section */}
-          <div className="w-[400px] flex flex-col bg-card">
+          {/* Mobile Cart Toggle Button */}
+          <button
+            onClick={() => setShowCart(!showCart)}
+            className={cn(
+              'lg:hidden fixed bottom-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all',
+              cart.length > 0 ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-foreground'
+            )}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartItemsCount > 0 && (
+              <>
+                <span className="font-bold">{formatCurrency(total)}</span>
+                <Badge className="bg-primary-foreground text-primary">{cartItemsCount}</Badge>
+              </>
+            )}
+            <ChevronUp className={cn('h-4 w-4 transition-transform', showCart && 'rotate-180')} />
+          </button>
+
+          {/* Cart Section - Slide up on mobile */}
+          <div
+            className={cn(
+              'fixed lg:relative inset-x-0 bottom-0 lg:inset-auto z-40',
+              'w-full lg:w-[380px] xl:w-[400px] flex flex-col bg-card',
+              'transition-transform duration-300 ease-out',
+              'max-h-[85vh] lg:max-h-none rounded-t-2xl lg:rounded-none shadow-2xl lg:shadow-none',
+              showCart ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'
+            )}
+          >
             {/* Cart Header */}
-            <div className="p-4 border-b border-border flex items-center justify-between">
+            <div className="p-3 sm:p-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold text-foreground">Current Sale</h2>
+                <h2 className="font-semibold text-foreground text-sm sm:text-base">Current Sale</h2>
                 {cart.length > 0 && (
-                  <Badge variant="secondary">{cart.reduce((s, i) => s + i.quantity, 0)} items</Badge>
+                  <Badge variant="secondary" className="text-xs">{cartItemsCount} items</Badge>
                 )}
               </div>
-              {cart.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearCart} className="text-muted-foreground">
-                  <X className="h-4 w-4 mr-1" />
-                  Clear
+              <div className="flex items-center gap-2">
+                {cart.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearCart} className="text-muted-foreground h-8 px-2">
+                    <X className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden h-8 w-8"
+                  onClick={() => setShowCart(false)}
+                >
+                  <X className="h-4 w-4" />
                 </Button>
-              )}
+              </div>
             </div>
 
             {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 min-h-[120px] max-h-[30vh] lg:max-h-none">
               {cart.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <ShoppingCart className="h-12 w-12 mb-4 opacity-50" />
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
+                  <ShoppingCart className="h-10 w-10 mb-3 opacity-50" />
                   <p className="text-sm">Cart is empty</p>
-                  <p className="text-xs mt-1">Click products to add them</p>
+                  <p className="text-xs mt-1">Tap products to add them</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {cart.map((item) => (
                     <div
                       key={item.product.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border"
+                      className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-background border border-border"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-foreground truncate">
+                        <p className="font-medium text-xs sm:text-sm text-foreground truncate">
                           {item.product.name}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                           {formatCurrency(item.product.sellingPrice)} × {item.quantity}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-0.5 sm:gap-1">
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-7 w-7 sm:h-8 sm:w-8"
                           onClick={() => updateQuantity(item.product.id, -1)}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-8 text-center font-medium text-sm">
+                        <span className="w-6 sm:w-8 text-center font-medium text-xs sm:text-sm">
                           {item.quantity}
                         </span>
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-7 w-7 sm:h-8 sm:w-8"
                           onClick={() => updateQuantity(item.product.id, 1)}
                         >
                           <Plus className="h-3 w-3" />
@@ -294,10 +352,10 @@ const PointOfSale = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          className="h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:text-destructive"
                           onClick={() => removeFromCart(item.product.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                     </div>
@@ -307,28 +365,28 @@ const PointOfSale = () => {
             </div>
 
             {/* Cart Summary */}
-            <div className="border-t border-border p-4 space-y-4">
+            <div className="border-t border-border p-3 sm:p-4 space-y-3 sm:space-y-4">
               {/* Payment Methods */}
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-2">Payment Method</p>
-                <div className="grid grid-cols-4 gap-2">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">Payment</p>
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                   {paymentMethods.map((method) => (
                     <Button
                       key={method.id}
                       variant={selectedPayment === method.id ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedPayment(method.id)}
-                      className="flex flex-col h-auto py-2 gap-1"
+                      className="flex flex-col h-auto py-1.5 sm:py-2 gap-0.5 sm:gap-1"
                     >
-                      <method.icon className="h-4 w-4" />
-                      <span className="text-xs">{method.name}</span>
+                      <method.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="text-[10px] sm:text-xs">{method.name}</span>
                     </Button>
                   ))}
                 </div>
               </div>
 
               {/* Totals */}
-              <div className="space-y-2 text-sm">
+              <div className="space-y-1 text-xs sm:text-sm">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
                   <span>{formatCurrency(subtotal)}</span>
@@ -337,7 +395,7 @@ const PointOfSale = () => {
                   <span>VAT (18%)</span>
                   <span>{formatCurrency(vat)}</span>
                 </div>
-                <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border">
+                <div className="flex justify-between text-base sm:text-lg font-bold text-foreground pt-2 border-t border-border">
                   <span>Total</span>
                   <span>{formatCurrency(total)}</span>
                 </div>
@@ -347,18 +405,18 @@ const PointOfSale = () => {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1 gap-2"
+                  className="flex-1 gap-1.5 sm:gap-2 h-10 sm:h-11 text-xs sm:text-sm"
                   disabled={cart.length === 0}
                 >
-                  <Receipt className="h-4 w-4" />
+                  <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Hold
                 </Button>
                 <Button
-                  className="flex-1 gap-2"
+                  className="flex-1 gap-1.5 sm:gap-2 h-10 sm:h-11 text-xs sm:text-sm"
                   onClick={handleCheckout}
                   disabled={cart.length === 0}
                 >
-                  <Check className="h-4 w-4" />
+                  <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Complete Sale
                 </Button>
               </div>
@@ -366,6 +424,13 @@ const PointOfSale = () => {
           </div>
         </div>
       </PageContent>
+
+      {/* Receipt Modal */}
+      <ReceiptModal
+        open={receiptOpen}
+        onOpenChange={setReceiptOpen}
+        sale={lastSale}
+      />
     </MainLayout>
   );
 };
