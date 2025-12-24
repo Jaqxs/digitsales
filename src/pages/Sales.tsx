@@ -34,9 +34,10 @@ import {
   Eye,
   Plus,
   Printer,
+  FileText,
 } from 'lucide-react';
 import { RecordSaleModal } from '@/components/modals';
-import { ReceiptModal } from '@/components/receipt';
+import { ReceiptModal, InvoiceModal } from '@/components/receipt';
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,12 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Sale } from '@/types/pos';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Mock sales data (will be combined with store data)
 const mockRecentSales = [
@@ -61,6 +68,7 @@ const Sales = () => {
   const [recordSaleOpen, setRecordSaleOpen] = useState(false);
   const [viewSaleOpen, setViewSaleOpen] = useState(false);
   const [receiptOpen, setReceiptOpen] = useState(false);
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
   
@@ -128,6 +136,27 @@ const Sales = () => {
       });
     }
     setReceiptOpen(true);
+  };
+
+  const handlePrintInvoice = (sale: any) => {
+    if (sale.originalSale) {
+      setReceiptSale(sale.originalSale);
+    } else {
+      setReceiptSale({
+        id: sale.id,
+        items: [],
+        subtotal: sale.total / 1.18,
+        discount: 0,
+        vat: sale.total - (sale.total / 1.18),
+        total: sale.total,
+        paymentMethod: sale.payment.toLowerCase() as any,
+        employeeId: '1',
+        createdAt: new Date(sale.date),
+        status: sale.status as any,
+      });
+    }
+    setSelectedSale(sale);
+    setInvoiceOpen(true);
   };
 
   return (
@@ -276,9 +305,23 @@ const Sales = () => {
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewSale(sale)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrintReceipt(sale)}>
-                          <Printer className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handlePrintReceipt(sale)}>
+                              <Printer className="h-4 w-4 mr-2" />
+                              Print Receipt
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handlePrintInvoice(sale)}>
+                              <FileText className="h-4 w-4 mr-2" />
+                              Print Invoice
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -336,16 +379,29 @@ const Sales = () => {
                 <p className="text-sm text-muted-foreground">Total Amount</p>
                 <p className="text-2xl font-bold text-success">{formatCurrency(selectedSale.total)}</p>
               </div>
-              <Button 
-                className="w-full gap-2" 
-                onClick={() => {
-                  setViewSaleOpen(false);
-                  handlePrintReceipt(selectedSale);
-                }}
-              >
-                <Printer className="h-4 w-4" />
-                Print Receipt
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  className="flex-1 gap-2" 
+                  variant="outline"
+                  onClick={() => {
+                    setViewSaleOpen(false);
+                    handlePrintReceipt(selectedSale);
+                  }}
+                >
+                  <Printer className="h-4 w-4" />
+                  Receipt
+                </Button>
+                <Button 
+                  className="flex-1 gap-2" 
+                  onClick={() => {
+                    setViewSaleOpen(false);
+                    handlePrintInvoice(selectedSale);
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  Invoice
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
@@ -358,6 +414,15 @@ const Sales = () => {
         sale={receiptSale}
         customerName={selectedSale?.customer}
       />
+
+      {/* Invoice Modal */}
+      {receiptSale && (
+        <InvoiceModal
+          open={invoiceOpen}
+          onOpenChange={setInvoiceOpen}
+          sale={receiptSale}
+        />
+      )}
     </MainLayout>
   );
 };
