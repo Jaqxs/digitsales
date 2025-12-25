@@ -1,2 +1,2 @@
 export { MainLayout, PageHeader, PageContent } from './MainLayout';
-export { AppSidebar } from './AppSidebar';
+export { AppSidebar, MobileHeader } from './AppSidebar';
