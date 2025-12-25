@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth, canAccessRoute } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -13,9 +14,16 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import zantrixLogo from '@/assets/zantrix-logo.png';
 
 interface SidebarProps {
@@ -33,10 +41,103 @@ const navigation = [
   { name: 'Settings', href: '/settings', icon: Settings, route: 'settings' },
 ];
 
+// Mobile Header Component
+export function MobileHeader() {
+  const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth');
+    setOpen(false);
+  };
+
+  const filteredNav = navigation.filter(
+    (item) => user && canAccessRoute(user.role, item.route)
+  );
+
+  return (
+    <>
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center justify-between px-4">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpen(true)}
+            className="h-9 w-9"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <img src={zantrixLogo} alt="Zantrix" className="h-8 w-auto" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-xs">
+            {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
+          </div>
+        </div>
+      </header>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="left" className="w-[280px] p-0">
+          <SheetHeader className="p-4 border-b border-border">
+            <SheetTitle className="flex items-center gap-3">
+              <img src={zantrixLogo} alt="Zantrix" className="h-10 w-auto" />
+            </SheetTitle>
+          </SheetHeader>
+          
+          <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
+            {filteredNav.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'text-foreground hover:bg-muted'
+                  )
+                }
+              >
+                <item.icon className="h-5 w-5 shrink-0" />
+                <span>{item.name}</span>
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="border-t border-border p-3 mt-auto">
+            <div className="flex items-center gap-3 rounded-lg px-3 py-2.5">
+              <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm shrink-0">
+                {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{user?.name || 'User'}</p>
+                <p className="text-xs text-muted-foreground truncate capitalize">{user?.role || 'Guest'}</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="w-full mt-2 justify-start gap-3 px-3"
+            >
+              <LogOut className="h-5 w-5 shrink-0" />
+              <span>Logout</span>
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}
+
+// Desktop Sidebar Component
 export function AppSidebar({ className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleLogout = () => {
     logout();
@@ -46,6 +147,11 @@ export function AppSidebar({ className }: SidebarProps) {
   const filteredNav = navigation.filter(
     (item) => user && canAccessRoute(user.role, item.route)
   );
+
+  // Don't render desktop sidebar on mobile
+  if (isMobile) {
+    return null;
+  }
 
   return (
     <aside
