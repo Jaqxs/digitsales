@@ -13,11 +13,19 @@ interface StatsCardProps {
 }
 
 const iconColors = {
-  primary: 'bg-primary/10 text-primary',
-  success: 'bg-success-light text-success',
-  warning: 'bg-warning-light text-warning',
-  destructive: 'bg-destructive-light text-destructive',
-  info: 'bg-info-light text-info',
+  primary: 'bg-primary/10 text-primary border-primary/20',
+  success: 'bg-success-light text-success border-success/20',
+  warning: 'bg-warning-light text-warning border-warning/20',
+  destructive: 'bg-destructive-light text-destructive border-destructive/20',
+  info: 'bg-info-light text-info border-info/20',
+};
+
+const glowColors = {
+  primary: 'hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)]',
+  success: 'hover:shadow-[0_0_30px_hsl(var(--success)/0.15)]',
+  warning: 'hover:shadow-[0_0_30px_hsl(var(--warning)/0.15)]',
+  destructive: 'hover:shadow-[0_0_30px_hsl(var(--destructive)/0.15)]',
+  info: 'hover:shadow-[0_0_30px_hsl(var(--info)/0.15)]',
 };
 
 export function StatsCard({
@@ -35,30 +43,34 @@ export function StatsCard({
   };
 
   const getTrendColor = () => {
-    if (change === undefined || change === 0) return 'text-muted-foreground';
-    return change > 0 ? 'text-success' : 'text-destructive';
+    if (change === undefined || change === 0) return 'text-muted-foreground bg-muted';
+    return change > 0 ? 'text-success bg-success-light' : 'text-destructive bg-destructive-light';
   };
 
   return (
     <div
       className={cn(
-        'rounded-xl border border-border bg-card p-6 shadow-card transition-all duration-200 hover:shadow-card-hover animate-in',
+        'group relative rounded-xl border border-border bg-card p-4 sm:p-6 shadow-card transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1 animate-in overflow-hidden',
+        glowColors[iconColor],
         className
       )}
     >
-      <div className="flex items-start justify-between">
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-3xl font-bold tracking-tight text-foreground">{value}</p>
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/[0.02] pointer-events-none" />
+      
+      <div className="relative flex items-start justify-between">
+        <div className="space-y-2 sm:space-y-3">
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+          <p className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-foreground">{value}</p>
           {change !== undefined && (
-            <div className={cn('flex items-center gap-1 text-xs font-medium', getTrendColor())}>
+            <div className={cn('inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full', getTrendColor())}>
               {getTrendIcon()}
               <span>{Math.abs(change)}%</span>
-              <span className="text-muted-foreground font-normal">{changeLabel}</span>
+              <span className="text-muted-foreground font-normal hidden sm:inline">{changeLabel}</span>
             </div>
           )}
         </div>
-        <div className={cn('rounded-xl p-3', iconColors[iconColor])}>
+        <div className={cn('rounded-xl p-2.5 sm:p-3 border transition-transform duration-300 group-hover:scale-110', iconColors[iconColor])}>
           {icon}
         </div>
       </div>
