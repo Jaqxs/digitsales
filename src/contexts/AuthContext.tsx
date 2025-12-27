@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthApiService, type User as ApiUser } from '../lib/api/auth';
+import { apiClient } from '../lib/api';
 
 export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'support';
 
@@ -9,6 +11,18 @@ export interface User {
   email: string;
   role: UserRole;
   avatar?: string;
+  // Additional fields from backend
+  isActive?: boolean;
+  lastLoginAt?: string | null;
+  profile?: {
+    firstName: string;
+    lastName: string;
+    phone?: string | null;
+    avatarUrl?: string | null;
+    employeeId?: string | null;
+  } | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface AuthContextType {
@@ -22,90 +36,78 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo - in production, this would come from your backend
-const mockUsers: Record<string, { password: string; user: User }> = {
-  'admin@zantrix.co.tz': {
-    password: 'admin123',
-    user: {
-      id: '1',
-      name: 'Amina Juma',
-      email: 'admin@zantrix.co.tz',
-      role: 'admin',
-    },
-  },
-  'manager@zantrix.co.tz': {
-    password: 'manager123',
-    user: {
-      id: '2',
-      name: 'John Mwanga',
-      email: 'manager@zantrix.co.tz',
-      role: 'manager',
-    },
-  },
-  'sales@zantrix.co.tz': {
-    password: 'sales123',
-    user: {
-      id: '3',
-      name: 'Grace Mushi',
-      email: 'sales@zantrix.co.tz',
-      role: 'sales',
-    },
-  },
-  'inventory@zantrix.co.tz': {
-    password: 'inventory123',
-    user: {
-      id: '4',
-      name: 'Peter Kimaro',
-      email: 'inventory@zantrix.co.tz',
-      role: 'inventory',
-    },
-  },
+// Convert API user to context user
+const convertApiUserToContextUser = (apiUser: ApiUser): User => {
+  return {
+    id: apiUser.id,
+    name: apiUser.profile
+      ? `${apiUser.profile.firstName} ${apiUser.profile.lastName}`
+      : apiUser.email,
+    email: apiUser.email,
+    role: apiUser.role,
+    avatar: apiUser.profile?.avatarUrl || undefined,
+    isActive: apiUser.isActive,
+    lastLoginAt: apiUser.lastLoginAt,
+    profile: apiUser.profile,
+    createdAt: apiUser.createdAt,
+    updatedAt: apiUser.updatedAt,
+  };
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check for existing session
-    const storedUser = localStorage.getItem('zantrix_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem('zantrix_user');
+    const checkAuth = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        try {
+          // Set token in API client
+          apiClient.setToken(token);
+
+          // Verify token by fetching current user
+          const apiUser = await AuthApiService.getCurrentUser();
+          const contextUser = convertApiUserToContextUser(apiUser);
+          setUser(contextUser);
+        } catch (error) {
+          // Token is invalid or expired
+          console.error('Auth check failed:', error);
+          apiClient.setToken(null);
+          localStorage.removeItem('auth_token');
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const userRecord = mockUsers[email.toLowerCase()];
-    
-    if (!userRecord) {
+
+    try {
+      const authResponse = await AuthApiService.login({ email, password });
+      const contextUser = convertApiUserToContextUser(authResponse.user);
+      setUser(contextUser);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      return {
+        success: false,
+        error: error.message || 'Login failed. Please try again.'
+      };
+    } finally {
       setIsLoading(false);
-      return { success: false, error: 'User not found. Please check your email.' };
     }
-    
-    if (userRecord.password !== password) {
-      setIsLoading(false);
-      return { success: false, error: 'Invalid password. Please try again.' };
-    }
-    
-    setUser(userRecord.user);
-    localStorage.setItem('zantrix_user', JSON.stringify(userRecord.user));
-    setIsLoading(false);
-    return { success: true };
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('zantrix_user');
+    AuthApiService.logout();
+    navigate('/auth');
   };
 
   const hasPermission = (allowedRoles: UserRole[]): boolean => {
