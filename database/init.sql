@@ -366,36 +366,36 @@ CREATE TABLE general_ledger (
 -- EMPLOYEE TARGETS & PERFORMANCE
 -- ==========================================
 
--- Employee targets (monthly/quarterly/annual goals)
+-- Create enum types first
+CREATE TYPE target_type AS ENUM ('sales_revenue', 'sales_quantity', 'customer_acquisition', 'profit_margin', 'task_completion');
+CREATE TYPE target_period AS ENUM ('weekly', 'monthly', 'quarterly', 'yearly');
+
+-- Employee targets and performance tracking
 CREATE TABLE employee_targets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    employee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    target_type target_type NOT NULL DEFAULT 'monthly',
-    period_start DATE NOT NULL,
-    period_end DATE NOT NULL,
-    sales_target DECIMAL(15,2) NOT NULL DEFAULT 0,
-    revenue_target DECIMAL(15,2) NOT NULL DEFAULT 0,
-    customer_target INTEGER NOT NULL DEFAULT 0, -- Number of customers to acquire
-    commission_rate DECIMAL(5,2) NOT NULL DEFAULT 0, -- Commission percentage
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    target_type target_type NOT NULL,
+    target_value DECIMAL(15,2) NOT NULL,
+    current_value DECIMAL(15,2) NOT NULL DEFAULT 0,
+    period target_period NOT NULL DEFAULT 'monthly',
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
+    commission_rate DECIMAL(5,2), -- Percentage commission on target achievement
+    bonus_amount DECIMAL(15,2) DEFAULT 0, -- Fixed bonus on target achievement
     created_by UUID NOT NULL REFERENCES users(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TYPE target_type AS ENUM ('monthly', 'quarterly', 'annual');
+-- Add triggers for updated_at
+CREATE TRIGGER update_employee_targets_updated_at BEFORE UPDATE ON employee_targets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Target achievements/progress tracking
-CREATE TABLE target_achievements (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    target_id UUID NOT NULL REFERENCES employee_targets(id) ON DELETE CASCADE,
-    period_date DATE NOT NULL,
-    sales_achieved DECIMAL(15,2) NOT NULL DEFAULT 0,
-    revenue_achieved DECIMAL(15,2) NOT NULL DEFAULT 0,
-    customers_acquired INTEGER NOT NULL DEFAULT 0,
-    notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- Indexes for employee targets
+CREATE INDEX idx_employee_targets_user ON employee_targets(user_id);
+CREATE INDEX idx_employee_targets_period ON employee_targets(start_date, end_date);
+CREATE INDEX idx_employee_targets_active ON employee_targets(is_active);
+CREATE INDEX idx_employee_targets_created_by ON employee_targets(created_by);
 
 -- ==========================================
 -- INDEXES FOR PERFORMANCE
