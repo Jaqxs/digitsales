@@ -7,18 +7,24 @@ interface MainLayoutProps {
   children: ReactNode;
 }
 
+import { useLayout } from '@/contexts/LayoutContext';
+
 export function MainLayout({ children }: MainLayoutProps) {
   const isMobile = useIsMobile();
+  const { isSidebarCollapsed } = useLayout();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-50 via-slate-50 to-white">
       <MobileHeader />
       <AppSidebar />
       <main className={cn(
-        'transition-all duration-300',
-        isMobile ? 'pt-14' : 'pl-64'
+        'transition-all duration-300 ease-in-out',
+        isMobile ? 'pt-20 px-4' : cn(
+          'min-h-screen py-6 pr-6',
+          isSidebarCollapsed ? 'pl-[112px]' : 'pl-[320px]'
+        )
       )}>
-        <div className="min-h-screen">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           {children}
         </div>
       </main>
@@ -58,7 +64,7 @@ interface PageContentProps {
 
 export function PageContent({ children, className }: PageContentProps) {
   return (
-    <div className={cn('p-4 sm:p-6', className)}>
+    <div className={cn('space-y-6', className)}>
       {children}
     </div>
   );

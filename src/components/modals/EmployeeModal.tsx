@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { UserRole } from '@/types/pos';
-import { EmployeeApiService, type Employee as ApiEmployee, type CreateEmployeeData, type UpdateEmployeeData } from '@/lib/api/employees';
+import { UserRole, Employee } from '@/types/pos';
+import { useDataStore } from '@/stores/dataStore';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
@@ -26,13 +26,14 @@ import { Loader2, UserCircle, Target } from 'lucide-react';
 interface EmployeeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  employee?: ApiEmployee | null;
+  employee?: Employee | null;
   onSuccess?: () => void;
 }
 
 export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: EmployeeModalProps) {
   const { user: currentUser, hasPermission } = useAuth();
   const { toast } = useToast();
+  const { addEmployee, updateEmployee } = useDataStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check permissions
@@ -47,6 +48,8 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
     phone: string;
     role: UserRole;
     employeeId: string;
+    salesTarget: number;
+    commission: number;
   }>({
     firstName: '',
     lastName: '',
@@ -55,18 +58,26 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
     phone: '',
     role: 'sales' as UserRole,
     employeeId: '',
+    salesTarget: 0,
+    commission: 0,
   });
 
   useEffect(() => {
     if (employee) {
-      // For editing existing employee
+      // Split name into first and last
+      const nameParts = employee.name.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
       setFormData({
-        firstName: employee.profile?.firstName || '',
-        lastName: employee.profile?.lastName || '',
+        firstName,
+        lastName,
         email: employee.email,
-        phone: employee.profile?.phone || '',
+        phone: employee.phone || '',
         role: employee.role,
-        employeeId: employee.profile?.employeeId || '',
+        employeeId: '', // Employee ID not in store type yet, ignore for now
+        salesTarget: employee.salesTarget || 0,
+        commission: employee.commission || 0,
       });
     } else {
       // For creating new employee
@@ -78,6 +89,8 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
         phone: '',
         role: 'sales' as UserRole,
         employeeId: '',
+        salesTarget: 0,
+        commission: 0,
       });
     }
   }, [employee, open]);
@@ -94,47 +107,39 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
       return;
     }
 
-    // For new employees, password is required
-    if (!employee && !formData.password) {
-      toast({
-        title: 'Password required',
-        description: 'Please provide a password for the new employee.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+
       if (employee) {
         // Update existing employee
-        await EmployeeApiService.updateEmployee(employee.id, {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+        await updateEmployee(employee.id, {
+          name: fullName,
           email: formData.email,
           role: formData.role,
           phone: formData.phone,
-          employeeId: formData.employeeId,
+          salesTarget: formData.salesTarget,
+          commission: formData.commission,
         });
         toast({
           title: 'Employee updated',
-          description: `${formData.firstName} ${formData.lastName} has been updated.`
+          description: `${fullName} has been updated.`
         });
       } else {
         // Create new employee
-        await EmployeeApiService.createEmployee({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+        await addEmployee({
+          name: fullName,
           email: formData.email,
-          password: formData.password!,
           role: formData.role,
           phone: formData.phone,
-          employeeId: formData.employeeId,
+          avatar: '',
+          salesTarget: formData.salesTarget,
+          commission: formData.commission,
         });
         toast({
           title: 'Employee added',
-          description: `${formData.firstName} ${formData.lastName} has been added.`
+          description: `${fullName} has been added.`
         });
       }
 

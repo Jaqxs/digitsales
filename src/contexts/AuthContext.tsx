@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthApiService, type User as ApiUser } from '../lib/api/auth';
-import { apiClient } from '../lib/api';
+import { type User as ApiUser } from '../lib/api/auth';
+import { LocalAuthService } from '@/services/localAuth';
 
 export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'support';
 
@@ -44,11 +44,17 @@ const convertApiUserToContextUser = (apiUser: ApiUser): User => {
       ? `${apiUser.profile.firstName} ${apiUser.profile.lastName}`
       : apiUser.email,
     email: apiUser.email,
-    role: apiUser.role,
+    role: apiUser.role as UserRole,
     avatar: apiUser.profile?.avatarUrl || undefined,
     isActive: apiUser.isActive,
     lastLoginAt: apiUser.lastLoginAt,
-    profile: apiUser.profile,
+    profile: apiUser.profile ? {
+      firstName: apiUser.profile.firstName || '',
+      lastName: apiUser.profile.lastName || '',
+      phone: apiUser.profile.phone,
+      avatarUrl: apiUser.profile.avatarUrl,
+      employeeId: apiUser.profile.employeeId,
+    } : null,
     createdAt: apiUser.createdAt,
     updatedAt: apiUser.updatedAt,
   };
@@ -65,18 +71,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = localStorage.getItem('auth_token');
       if (token) {
         try {
-          // Set token in API client
-          apiClient.setToken(token);
-
-          // Verify token by fetching current user
-          const apiUser = await AuthApiService.getCurrentUser();
+          // Verify session by fetching current user from local storage
+          const apiUser = await LocalAuthService.getCurrentUser();
           const contextUser = convertApiUserToContextUser(apiUser);
           setUser(contextUser);
         } catch (error) {
           // Token is invalid or expired
           console.error('Auth check failed:', error);
-          apiClient.setToken(null);
-          localStorage.removeItem('auth_token');
+          LocalAuthService.logout();
+          setUser(null);
         }
       }
       setIsLoading(false);
@@ -89,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
 
     try {
-      const authResponse = await AuthApiService.login({ email, password });
+      const authResponse = await LocalAuthService.login({ email, password });
       const contextUser = convertApiUserToContextUser(authResponse.user);
       setUser(contextUser);
       return { success: true };
@@ -106,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    AuthApiService.logout();
+    LocalAuthService.logout();
     navigate('/auth');
   };
 
@@ -139,7 +142,7 @@ export function useAuth() {
 
 // Role permissions mapping
 export const rolePermissions: Record<UserRole, string[]> = {
-  admin: ['dashboard', 'pos', 'inventory', 'sales', 'customers', 'employees', 'reports', 'settings'],
+  admin: ['dashboard', 'pos', 'inventory', 'sales', 'customers', 'employees', 'reports', 'settings', 'system-logs'],
   manager: ['dashboard', 'pos', 'inventory', 'sales', 'customers', 'employees', 'reports'],
   sales: ['dashboard', 'pos', 'customers'],
   inventory: ['dashboard', 'inventory'],

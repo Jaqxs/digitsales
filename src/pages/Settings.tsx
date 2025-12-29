@@ -16,8 +16,11 @@ import { Building2, Bell, Shield, Printer, Globe, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import zantrixLogo from '@/assets/zantrix-logo.png';
 
+import { useSettingsStore } from '@/stores/settingsStore';
+
 const Settings = () => {
   const { toast } = useToast();
+  const { business, notifications, pos, security, updateBusiness, updateNotifications, updatePos, updateSecurity } = useSettingsStore();
 
   const handleSave = () => {
     toast({
@@ -63,31 +66,60 @@ const Settings = () => {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="businessName">Business Name</Label>
-                    <Input id="businessName" defaultValue="Zantrix Group Limited" />
+                    <Input
+                      id="businessName"
+                      value={business.name}
+                      onChange={(e) => updateBusiness({ name: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tradingName">Trading Name</Label>
-                    <Input id="tradingName" defaultValue="Zantrix Hardware & Construction" />
+                    <Input
+                      id="tradingName"
+                      value={business.tradingName}
+                      onChange={(e) => updateBusiness({ tradingName: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tinNumber">TIN Number</Label>
-                    <Input id="tinNumber" defaultValue="123-456-789" />
+                    <Input
+                      id="tinNumber"
+                      value={business.tin}
+                      onChange={(e) => updateBusiness({ tin: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="vatNumber">VAT Number</Label>
-                    <Input id="vatNumber" defaultValue="VAT-TZ-2024-001" />
+                    <Input
+                      id="vatNumber"
+                      value={business.vatNumber}
+                      onChange={(e) => updateBusiness({ vatNumber: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" defaultValue="+255 22 123 4567" />
+                    <Input
+                      id="phone"
+                      value={business.phone}
+                      onChange={(e) => updateBusiness({ phone: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue="info@zantrix.co.tz" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={business.email}
+                      onChange={(e) => updateBusiness({ email: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2 sm:col-span-2">
                     <Label htmlFor="address">Address</Label>
-                    <Input id="address" defaultValue="Posta Street, Kariakoo, Dar es Salaam, Tanzania" />
+                    <Input
+                      id="address"
+                      value={business.address}
+                      onChange={(e) => updateBusiness({ address: e.target.value })}
+                    />
                   </div>
                 </div>
 
@@ -96,7 +128,10 @@ const Settings = () => {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="currency">Currency</Label>
-                    <Select defaultValue="TZS">
+                    <Select
+                      value={business.currency}
+                      onValueChange={(value) => updateBusiness({ currency: value })}
+                    >
                       <SelectTrigger id="currency">
                         <SelectValue />
                       </SelectTrigger>
@@ -109,7 +144,12 @@ const Settings = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="vatRate">VAT Rate (%)</Label>
-                    <Input id="vatRate" type="number" defaultValue="18" />
+                    <Input
+                      id="vatRate"
+                      type="number"
+                      value={business.vatRate}
+                      onChange={(e) => updateBusiness({ vatRate: Number(e.target.value) })}
+                    />
                   </div>
                 </div>
 
@@ -142,7 +182,10 @@ const Settings = () => {
                     <p className="font-medium text-foreground">Low Stock Alerts</p>
                     <p className="text-sm text-muted-foreground">Get notified when stock is low</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={notifications.lowStock}
+                    onCheckedChange={(checked) => updateNotifications({ lowStock: checked })}
+                  />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -150,7 +193,10 @@ const Settings = () => {
                     <p className="font-medium text-foreground">Daily Sales Summary</p>
                     <p className="text-sm text-muted-foreground">Receive daily sales report via email</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={notifications.dailySales}
+                    onCheckedChange={(checked) => updateNotifications({ dailySales: checked })}
+                  />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -158,7 +204,10 @@ const Settings = () => {
                     <p className="font-medium text-foreground">New Order Notifications</p>
                     <p className="text-sm text-muted-foreground">Alert on new customer orders</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={notifications.newOrders}
+                    onCheckedChange={(checked) => updateNotifications({ newOrders: checked })}
+                  />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -166,7 +215,10 @@ const Settings = () => {
                     <p className="font-medium text-foreground">SMS Notifications</p>
                     <p className="text-sm text-muted-foreground">Send alerts via SMS</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={notifications.smsAlerts}
+                    onCheckedChange={(checked) => updateNotifications({ smsAlerts: checked })}
+                  />
                 </div>
 
                 <div className="flex justify-end">
@@ -198,7 +250,10 @@ const Settings = () => {
                     <p className="font-medium text-foreground">Auto-print Receipts</p>
                     <p className="text-sm text-muted-foreground">Print receipt after each sale</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={pos.autoPrint}
+                    onCheckedChange={(checked) => updatePos({ autoPrint: checked })}
+                  />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -206,7 +261,10 @@ const Settings = () => {
                     <p className="font-medium text-foreground">Include VAT in Prices</p>
                     <p className="text-sm text-muted-foreground">Display prices with VAT included</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={pos.includeVat}
+                    onCheckedChange={(checked) => updatePos({ includeVat: checked })}
+                  />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -214,12 +272,18 @@ const Settings = () => {
                     <p className="font-medium text-foreground">Require Customer for Sales</p>
                     <p className="text-sm text-muted-foreground">Mandate customer selection</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={pos.requireCustomer}
+                    onCheckedChange={(checked) => updatePos({ requireCustomer: checked })}
+                  />
                 </div>
                 <Separator />
                 <div className="space-y-2">
                   <Label htmlFor="defaultPayment">Default Payment Method</Label>
-                  <Select defaultValue="cash">
+                  <Select
+                    value={pos.defaultPayment}
+                    onValueChange={(value) => updatePos({ defaultPayment: value })}
+                  >
                     <SelectTrigger id="defaultPayment" className="w-full sm:w-64">
                       <SelectValue />
                     </SelectTrigger>
@@ -261,7 +325,10 @@ const Settings = () => {
                     <p className="font-medium text-foreground">Two-Factor Authentication</p>
                     <p className="text-sm text-muted-foreground">Add extra security to admin accounts</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={security.twoFactor}
+                    onCheckedChange={(checked) => updateSecurity({ twoFactor: checked })}
+                  />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -269,7 +336,10 @@ const Settings = () => {
                     <p className="font-medium text-foreground">Session Timeout</p>
                     <p className="text-sm text-muted-foreground">Auto-logout after inactivity</p>
                   </div>
-                  <Select defaultValue="30">
+                  <Select
+                    value={security.sessionTimeout}
+                    onValueChange={(value) => updateSecurity({ sessionTimeout: value })}
+                  >
                     <SelectTrigger className="w-32">
                       <SelectValue />
                     </SelectTrigger>
@@ -287,7 +357,10 @@ const Settings = () => {
                     <p className="font-medium text-foreground">Audit Logging</p>
                     <p className="text-sm text-muted-foreground">Track all system actions</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={security.auditLogging}
+                    onCheckedChange={(checked) => updateSecurity({ auditLogging: checked })}
+                  />
                 </div>
 
                 <div className="flex justify-end">

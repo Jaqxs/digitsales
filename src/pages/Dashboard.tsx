@@ -3,7 +3,6 @@ import { MainLayout, PageHeader, PageContent } from '@/components/layout';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { SalesChart, CategoryChart, TopProducts } from '@/components/dashboard/Charts';
 import { LowStockAlert, RecentActivity } from '@/components/dashboard/Alerts';
-import { mockDashboardStats } from '@/data/mock-data';
 import { useDataStore } from '@/stores/dataStore';
 import { formatCurrency, formatNumber } from '@/lib/pos-utils';
 import { getStockStatus } from '@/lib/pos-utils';
@@ -21,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { RecordSaleModal, RecordInventoryModal } from '@/components/modals';
 
 const Dashboard = () => {
-  const stats = mockDashboardStats;
   const { products, sales } = useDataStore();
   const [recordSaleOpen, setRecordSaleOpen] = useState(false);
   const [recordInventoryOpen, setRecordInventoryOpen] = useState(false);
@@ -68,29 +66,29 @@ const Dashboard = () => {
         <div className="grid gap-3 sm:gap-6 mt-4 sm:mt-6 grid-cols-2 lg:grid-cols-4">
           <StatsCard
             title="Total Sales"
-            value={formatCurrency(stats.totalSales)}
-            change={stats.salesGrowth}
+            value={formatCurrency(sales.reduce((sum, sale) => sum + sale.total, 0))}
+            change={0}
             icon={<DollarSign className="h-5 w-5 sm:h-6 sm:w-6" />}
             iconColor="success"
           />
           <StatsCard
             title="Total Orders"
-            value={formatNumber(stats.totalOrders + sales.length)}
-            change={8.2}
+            value={formatNumber(sales.length)}
+            change={0}
             icon={<ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />}
             iconColor="primary"
           />
           <StatsCard
             title="Products"
             value={formatNumber(products.length)}
-            change={2.5}
+            change={0}
             icon={<Package className="h-5 w-5 sm:h-6 sm:w-6" />}
             iconColor="info"
           />
           <StatsCard
             title="Low Stock"
             value={lowStockCount}
-            change={-15}
+            change={0}
             changeLabel="items"
             icon={<AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />}
             iconColor="warning"
@@ -99,13 +97,13 @@ const Dashboard = () => {
 
         {/* Charts Row */}
         <div className="grid gap-4 sm:gap-6 mt-4 sm:mt-6 lg:grid-cols-2">
-          <SalesChart data={stats.monthlySales} />
-          <CategoryChart data={stats.salesByCategory} />
+          <SalesChart data={[]} />
+          <CategoryChart data={[]} />
         </div>
 
         {/* Bottom Row */}
         <div className="grid gap-4 sm:gap-6 mt-4 sm:mt-6 lg:grid-cols-3">
-          <TopProducts data={stats.topProducts} />
+          <TopProducts data={[]} />
           <LowStockAlert />
           <RecentActivity />
         </div>

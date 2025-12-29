@@ -1,4 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useLayout } from '@/contexts/LayoutContext';
 import { cn } from '@/lib/utils';
 import { useAuth, canAccessRoute } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -16,6 +17,7 @@ import {
   Menu,
   X,
   Zap,
+  Activity,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -39,6 +41,7 @@ const navigation = [
   { name: 'Customers', href: '/customers', icon: Users, route: 'customers' },
   { name: 'Employees', href: '/employees', icon: UserCircle, route: 'employees' },
   { name: 'Reports', href: '/reports', icon: BarChart3, route: 'reports' },
+  { name: 'System Logs', href: '/system-logs', icon: Activity, route: 'system-logs' },
   { name: 'Settings', href: '/settings', icon: Settings, route: 'settings' },
 ];
 
@@ -86,7 +89,7 @@ export function MobileHeader() {
               <img src={zantrixLogo} alt="Zantrix" className="h-11 w-auto" />
             </SheetTitle>
           </SheetHeader>
-          
+
           <nav className="flex-1 space-y-1.5 p-4 overflow-y-auto">
             {filteredNav.map((item) => (
               <NavLink
@@ -135,10 +138,11 @@ export function MobileHeader() {
 
 // Desktop Sidebar Component
 export function AppSidebar({ className }: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const { isSidebarCollapsed, toggleSidebar } = useLayout();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -157,98 +161,84 @@ export function AppSidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300',
-        collapsed ? 'w-[80px]' : 'w-72',
+        'fixed left-4 top-4 bottom-4 z-40 flex flex-col rounded-2xl border border-white/20 bg-white/80 backdrop-blur-xl shadow-2xl transition-all duration-300',
+        isSidebarCollapsed ? 'w-[80px]' : 'w-72',
         className
       )}
-      style={{
-        background: 'linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(0 0% 5%) 100%)',
-      }}
     >
       {/* Header */}
-      <div className="flex h-20 items-center justify-between px-5 border-b border-sidebar-border">
-        {!collapsed && (
+      <div className={cn("flex h-20 items-center px-4", isSidebarCollapsed ? "justify-center" : "justify-between")}>
+        {!isSidebarCollapsed && (
           <div className="flex items-center gap-3">
-            <img src={zantrixLogo} alt="Zantrix" className="h-11 w-auto" />
+            <img src={zantrixLogo} alt="Zantrix" className="h-9 w-auto" />
           </div>
         )}
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground shrink-0 rounded-xl"
+          onClick={toggleSidebar}
+          className="text-foreground/60 hover:text-primary hover:bg-primary/10 shrink-0 rounded-xl"
         >
-          {collapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          {isSidebarCollapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
         </Button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1.5 px-4 py-5 overflow-y-auto">
-        {filteredNav.map((item) => (
-          <NavLink
-            key={item.name}
-            to={item.href}
-            className={({ isActive }) =>
-              cn(
-                'group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
+      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto no-scrollbar">
+        {filteredNav.map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <NavLink
+              key={item.name}
+              to={item.href}
+              className={cn(
+                'group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300',
                 isActive
-                  ? 'bg-gradient-to-r from-primary to-primary-dark text-primary-foreground shadow-lg shadow-primary/20'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
-                collapsed && 'justify-center px-3'
-              )
-            }
-          >
-            <item.icon className={cn('h-5 w-5 shrink-0 transition-transform duration-200', !collapsed && 'group-hover:scale-110')} />
-            {!collapsed && <span>{item.name}</span>}
-          </NavLink>
-        ))}
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                  : 'text-foreground/70 hover:bg-white/50 hover:text-primary hover:shadow-sm',
+                isSidebarCollapsed && 'justify-center px-0'
+              )}
+              title={isSidebarCollapsed ? item.name : undefined}
+            >
+              <item.icon
+                className={cn(
+                  'h-5 w-5 shrink-0 transition-transform duration-300',
+                  isActive ? 'scale-110' : 'group-hover:scale-110'
+                )}
+              />
+              {!isSidebarCollapsed && <span>{item.name}</span>}
+            </NavLink>
+          );
+        })}
       </nav>
 
-      {/* Quick Action */}
-      {!collapsed && (
-        <div className="px-4 pb-4">
-          <div className="rounded-xl bg-gradient-to-r from-primary/10 to-primary-dark/10 border border-primary/20 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold text-primary">Quick Sale</span>
-            </div>
-            <p className="text-xs text-sidebar-foreground/70 mb-3">Start a new transaction</p>
-            <Button
-              size="sm"
-              variant="glow"
-              className="w-full"
-              onClick={() => navigate('/pos')}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              Open POS
-            </Button>
-          </div>
-        </div>
-      )}
-
       {/* User Section */}
-      <div className="border-t border-sidebar-border p-4">
-        <div className={cn('flex items-center gap-3 rounded-xl px-4 py-3 bg-sidebar-accent/30', collapsed && 'justify-center px-3')}>
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0 shadow-glow">
+      <div className="p-3 mt-auto">
+        <div className={cn(
+          'flex items-center gap-3 rounded-xl p-2 transition-all duration-300',
+          !isSidebarCollapsed && 'bg-white/50 border border-white/40 shadow-sm'
+        )}>
+          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary to-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md ring-2 ring-white">
             {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
           </div>
-          {!collapsed && (
+          {!isSidebarCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-sidebar-foreground truncate">{user?.name || 'User'}</p>
-              <p className="text-xs text-sidebar-foreground/60 truncate capitalize">{user?.role || 'Guest'}</p>
+              <p className="text-sm font-semibold text-foreground truncate">{user?.name}</p>
+              <p className="text-xs text-foreground/60 truncate capitalize">{user?.role}</p>
             </div>
           )}
         </div>
+
         <Button
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            'w-full mt-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-destructive rounded-xl',
-            collapsed ? 'justify-center px-3' : 'justify-start gap-3 px-4'
+            'w-full mt-2 text-foreground/60 hover:bg-red-50 hover:text-destructive rounded-xl transition-colors',
+            isSidebarCollapsed ? 'justify-center px-0' : 'justify-start gap-3 px-3'
           )}
         >
           <LogOut className="h-5 w-5 shrink-0" />
-          {!collapsed && <span>Logout</span>}
+          {!isSidebarCollapsed && <span>Logout</span>}
         </Button>
       </div>
     </aside>

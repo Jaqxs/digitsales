@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { EmployeeApiService, type Employee } from '@/lib/api/employees';
+import { Employee } from '@/types/pos';
+import { useDataStore } from '@/stores/dataStore';
 import { useToast } from '@/hooks/use-toast';
 import { Target } from 'lucide-react';
 
@@ -17,6 +18,7 @@ interface TargetModalProps {
 
 const TargetModal = ({ open, onOpenChange, employee, onSuccess }: TargetModalProps) => {
   const { toast } = useToast();
+  const { updateEmployee } = useDataStore();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     targetType: 'sales_revenue' as const,
@@ -47,10 +49,10 @@ const TargetModal = ({ open, onOpenChange, employee, onSuccess }: TargetModalPro
     e.preventDefault();
     if (!employee) return;
 
-    if (!formData.targetValue || !formData.startDate || !formData.endDate) {
+    if (!formData.targetValue) {
       toast({
         title: 'Validation Error',
-        description: 'Please fill in all required fields',
+        description: 'Please set a target value',
         variant: 'destructive',
       });
       return;
@@ -58,20 +60,16 @@ const TargetModal = ({ open, onOpenChange, employee, onSuccess }: TargetModalPro
 
     setLoading(true);
     try {
-      await EmployeeApiService.createEmployeeTarget({
-        userId: employee.id,
-        targetType: formData.targetType,
-        targetValue: parseFloat(formData.targetValue),
-        period: formData.period,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        commissionRate: formData.commissionRate ? parseFloat(formData.commissionRate) : undefined,
-        bonusAmount: formData.bonusAmount ? parseFloat(formData.bonusAmount) : undefined,
+      // We are simplifying to just update the main sales target and commission
+      // since the simple store doesn't support complex target objects yet.
+      await updateEmployee(employee.id, {
+        salesTarget: parseFloat(formData.targetValue),
+        commission: formData.commissionRate ? parseFloat(formData.commissionRate) : undefined,
       });
 
       toast({
         title: 'Success',
-        description: 'Target set successfully',
+        description: 'Target updated successfully',
       });
 
       onOpenChange(false);
@@ -79,7 +77,7 @@ const TargetModal = ({ open, onOpenChange, employee, onSuccess }: TargetModalPro
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to set target',
+        description: error.message || 'Failed to update target',
         variant: 'destructive',
       });
     } finally {

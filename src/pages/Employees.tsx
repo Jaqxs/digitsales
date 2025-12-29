@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { EmployeeApiService, type Employee as ApiEmployee } from '@/lib/api/employees';
+import { useDataStore } from '@/stores/dataStore';
+import { type Employee } from '@/types/pos';
 import { formatCurrency } from '@/lib/pos-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -38,13 +39,18 @@ const Employees = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // State management
-  const [employees, setEmployees] = useState<ApiEmployee[]>([]);
+  const {
+    employees,
+    fetchEmployees,
+    addEmployee,
+    updateEmployee,
+    deleteEmployee,
+    loading: storeLoading
+  } = useDataStore();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalEmployees, setTotalEmployees] = useState(0);
+  const itemsPerPage = 12;
 
   // Check permissions
   const canManageEmployees = hasPermission(['admin']);
@@ -55,55 +61,38 @@ const Employees = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [targetModalOpen, setTargetModalOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<ApiEmployee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
-  // Fetch employees
-  const fetchEmployees = async (page = 1, search = '') => {
-    try {
+  // Load employees on mount
+  useEffect(() => {
+    const loadData = async () => {
       setLoading(true);
-      const result = await EmployeeApiService.getAllEmployees({
-        page,
-        limit: 12, // Show 12 employees per page for better UX
-        search: search || undefined,
-      });
-
-      setEmployees(result.employees);
-      setCurrentPage(result.pagination.page);
-      setTotalPages(result.pagination.totalPages);
-      setTotalEmployees(result.pagination.total);
-    } catch (error: any) {
-      console.error('Failed to fetch employees:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to load employees',
-        variant: 'destructive',
-      });
-    } finally {
+      await fetchEmployees();
       setLoading(false);
+    };
+    loadData();
+  }, [fetchEmployees]);
+
+  // Filter and paginate employees
+  const filteredEmployees = useMemo(() => {
+    let result = employees;
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(e =>
+        e.name.toLowerCase().includes(query) ||
+        e.email.toLowerCase().includes(query) ||
+        (e.role && e.role.toLowerCase().includes(query))
+      );
     }
-  };
 
-  // Load employees on mount and when search/page changes
-  useEffect(() => {
-    fetchEmployees(currentPage, searchQuery);
-  }, [currentPage]);
+    // Pagination logic
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return result.slice(startIndex, startIndex + itemsPerPage);
+  }, [employees, searchQuery, currentPage]);
 
-  // Handle search with debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (currentPage === 1) {
-        fetchEmployees(1, searchQuery);
-      } else {
-        setCurrentPage(1); // Reset to first page when searching
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // Since we're now doing server-side search and pagination,
-  // we can use the employees state directly
-  const filteredEmployees = employees;
+  const totalPages = Math.ceil((employees.length) / itemsPerPage);
+  const totalEmployees = employees.length;
 
   const topPerformer = useMemo(() => {
     const salesStaff = employees.filter(e => e.salesTarget > 0);
@@ -142,13 +131,11 @@ const Employees = () => {
     if (!selectedEmployee) return;
 
     try {
-      await EmployeeApiService.deleteEmployee(selectedEmployee.id);
+      await deleteEmployee(selectedEmployee.id);
       toast({
         title: 'Employee removed',
         description: `${selectedEmployee.name} has been removed.`
       });
-      // Refresh the employee list
-      fetchEmployees(currentPage, searchQuery);
       setDeleteModalOpen(false);
       setSelectedEmployee(null);
     } catch (error: any) {
@@ -188,7 +175,7 @@ const Employees = () => {
             <div className="min-w-0">
               <p className="text-xs sm:text-sm text-muted-foreground">Active</p>
               <p className="text-lg sm:text-2xl font-bold text-foreground">
-                {employees.filter(e => e.isActive).length}
+                {employees.length}
               </p>
             </div>
           </div>
@@ -344,9 +331,9 @@ const Employees = () => {
                       <Edit className="h-4 w-4" />
                       Edit
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="gap-1 text-destructive hover:text-destructive"
                       onClick={() => handleDelete(employee)}
                     >

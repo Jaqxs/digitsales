@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
-import { mockDashboardStats } from '@/data/mock-data';
 import { useDataStore } from '@/stores/dataStore';
 import { formatCurrency, formatDateTime } from '@/lib/pos-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -55,16 +54,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Mock sales data (will be combined with store data)
-const mockRecentSales = [
-  { id: '#1247', customer: 'Mwanza Construction Ltd', items: 5, total: 2450000, date: '2024-12-22 14:35', status: 'completed', payment: 'M-Pesa' },
-  { id: '#1246', customer: 'Walk-in Customer', items: 2, total: 680000, date: '2024-12-22 13:12', status: 'completed', payment: 'Cash' },
-  { id: '#1245', customer: 'Dar Hardware Store', items: 12, total: 4250000, date: '2024-12-22 11:48', status: 'completed', payment: 'Bank' },
-  { id: '#1244', customer: 'Walk-in Customer', items: 1, total: 55000, date: '2024-12-22 10:22', status: 'completed', payment: 'Cash' },
-  { id: '#1243', customer: 'Arusha Builders', items: 8, total: 3180000, date: '2024-12-21 16:45', status: 'refunded', payment: 'Card' },
-  { id: '#1242', customer: 'Walk-in Customer', items: 3, total: 275000, date: '2024-12-21 15:30', status: 'completed', payment: 'M-Pesa' },
-];
-
 const Sales = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [recordSaleOpen, setRecordSaleOpen] = useState(false);
@@ -74,24 +63,33 @@ const Sales = () => {
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
   const isMobile = useIsMobile();
-  
-  const { sales } = useDataStore();
-  const stats = mockDashboardStats;
+
+  const { sales, customers, fetchSales, fetchCustomers } = useDataStore();
+
+  useEffect(() => {
+    fetchSales();
+    fetchCustomers();
+  }, [fetchSales, fetchCustomers]);
 
   // Combine mock sales with store sales
   const allSales = useMemo(() => {
-    const storeSales = sales.map((sale, index) => ({
-      id: `#${sale.id}`,
-      customer: 'Walk-in Customer',
-      items: sale.items.reduce((sum, item) => sum + item.quantity, 0),
-      total: sale.total,
-      date: formatDateTime(sale.createdAt),
-      status: sale.status,
-      payment: sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1),
-      originalSale: sale,
-    }));
-    return [...storeSales, ...mockRecentSales];
-  }, [sales]);
+    return sales.map((sale) => {
+      const customerName = sale.customerId
+        ? customers.find(c => c.id === sale.customerId)?.name || 'Unknown Customer'
+        : 'Walk-in Customer';
+
+      return {
+        id: `#${sale.id}`,
+        customer: customerName,
+        items: sale.items.reduce((sum, item) => sum + item.quantity, 0),
+        total: sale.total,
+        date: formatDateTime(sale.createdAt),
+        status: sale.status,
+        payment: sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1),
+        originalSale: sale,
+      };
+    });
+  }, [sales, customers]);
 
   const filteredSales = useMemo(() => {
     return allSales.filter(
@@ -102,7 +100,21 @@ const Sales = () => {
   }, [allSales, searchQuery]);
 
   const todaysSales = useMemo(() => {
-    return sales.reduce((sum, sale) => sum + sale.total, 0) + 7435000;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return sales
+      .filter(sale => {
+        const saleDate = new Date(sale.createdAt);
+        return saleDate >= today;
+      })
+      .reduce((sum, sale) => sum + sale.total, 0);
+  }, [sales]);
+
+  const avgOrderValue = useMemo(() => {
+    if (sales.length === 0) return 0;
+    const totalRevenue = sales.reduce((sum, sale) => sum + sale.total, 0);
+    return totalRevenue / sales.length;
   }, [sales]);
 
   const getStatusBadge = (status: string) => {
@@ -124,14 +136,15 @@ const Sales = () => {
     if (sale.originalSale) {
       setReceiptSale(sale.originalSale);
     } else {
+      // Fallback if somehow originalSale is missing (shouldn't happen with new logic)
       setReceiptSale({
-        id: sale.id,
+        id: sale.id.replace('#', ''),
         items: [],
         subtotal: sale.total / 1.18,
         discount: 0,
         vat: sale.total - (sale.total / 1.18),
         total: sale.total,
-        paymentMethod: sale.payment.toLowerCase().replace('-', '-') as any,
+        paymentMethod: sale.payment.toLowerCase(),
         employeeId: '1',
         createdAt: new Date(sale.date),
         status: sale.status as any,
@@ -145,7 +158,7 @@ const Sales = () => {
       setReceiptSale(sale.originalSale);
     } else {
       setReceiptSale({
-        id: sale.id,
+        id: sale.id.replace('#', ''),
         items: [],
         subtotal: sale.total / 1.18,
         discount: 0,
@@ -240,7 +253,7 @@ const Sales = () => {
             </div>
             <div className="min-w-0">
               <p className="text-xs sm:text-sm text-muted-foreground">Orders</p>
-              <p className="text-lg sm:text-2xl font-bold text-foreground">{23 + sales.length}</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground">{sales.length}</p>
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex items-center gap-3">
@@ -249,7 +262,7 @@ const Sales = () => {
             </div>
             <div className="min-w-0">
               <p className="text-xs sm:text-sm text-muted-foreground">Avg Order</p>
-              <p className="text-base sm:text-2xl font-bold text-foreground truncate">{formatCurrency(323260)}</p>
+              <p className="text-base sm:text-2xl font-bold text-foreground truncate">{formatCurrency(avgOrderValue)}</p>
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex items-center gap-3">
@@ -258,7 +271,7 @@ const Sales = () => {
             </div>
             <div className="min-w-0">
               <p className="text-xs sm:text-sm text-muted-foreground">Growth</p>
-              <p className="text-lg sm:text-2xl font-bold text-success">+{stats.salesGrowth}%</p>
+              <p className="text-lg sm:text-2xl font-bold text-success">+0%</p>
             </div>
           </div>
         </div>
@@ -271,7 +284,7 @@ const Sales = () => {
           </div>
           <div className="h-[180px] sm:h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.monthlySales} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <BarChart data={[]} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis
                   dataKey="month"
@@ -320,7 +333,7 @@ const Sales = () => {
               />
             </div>
           </div>
-          
+
           {/* Mobile Cards / Desktop Table */}
           {isMobile ? (
             <div className="space-y-3">
@@ -444,8 +457,8 @@ const Sales = () => {
                 <p className="text-xl font-bold text-success">{formatCurrency(selectedSale.total)}</p>
               </div>
               <div className="flex gap-2">
-                <Button 
-                  className="flex-1 gap-2" 
+                <Button
+                  className="flex-1 gap-2"
                   variant="outline"
                   size="sm"
                   onClick={() => {
@@ -456,7 +469,7 @@ const Sales = () => {
                   <Printer className="h-4 w-4" />
                   Receipt
                 </Button>
-                <Button 
+                <Button
                   className="flex-1 gap-2"
                   size="sm"
                   onClick={() => {
@@ -472,8 +485,6 @@ const Sales = () => {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Receipt Modal */}
       <ReceiptModal
         open={receiptOpen}
         onOpenChange={setReceiptOpen}
@@ -481,7 +492,6 @@ const Sales = () => {
         customerName={selectedSale?.customer}
       />
 
-      {/* Invoice Modal */}
       {receiptSale && (
         <InvoiceModal
           open={invoiceOpen}
