@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
+import { Button } from '@/components/ui/button';
 import { useDataStore } from '@/stores/dataStore';
 import { formatCurrency } from '@/lib/pos-utils';
 import { Badge } from '@/components/ui/badge';
@@ -25,12 +26,21 @@ import {
     ArrowUpRight,
     ArrowDownLeft,
     RefreshCw,
+    Download,
 } from 'lucide-react';
+import { DateRange } from "react-day-picker";
+import { addDays, endOfDay } from "date-fns";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { exportToCSV } from "@/utils/exportUtils";
 
 const SystemLogs = () => {
     const { stockRecords } = useDataStore();
     const [searchQuery, setSearchQuery] = useState('');
     const [typeFilter, setTypeFilter] = useState('all');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({
+        from: addDays(new Date(), -30),
+        to: new Date(),
+    });
 
     const filteredRecords = useMemo(() => {
         return stockRecords.filter((record) => {
@@ -40,9 +50,12 @@ const SystemLogs = () => {
 
             const matchesType = typeFilter === 'all' || record.type === typeFilter;
 
-            return matchesSearch && matchesType;
+            const matchesDate = dateRange?.from ?
+                (new Date(record.createdAt) >= dateRange.from && new Date(record.createdAt) <= endOfDay(dateRange.to || dateRange.from)) : true;
+
+            return matchesSearch && matchesType && matchesDate;
         }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }, [stockRecords, searchQuery, typeFilter]);
+    }, [stockRecords, searchQuery, typeFilter, dateRange]);
 
     const getTypeBadge = (type: string) => {
         switch (type) {
@@ -72,13 +85,35 @@ const SystemLogs = () => {
         }
     };
 
+    const handleExport = () => {
+        const dataToExport = filteredRecords.map(r => ({
+            'Date': new Date(r.createdAt).toLocaleString(),
+            'Type': r.type.toUpperCase(),
+            'Product': r.productName,
+            'Quantity': r.quantity,
+            'Prev Stock': r.previousStock,
+            'New Stock': r.newStock,
+            'Reason': r.reason,
+            'User': r.createdBy
+        }));
+        exportToCSV(dataToExport, 'System_Logs');
+    };
+
     return (
         <MainLayout>
             <PageContent>
                 <PageHeader
                     title="System Logs"
                     description="View system activity and stock movements"
-                />
+                >
+                    <div className="flex items-center gap-2">
+                        <DateRangePicker date={dateRange} setDate={setDateRange} />
+                        <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
+                            <Download className="h-4 w-4" />
+                            Export
+                        </Button>
+                    </div>
+                </PageHeader>
 
                 <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="relative flex-1 max-w-sm">

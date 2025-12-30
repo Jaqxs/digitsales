@@ -1,4 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
+import { DateRange } from "react-day-picker";
+import { addDays, endOfDay } from "date-fns";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
 import { useDataStore } from '@/stores/dataStore';
 import { formatCurrency, formatDateTime } from '@/lib/pos-utils';
@@ -54,6 +58,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { useSettingsStore } from '@/stores/settingsStore';
+
 const Sales = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [recordSaleOpen, setRecordSaleOpen] = useState(false);
@@ -62,7 +68,14 @@ const Sales = () => {
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
+
+
   const isMobile = useIsMobile();
+  const { business } = useSettingsStore();
 
   const { sales, customers, fetchSales, fetchCustomers } = useDataStore();
 
@@ -74,9 +87,11 @@ const Sales = () => {
   // Combine mock sales with store sales
   const allSales = useMemo(() => {
     return sales.map((sale) => {
-      const customerName = sale.customerId
-        ? customers.find(c => c.id === sale.customerId)?.name || 'Unknown Customer'
-        : 'Walk-in Customer';
+      const customerName = sale.customerName || (
+        sale.customerId
+          ? customers.find(c => c.id === sale.customerId)?.name || 'Unknown Customer'
+          : 'Walk-in Customer'
+      );
 
       return {
         id: `#${sale.id}`,
@@ -92,30 +107,26 @@ const Sales = () => {
   }, [sales, customers]);
 
   const filteredSales = useMemo(() => {
-    return allSales.filter(
-      (sale) =>
-        sale.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        sale.customer.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [allSales, searchQuery]);
+    return allSales.filter((sale) => {
+      const matchesSearch = sale.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sale.customer.toLowerCase().includes(searchQuery.toLowerCase());
 
-  const todaysSales = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+      const matchesDate = dateRange?.from ?
+        (new Date(sale.originalSale.createdAt) >= dateRange.from &&
+          new Date(sale.originalSale.createdAt) <= endOfDay(dateRange.to || dateRange.from)) : true;
 
-    return sales
-      .filter(sale => {
-        const saleDate = new Date(sale.createdAt);
-        return saleDate >= today;
-      })
-      .reduce((sum, sale) => sum + sale.total, 0);
-  }, [sales]);
+      return matchesSearch && matchesDate;
+    });
+  }, [allSales, searchQuery, dateRange]);
+
+  const totalRevenue = useMemo(() => {
+    return filteredSales.reduce((sum, sale) => sum + sale.total, 0);
+  }, [filteredSales]);
 
   const avgOrderValue = useMemo(() => {
-    if (sales.length === 0) return 0;
-    const totalRevenue = sales.reduce((sum, sale) => sum + sale.total, 0);
-    return totalRevenue / sales.length;
-  }, [sales]);
+    if (filteredSales.length === 0) return 0;
+    return totalRevenue / filteredSales.length;
+  }, [filteredSales, totalRevenue]);
 
   const getStatusBadge = (status: string) => {
     if (status === 'completed') {
@@ -137,12 +148,14 @@ const Sales = () => {
       setReceiptSale(sale.originalSale);
     } else {
       // Fallback if somehow originalSale is missing (shouldn't happen with new logic)
+      const vatRate = business.vatRate / 100;
+      const subtotal = sale.total / (1 + vatRate);
       setReceiptSale({
         id: sale.id.replace('#', ''),
         items: [],
-        subtotal: sale.total / 1.18,
+        subtotal: subtotal,
         discount: 0,
-        vat: sale.total - (sale.total / 1.18),
+        vat: sale.total - subtotal,
         total: sale.total,
         paymentMethod: sale.payment.toLowerCase(),
         employeeId: '1',
@@ -157,12 +170,14 @@ const Sales = () => {
     if (sale.originalSale) {
       setReceiptSale(sale.originalSale);
     } else {
+      const vatRate = business.vatRate / 100;
+      const subtotal = sale.total / (1 + vatRate);
       setReceiptSale({
         id: sale.id.replace('#', ''),
         items: [],
-        subtotal: sale.total / 1.18,
+        subtotal: subtotal,
         discount: 0,
-        vat: sale.total - (sale.total / 1.18),
+        vat: sale.total - subtotal,
         total: sale.total,
         paymentMethod: sale.payment.toLowerCase() as any,
         employeeId: '1',
@@ -172,6 +187,21 @@ const Sales = () => {
     }
     setSelectedSale(sale);
     setInvoiceOpen(true);
+  };
+
+  const handleExport = () => {
+    // Export mostly what's visible or all sales
+    const dataToExport = filteredSales.map(s => ({
+      'Order ID': s.id,
+      'Customer': s.customer,
+      'Date': s.date,
+      'Items': s.items,
+      'Total': s.total,
+      'Status': s.status,
+      'Payment': s.payment
+    }));
+
+    exportToCSV(dataToExport, 'Sales_Report');
   };
 
   // Mobile Sale Card
@@ -222,11 +252,10 @@ const Sales = () => {
     <MainLayout>
       <PageContent>
         <PageHeader title="Sales" description="Track and manage transactions">
-          <Button variant="outline" size="sm" className="gap-2 hidden sm:flex">
-            <CalendarDays className="h-4 w-4" />
-            Dec 2024
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2 hidden sm:flex">
+          <div className="hidden sm:block">
+            <DateRangePicker date={dateRange} setDate={setDateRange} />
+          </div>
+          <Button variant="outline" size="sm" className="gap-2 hidden sm:flex" onClick={handleExport}>
             <Download className="h-4 w-4" />
             Export
           </Button>
@@ -243,8 +272,8 @@ const Sales = () => {
               <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs sm:text-sm text-muted-foreground">Today</p>
-              <p className="text-base sm:text-2xl font-bold text-foreground truncate">{formatCurrency(todaysSales)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Period Revenue</p>
+              <p className="text-base sm:text-2xl font-bold text-foreground truncate">{formatCurrency(totalRevenue)}</p>
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex items-center gap-3">
@@ -253,7 +282,7 @@ const Sales = () => {
             </div>
             <div className="min-w-0">
               <p className="text-xs sm:text-sm text-muted-foreground">Orders</p>
-              <p className="text-lg sm:text-2xl font-bold text-foreground">{sales.length}</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground">{filteredSales.length}</p>
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex items-center gap-3">

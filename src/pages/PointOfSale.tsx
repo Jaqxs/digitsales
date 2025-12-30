@@ -44,8 +44,11 @@ const paymentMethods: { id: PaymentMethod; name: string; icon: React.ElementType
   { id: 'bank-transfer', name: 'Bank', icon: Building2 },
 ];
 
+import { useSettingsStore } from '@/stores/settingsStore';
+
 const PointOfSale = () => {
   const { products, addSale } = useDataStore();
+  const { business } = useSettingsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -392,7 +395,7 @@ const PointOfSale = () => {
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
-                  <span>VAT (18%)</span>
+                  <span>VAT ({business.vatRate}%)</span>
                   <span>{formatCurrency(vat)}</span>
                 </div>
                 <div className="flex justify-between text-base sm:text-lg font-bold text-foreground pt-2 border-t border-border">

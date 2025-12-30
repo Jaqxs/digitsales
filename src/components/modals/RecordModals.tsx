@@ -28,8 +28,11 @@ interface RecordSaleModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+import { useSettingsStore } from '@/stores/settingsStore';
+
 export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
   const { products, addSale } = useDataStore();
+  const { business } = useSettingsStore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -39,12 +42,13 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
 
   const product = products.find(p => p.id === selectedProduct);
   const subtotal = product ? product.sellingPrice * quantity : 0;
-  const vat = subtotal * 0.18;
+  const vatRate = business.vatRate / 100;
+  const vat = subtotal * vatRate;
   const total = subtotal + vat;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedProduct || quantity < 1) {
       toast({
         title: 'Invalid sale',
@@ -75,6 +79,8 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
       vat,
       total,
       paymentMethod,
+      customerId: undefined, // Or selected customer ID if we had a dropdown
+      customerName: customerName || 'Walk-in Customer',
       employeeId: '1',
       status: 'completed',
     });
@@ -166,7 +172,7 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
                 <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">VAT (18%):</span>
+                <span className="text-muted-foreground">VAT ({business.vatRate}%):</span>
                 <span>{formatCurrency(vat)}</span>
               </div>
               <div className="flex justify-between font-bold text-foreground pt-2 border-t border-border">
@@ -209,7 +215,7 @@ export function RecordInventoryModal({ open, onOpenChange }: RecordInventoryModa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedProduct || quantity < 1) {
       toast({
         title: 'Invalid entry',

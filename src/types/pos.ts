@@ -16,7 +16,7 @@ export interface Product {
   updatedAt: Date;
 }
 
-export type ProductCategory = 
+export type ProductCategory =
   | 'construction-equipment'
   | 'power-tools'
   | 'hand-tools'
@@ -41,6 +41,7 @@ export interface Sale {
   total: number;
   paymentMethod: PaymentMethod;
   customerId?: string;
+  customerName?: string;
   employeeId: string;
   createdAt: Date;
   status: 'completed' | 'refunded' | 'partial-refund';

@@ -2,6 +2,7 @@ import React from 'react';
 import { Sale } from '@/types/pos';
 import { format } from 'date-fns';
 import zantrixLogo from '@/assets/zantrix-logo.png';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 interface InvoiceProps {
   sale: Sale;
@@ -19,14 +20,15 @@ interface InvoiceProps {
   printedBy?: string;
 }
 
-const Invoice: React.FC<InvoiceProps> = ({ 
-  sale, 
+const Invoice: React.FC<InvoiceProps> = ({
+  sale,
   invoiceType = 'proforma',
   customerInfo,
   printedBy = 'System'
 }) => {
+  const { business } = useSettingsStore();
   const subtotal = sale.items.reduce((sum, item) => sum + (item.product.sellingPrice * item.quantity), 0);
-  const vatRate = 0.18;
+  const vatRate = business.vatRate / 100;
   const vatAmount = subtotal * vatRate;
   const netAmount = subtotal + vatAmount;
 
@@ -37,20 +39,18 @@ const Invoice: React.FC<InvoiceProps> = ({
         <div className="flex items-start gap-4">
           <img src={zantrixLogo} alt="Zantrix Logo" className="w-20 h-20 object-contain" />
           <div>
-            <h1 className="text-xl font-bold text-primary">Zantrix Group Limited</h1>
-            <p className="text-xs text-gray-600">Mbezi beach DC, PLOT 107</p>
-            <p className="text-xs text-gray-600">P.O Box 062, Dar es Salaam</p>
-            <p className="text-xs text-gray-600">Bagamoyo road, Dar es Salaam, Tanzania</p>
-            <p className="text-xs text-gray-600">Phone: +255 XXX XXX XXX</p>
-            <p className="text-xs text-gray-600">Email: info@zantrix.co.tz</p>
+            <h1 className="text-xl font-bold text-primary">{business.name}</h1>
+            <p className="text-xs text-gray-600">{business.address}</p>
+            <p className="text-xs text-gray-600">Phone: {business.phone}</p>
+            <p className="text-xs text-gray-600">Email: {business.email}</p>
           </div>
         </div>
         <div className="text-right">
           <h2 className="text-lg font-bold text-primary uppercase">
             {invoiceType === 'proforma' ? 'Proforma Invoice' : 'Tax Invoice'}
           </h2>
-          <p className="text-xs mt-1"><span className="font-semibold">TIN No:</span> 141-233-556</p>
-          <p className="text-xs"><span className="font-semibold">VRN:</span> 40037086P</p>
+          <p className="text-xs mt-1"><span className="font-semibold">TIN No:</span> {business.tin}</p>
+          <p className="text-xs"><span className="font-semibold">VRN:</span> {business.vatNumber}</p>
           <p className="text-xs mt-2"><span className="font-semibold">Invoice #:</span> {sale.id}</p>
           <p className="text-xs"><span className="font-semibold">Date:</span> {format(new Date(sale.createdAt), 'dd/MM/yyyy')}</p>
         </div>
@@ -121,7 +121,7 @@ const Invoice: React.FC<InvoiceProps> = ({
             <span>{subtotal.toLocaleString('en-TZ', { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="flex justify-between py-1 text-xs">
-            <span className="font-semibold">VAT (18%):</span>
+            <span className="font-semibold">VAT ({business.vatRate}%):</span>
             <span>{vatAmount.toLocaleString('en-TZ', { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="flex justify-between py-2 text-sm font-bold border-t-2 border-primary mt-1 pt-2 bg-primary/10 px-2 -mx-2">
@@ -175,7 +175,8 @@ const Invoice: React.FC<InvoiceProps> = ({
             <p>Acc No: 3001211680576</p>
           </div>
         </div>
-        <p className="text-center text-xs mt-3 italic text-gray-600">Make all checks payable to Zantrix Group Limited</p>
+
+        <p className="text-center text-xs mt-3 italic text-gray-600">Make all checks payable to {business.name}</p>
       </div>
 
       {/* Thank You Message */}
@@ -185,15 +186,15 @@ const Invoice: React.FC<InvoiceProps> = ({
 
       {/* Footer */}
       <div className="border-t border-gray-300 pt-3 text-center text-xs text-gray-600">
-        <p>Zantrix Group Limited, Mbezi beach DC, Plot 107, P.O Box 062, Bagamoyo road, Dar es Salaam, Tanzania.</p>
-        <p>TIN: 141-233-556 | www.zantrix.co.tz</p>
+        <p>{business.name}, {business.address}</p>
+        <p>TIN: {business.tin}</p>
         <div className="flex justify-between mt-2 text-[10px]">
           <span>Report Date: {format(new Date(), 'dd/MM/yyyy hh:mm:ss a')}</span>
           <span>Printed by: {printedBy}</span>
           <span>Page 1 / 1</span>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

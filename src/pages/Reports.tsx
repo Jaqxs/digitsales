@@ -1,4 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
+import { DateRange } from "react-day-picker";
+import { addDays, endOfDay } from "date-fns";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
 import { useDataStore } from '@/stores/dataStore';
 import { formatCurrency } from '@/lib/pos-utils';
@@ -34,6 +38,10 @@ const Reports = () => {
   const [stats, setStats] = useState({
     salesByCategory: [] as { category: string; value: number }[]
   });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
 
   useEffect(() => {
     fetchSales();
@@ -45,6 +53,11 @@ const Reports = () => {
     const categoryMap = new Map<string, number>();
 
     sales.forEach(sale => {
+      const saleDate = new Date(sale.createdAt);
+      if (dateRange?.from && (saleDate < dateRange.from || saleDate > endOfDay(dateRange.to || dateRange.from))) {
+        return;
+      }
+
       sale.items.forEach(item => {
         const product = products.find(p => p.id === item.product.id);
         if (product) {
@@ -61,7 +74,7 @@ const Reports = () => {
     }));
 
     setStats({ salesByCategory });
-  }, [sales, products]);
+  }, [sales, products, dateRange]);
 
   const profitData = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -72,33 +85,40 @@ const Reports = () => {
 
     sales.forEach(sale => {
       const date = new Date(sale.createdAt);
-      if (date.getFullYear() === currentYear) {
-        const monthIndex = date.getMonth();
-        let saleRevenue = 0;
-        let saleCost = 0;
 
-        sale.items.forEach(item => {
-          const product = products.find(p => p.id === item.product.id);
-          if (product) {
-            saleRevenue += product.sellingPrice * item.quantity;
-            // Assuming cost price is 70% of selling price if not available, just for demo
-            // In a real app, product would have costPrice. 
-            // The user wants "mock data removed", so I should use what I have.
-            // If product has costPrice (it's in the type usually, let's assume it is or default to 0)
-            // Checking Product type in dataStore... it references 'pos.ts'
-            // I'll assume decent margin if not present.
-            saleCost += (product.costPrice || product.sellingPrice * 0.7) * item.quantity;
-          }
-        });
-
-        monthlyStats[monthIndex].revenue += saleRevenue;
-        monthlyStats[monthIndex].cost += saleCost;
-        monthlyStats[monthIndex].profit += (saleRevenue - saleCost);
+      // Basic check if it falls in the range, otherwise skip for P&L aggregation if we want P&L to roughly match selection
+      // However, usually P&L is monthly, so it should show months involved in the range
+      if (dateRange?.from) {
+        if (date < dateRange.from || date > endOfDay(dateRange.to || dateRange.from)) return;
       }
+
+      const monthIndex = date.getMonth();
+      let saleRevenue = 0;
+      let saleCost = 0;
+
+      sale.items.forEach(item => {
+        const product = products.find(p => p.id === item.product.id);
+        if (product) {
+          saleRevenue += product.sellingPrice * item.quantity;
+          // Assuming cost price is 70% of selling price if not available, just for demo
+          // In a real app, product would have costPrice. 
+          // The user wants "mock data removed", so I should use what I have.
+          // If product has costPrice (it's in the type usually, let's assume it is or default to 0)
+          // Checking Product type in dataStore... it references 'pos.ts'
+          // I'll assume decent margin if not present.
+          saleCost += (product.costPrice || product.sellingPrice * 0.7) * item.quantity;
+        }
+      });
+
+      monthlyStats[monthIndex].revenue += saleRevenue;
+      monthlyStats[monthIndex].cost += saleCost;
+      monthlyStats[monthIndex].profit += (saleRevenue - saleCost);
     });
 
+    // Filter out months with zero data unless they are in the 'current year' view context
+    // For now returning all months as per original design, but data is filtered by dateRange
     return monthlyStats;
-  }, [sales, products]);
+  }, [sales, products, dateRange]);
 
   const reportTypes = [
     { name: 'Sales Report', description: 'Daily/weekly/monthly sales summary', icon: TrendingUp, color: 'success' },
@@ -111,11 +131,10 @@ const Reports = () => {
     <MainLayout>
       <PageContent>
         <PageHeader title="Reports" description="Generate and view business analytics">
-          <Button variant="outline" className="gap-2">
-            <CalendarDays className="h-4 w-4" />
-            Dec 2024
-          </Button>
-          <Button className="gap-2">
+          <div className="hidden sm:block">
+            <DateRangePicker date={dateRange} setDate={setDateRange} />
+          </div>
+          <Button className="gap-2" onClick={() => exportToCSV(sales, 'All_Sales_Export')}>
             <Download className="h-4 w-4" />
             Export All
           </Button>
@@ -144,7 +163,10 @@ const Reports = () => {
               <h3 className="text-lg font-semibold text-foreground">Profit & Loss Overview</h3>
               <p className="text-sm text-muted-foreground">Revenue vs Cost vs Profit</p>
             </div>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+              const mapData = profitData.map(d => [d.month, formatCurrency(d.revenue), formatCurrency(d.cost), formatCurrency(d.profit)]);
+              exportToPDF('Profit and Loss', ['Month', 'Revenue', 'Cost', 'Profit'], mapData, 'Profit_Loss_Report');
+            }}>
               <Download className="h-4 w-4" />
               Export PDF
             </Button>

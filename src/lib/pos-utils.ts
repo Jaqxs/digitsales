@@ -1,9 +1,10 @@
-// Utility functions for Zantrix POS
+import { useSettingsStore } from '@/stores/settingsStore';
 
 export const formatCurrency = (amount: number): string => {
+  const currency = useSettingsStore.getState().business.currency;
   return new Intl.NumberFormat('sw-TZ', {
     style: 'currency',
-    currency: 'TZS',
+    currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -44,8 +45,9 @@ export const generateSKU = (category: string, id: number): string => {
   return `${prefix}-${String(id).padStart(6, '0')}`;
 };
 
-export const calculateVAT = (amount: number, vatRate: number = 18): number => {
-  return amount * (vatRate / 100);
+export const calculateVAT = (amount: number, vatRate?: number): number => {
+  const rate = vatRate ?? useSettingsStore.getState().business.vatRate;
+  return amount * (rate / 100);
 };
 
 export const getStockStatus = (quantity: number, lowStockThreshold: number = 10) => {
