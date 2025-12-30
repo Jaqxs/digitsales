@@ -9,6 +9,9 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 5173,
   },
+  preview: {
+    allowedHosts: ["zantrixpos.onrender.com"],
+  },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
