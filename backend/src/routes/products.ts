@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
+import * as productController from '../controllers/productController';
 
 const router = Router();
 
-// Placeholder routes - to be implemented
-router.get('/', requireAuth, (req, res) => {
-  res.json({ message: 'Products endpoint - Coming soon' });
-});
+router.get('/', requireAuth, productController.getAllProducts);
+router.get('/:id', requireAuth, productController.getProductById);
+router.post('/', requireAuth, productController.createProduct);
+router.put('/:id', requireAuth, productController.updateProduct);
+router.delete('/:id', requireAuth, productController.deleteProduct);
+router.post('/stock', requireAuth, productController.updateStock);
 
 export default router;

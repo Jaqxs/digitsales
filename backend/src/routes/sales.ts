@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
+import * as saleController from '../controllers/saleController';
 
 const router = Router();
 
-// Placeholder routes - to be implemented
-router.get('/', requireAuth, (req, res) => {
-  res.json({ message: 'Sales endpoint - Coming soon' });
-});
+router.get('/', requireAuth, saleController.getAllSales);
+router.get('/:id', requireAuth, saleController.getSaleById);
+router.post('/', requireAuth, saleController.createSale);
 
 export default router;

@@ -135,19 +135,189 @@ export const userAPI = {
     }),
 };
 
-// Employee targets API (Admin/Manager only)
-export const employeeAPI = {
-  setTarget: (userId: string, data: {
-    salesTarget: number;
-    commission?: number;
-  }) =>
-    apiRequest<{ user: any }>(`/auth/users/${userId}`, {
+// Product API functions
+export const productAPI = {
+  getAllProducts: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    categoryId?: string;
+    isActive?: boolean;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.categoryId) searchParams.append('categoryId', params.categoryId);
+    if (params?.isActive !== undefined) searchParams.append('isActive', params.isActive.toString());
+
+    const queryString = searchParams.toString();
+    return apiRequest<{ products: any[]; pagination: any }>(
+      `/products${queryString ? `?${queryString}` : ''}`
+    );
+  },
+
+  getProductById: (id: string) =>
+    apiRequest<{ product: any }>(`/products/${id}`),
+
+  createProduct: (data: any) =>
+    apiRequest<{ product: any }>('/products', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateProduct: (id: string, data: any) =>
+    apiRequest<{ product: any }>(`/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
 
-  getTargets: (userId: string) =>
-    apiRequest<{ salesTarget: number; commission: number }>(`/auth/users/${userId}/targets`),
+  deleteProduct: (id: string) =>
+    apiRequest(`/products/${id}`, {
+      method: 'DELETE',
+    }),
+
+  updateStock: (data: { productId: string; quantityChange: number; type: string; reason: string }) =>
+    apiRequest<{ product: any }>('/products/stock', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+
+// Customer API functions
+export const customerAPI = {
+  getAllCustomers: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    isActive?: boolean;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.isActive !== undefined) searchParams.append('isActive', params.isActive.toString());
+
+    const queryString = searchParams.toString();
+    return apiRequest<{ customers: any[]; pagination: any }>(
+      `/customers${queryString ? `?${queryString}` : ''}`
+    );
+  },
+
+  getCustomerById: (id: string) =>
+    apiRequest<{ customer: any }>(`/customers/${id}`),
+
+  createCustomer: (data: any) =>
+    apiRequest<{ customer: any }>('/customers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateCustomer: (id: string, data: any) =>
+    apiRequest<{ customer: any }>(`/customers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteCustomer: (id: string) =>
+    apiRequest(`/customers/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+// Sales API functions
+export const saleAPI = {
+  getAllSales: (params?: {
+    page?: number;
+    limit?: number;
+    customerId?: string;
+    employeeId?: string;
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.customerId) searchParams.append('customerId', params.customerId);
+    if (params?.employeeId) searchParams.append('employeeId', params.employeeId);
+    if (params?.startDate) searchParams.append('startDate', params.startDate);
+    if (params?.endDate) searchParams.append('endDate', params.endDate);
+
+    const queryString = searchParams.toString();
+    return apiRequest<{ sales: any[]; pagination: any }>(
+      `/sales${queryString ? `?${queryString}` : ''}`
+    );
+  },
+
+  getSaleById: (id: string) =>
+    apiRequest<{ sale: any }>(`/sales/${id}`),
+
+  createSale: (data: any) =>
+    apiRequest<{ sale: any }>('/sales', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+
+// Inventory API functions
+export const inventoryAPI = {
+  getLedger: (params?: {
+    page?: number;
+    limit?: number;
+    productId?: string;
+    locationId?: string;
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.productId) searchParams.append('productId', params.productId);
+    if (params?.locationId) searchParams.append('locationId', params.locationId);
+    if (params?.startDate) searchParams.append('startDate', params.startDate);
+    if (params?.endDate) searchParams.append('endDate', params.endDate);
+
+    const queryString = searchParams.toString();
+    return apiRequest<{ entries: any[]; pagination: any }>(
+      `/inventory/ledger${queryString ? `?${queryString}` : ''}`
+    );
+  },
+
+  getLowStock: () =>
+    apiRequest<{ products: any[] }>('/inventory/low-stock'),
+
+  adjustStock: (data: {
+    productId: string;
+    quantity: number;
+    type: string;
+    reason: string;
+  }) =>
+    apiRequest<{ adjustment: any }>('/inventory/adjust', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+
+// Report API functions
+export const reportAPI = {
+  getSalesSummary: (params?: { startDate?: string; endDate?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.startDate) searchParams.append('startDate', params.startDate);
+    if (params?.endDate) searchParams.append('endDate', params.endDate);
+
+    const queryString = searchParams.toString();
+    return apiRequest<{ data: any[] }>(
+      `/reports/sales-summary${queryString ? `?${queryString}` : ''}`
+    );
+  },
+
+  getCategoryPerformance: () =>
+    apiRequest<{ data: any[] }>('/reports/category-performance'),
+
+  getValuation: () =>
+    apiRequest<{ totalCost: number; totalSelling: number; productCount: number }>(
+      '/reports/valuation'
+    ),
 };
 
 // Export all APIs
@@ -155,4 +325,9 @@ export const api = {
   auth: authAPI,
   users: userAPI,
   employees: employeeAPI,
+  products: productAPI,
+  customers: customerAPI,
+  sales: saleAPI,
+  inventory: inventoryAPI,
+  reports: reportAPI,
 };

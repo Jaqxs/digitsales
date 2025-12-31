@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type User as ApiUser } from '../lib/api/auth';
-import { LocalAuthService } from '@/services/localAuth';
+import { api } from '@/services/api';
 
 export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'support';
 
@@ -36,24 +35,29 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const STORAGE_KEYS = {
+  TOKEN: 'zantrix_token',
+  USER: 'zantrix_user',
+};
+
 // Convert API user to context user
-const convertApiUserToContextUser = (apiUser: ApiUser): User => {
+const convertApiUserToContextUser = (apiUser: any): User => {
   return {
     id: apiUser.id,
-    name: apiUser.profile
-      ? `${apiUser.profile.firstName} ${apiUser.profile.lastName}`
+    name: apiUser.userProfile
+      ? `${apiUser.userProfile.firstName} ${apiUser.userProfile.lastName}`
       : apiUser.email,
     email: apiUser.email,
     role: apiUser.role as UserRole,
-    avatar: apiUser.profile?.avatarUrl || undefined,
+    avatar: apiUser.userProfile?.avatarUrl || undefined,
     isActive: apiUser.isActive,
     lastLoginAt: apiUser.lastLoginAt,
-    profile: apiUser.profile ? {
-      firstName: apiUser.profile.firstName || '',
-      lastName: apiUser.profile.lastName || '',
-      phone: apiUser.profile.phone,
-      avatarUrl: apiUser.profile.avatarUrl,
-      employeeId: apiUser.profile.employeeId,
+    profile: apiUser.userProfile ? {
+      firstName: apiUser.userProfile.firstName || '',
+      lastName: apiUser.userProfile.lastName || '',
+      phone: apiUser.userProfile.phone,
+      avatarUrl: apiUser.userProfile.avatarUrl,
+      employeeId: apiUser.userProfile.employeeId,
     } : null,
     createdAt: apiUser.createdAt,
     updatedAt: apiUser.updatedAt,
@@ -66,20 +70,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for existing session
     const checkAuth = async () => {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
       if (token) {
         try {
-          // Verify session by fetching current user from local storage
-          const apiUser = await LocalAuthService.getCurrentUser();
-          const contextUser = convertApiUserToContextUser(apiUser);
+          const response = await api.auth.getCurrentUser();
+          const contextUser = convertApiUserToContextUser(response.user);
           setUser(contextUser);
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(contextUser));
         } catch (error) {
-          // Token is invalid or expired
-          console.error('Auth check failed:', error);
-          LocalAuthService.logout();
-          setUser(null);
+          console.error('Session verification failed:', error);
+          handleLogout();
         }
       }
       setIsLoading(false);
@@ -90,26 +91,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
-
     try {
-      const authResponse = await LocalAuthService.login({ email, password });
-      const contextUser = convertApiUserToContextUser(authResponse.user);
+      const response = await api.auth.login(email, password);
+      const contextUser = convertApiUserToContextUser(response.user);
+
+      localStorage.setItem(STORAGE_KEYS.TOKEN, response.tokens.accessToken);
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(contextUser));
+
       setUser(contextUser);
       return { success: true };
     } catch (error: any) {
       console.error('Login failed:', error);
       return {
         success: false,
-        error: error.message || 'Login failed. Please try again.'
+        error: error.message || 'Invalid credentials'
       };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
+  const handleLogout = () => {
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER);
     setUser(null);
-    LocalAuthService.logout();
     navigate('/auth');
   };
 
@@ -124,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!user,
       isLoading,
       login,
-      logout,
+      logout: handleLogout,
       hasPermission,
     }}>
       {children}

@@ -130,7 +130,7 @@ const PointOfSale = () => {
   const vat = calculateVAT(subtotal);
   const total = subtotal + vat;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) {
       toast({
         title: 'Cart is empty',
@@ -140,41 +140,42 @@ const PointOfSale = () => {
       return;
     }
 
-    // Create sale object
-    const saleData: Omit<Sale, 'id' | 'createdAt'> = {
-      items: cart.map(item => ({
-        product: item.product,
-        quantity: item.quantity,
-        discount: item.discount,
-      })),
-      subtotal,
-      discount: 0,
-      vat,
-      total,
-      paymentMethod: selectedPayment,
-      employeeId: '1',
-      status: 'completed',
-    };
+    try {
+      // Create sale object
+      const saleData: Omit<Sale, 'id' | 'createdAt'> = {
+        items: cart.map(item => ({
+          product: item.product,
+          quantity: item.quantity,
+          discount: item.discount,
+        })),
+        subtotal,
+        discount: 0,
+        vat,
+        total,
+        paymentMethod: selectedPayment,
+        employeeId: '1',
+        status: 'completed',
+      };
 
-    // Add sale to store
-    addSale(saleData);
+      // Add sale to store and get the persistent sale object
+      const completedSale = await addSale(saleData);
 
-    // Create a complete sale object for receipt
-    const completedSale: Sale = {
-      ...saleData,
-      id: `INV-${Date.now()}`,
-      createdAt: new Date(),
-    };
+      setLastSale(completedSale);
+      setReceiptOpen(true);
 
-    setLastSale(completedSale);
-    setReceiptOpen(true);
-
-    toast({
-      title: 'Sale completed!',
-      description: `Total: ${formatCurrency(total)} via ${selectedPayment}`,
-    });
-    clearCart();
-    setShowCart(false);
+      toast({
+        title: 'Sale completed!',
+        description: `Total: ${formatCurrency(total)} via ${selectedPayment}`,
+      });
+      clearCart();
+      setShowCart(false);
+    } catch (error) {
+      toast({
+        title: 'Sale failed',
+        description: 'There was an error processing the sale. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);

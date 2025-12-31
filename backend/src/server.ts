@@ -5,11 +5,20 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { config, validateConfig } from './config/environment';
 import { errorHandler } from './middleware/errorHandler';
+import { requireAuth } from './middleware/auth';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { setupRoutes } from './routes';
+import { testDatabaseConnection } from './config/database';
 
 // Validate configuration
 validateConfig();
+
+// Test database connection
+testDatabaseConnection().catch((error) => {
+  console.error('Failed to connect to database on startup:', error);
+  // In production, we might want to exit the process
+  // if (config.NODE_ENV === 'production') process.exit(1);
+});
 
 // Create Express application
 const app = express();

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Product, Customer, Employee, Sale, CartItem, PaymentMethod, ProductCategory } from '@/types/pos';
-import { localDb } from '@/services/localDb';
+import { api } from '@/services/api';
 
 interface DataStore {
   // Loading states
@@ -17,7 +17,7 @@ interface DataStore {
   addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
-  updateStock: (id: string, quantity: number) => Promise<void>;
+  updateStock: (productId: string, quantityChange: number, type: 'in' | 'out' | 'adjustment', reason: string) => Promise<void>;
 
   // Customers
   customers: Customer[];
@@ -36,7 +36,7 @@ interface DataStore {
   // Sales
   sales: Sale[];
   fetchSales: () => Promise<void>;
-  addSale: (sale: Omit<Sale, 'id' | 'createdAt'>) => Promise<void>;
+  addSale: (sale: Omit<Sale, 'id' | 'createdAt'>) => Promise<Sale>;
 
   // Stock records
   stockRecords: StockRecord[];
@@ -75,8 +75,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchProducts: async () => {
     set((state) => ({ loading: { ...state.loading, products: true } }));
     try {
-      const products = await localDb.fetchProducts();
-      set({ products });
+      const response = await api.products.getAllProducts({ limit: 100 });
+      set({ products: response.products });
     } catch (error) {
       console.error('Failed to fetch products:', error);
     } finally {
@@ -86,15 +86,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   addProduct: async (productData) => {
     try {
-      const newProduct: Product = {
-        ...productData,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const product = await localDb.addProduct(newProduct);
-      set((state) => ({ products: [...state.products, product] }));
+      const response = await api.products.createProduct(productData);
+      set((state) => ({ products: [...state.products, response.product] }));
     } catch (error) {
       console.error('Failed to add product:', error);
       throw error;
@@ -103,10 +96,10 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   updateProduct: async (id, updates) => {
     try {
-      const updatedProduct = await localDb.updateProduct(id, updates);
+      const response = await api.products.updateProduct(id, updates);
       set((state) => ({
         products: state.products.map((p) =>
-          p.id === id ? updatedProduct : p
+          p.id === id ? response.product : p
         ),
       }));
     } catch (error) {
@@ -117,7 +110,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   deleteProduct: async (id) => {
     try {
-      await localDb.deleteProduct(id);
+      await api.products.deleteProduct(id);
       set((state) => ({
         products: state.products.filter((p) => p.id !== id),
       }));
@@ -127,12 +120,17 @@ export const useDataStore = create<DataStore>((set, get) => ({
     }
   },
 
-  updateStock: async (id, quantityChange) => {
+  updateStock: async (productId, quantityChange, type, reason) => {
     try {
-      const updatedProduct = await localDb.updateStock(id, quantityChange);
+      const response = await api.products.updateStock({
+        productId,
+        quantityChange,
+        type,
+        reason
+      });
       set((state) => ({
         products: state.products.map((p) =>
-          p.id === id ? updatedProduct : p
+          p.id === productId ? response.product : p
         ),
       }));
     } catch (error) {
@@ -145,8 +143,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchCustomers: async () => {
     set((state) => ({ loading: { ...state.loading, customers: true } }));
     try {
-      const customers = await localDb.fetchCustomers();
-      set({ customers });
+      const response = await api.customers.getAllCustomers({ limit: 100 });
+      set({ customers: response.customers });
     } catch (error) {
       console.error('Failed to fetch customers:', error);
     } finally {
@@ -156,15 +154,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   addCustomer: async (customerData) => {
     try {
-      const newCustomer: Customer = {
-        ...customerData,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-        loyaltyPoints: 0,
-        totalPurchases: 0,
-      };
-      const customer = await localDb.addCustomer(newCustomer);
-      set((state) => ({ customers: [...state.customers, customer] }));
+      const response = await api.customers.createCustomer(customerData);
+      set((state) => ({ customers: [...state.customers, response.customer] }));
     } catch (error) {
       console.error('Failed to add customer:', error);
       throw error;
@@ -173,10 +164,10 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   updateCustomer: async (id, updates) => {
     try {
-      const updatedCustomer = await localDb.updateCustomer(id, updates);
+      const response = await api.customers.updateCustomer(id, updates);
       set((state) => ({
         customers: state.customers.map((c) =>
-          c.id === id ? updatedCustomer : c
+          c.id === id ? response.customer : c
         ),
       }));
     } catch (error) {
@@ -187,7 +178,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   deleteCustomer: async (id) => {
     try {
-      await localDb.deleteCustomer(id);
+      await api.customers.deleteCustomer(id);
       set((state) => ({
         customers: state.customers.filter((c) => c.id !== id),
       }));
@@ -201,7 +192,19 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchEmployees: async () => {
     set((state) => ({ loading: { ...state.loading, employees: true } }));
     try {
-      const employees = await localDb.fetchEmployees();
+      const response = await api.users.getAllUsers({ role: 'sales', limit: 100 });
+      // Map backend users to frontend employee type
+      const employees: Employee[] = response.users.map((u: any) => ({
+        id: u.id,
+        name: u.userProfile ? `${u.userProfile.firstName} ${u.userProfile.lastName}` : u.email,
+        email: u.email,
+        role: u.role,
+        phone: u.userProfile?.phone || '',
+        salesTarget: 0, // Need to fetch separately or update backend
+        totalSales: 0,
+        commission: 0,
+        createdAt: new Date(u.createdAt),
+      }));
       set({ employees });
     } catch (error) {
       console.error('Failed to fetch employees:', error);
@@ -212,14 +215,29 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   addEmployee: async (employeeData) => {
     try {
-      const newEmployee: Employee = {
+      // Logic for adding employee via auth/users
+      const response = await api.users.createUser({
         ...employeeData,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
+        password: 'temporaryPassword123!', // Admin sets temporary password
+        firstName: (employeeData as any).name.split(' ')[0],
+        lastName: (employeeData as any).name.split(' ')[1] || '',
+      });
+
+      const newEmployee: Employee = {
+        id: response.user.id,
+        name: response.user.userProfile
+          ? `${response.user.userProfile.firstName} ${response.user.userProfile.lastName}`
+          : response.user.email,
+        email: response.user.email,
+        role: response.user.role,
+        phone: response.user.userProfile?.phone || '',
+        salesTarget: 0,
         totalSales: 0,
+        commission: 0,
+        createdAt: new Date(response.user.createdAt),
       };
-      const employee = await localDb.addEmployee(newEmployee);
-      set((state) => ({ employees: [...state.employees, employee] }));
+
+      set((state) => ({ employees: [...state.employees, newEmployee] }));
     } catch (error) {
       console.error('Failed to add employee:', error);
       throw error;
@@ -228,7 +246,20 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   updateEmployee: async (id, updates) => {
     try {
-      const updatedEmployee = await localDb.updateEmployee(id, updates);
+      const response = await api.users.updateUser(id, updates as any);
+      const updatedEmployee: Employee = {
+        id: response.user.id,
+        name: response.user.userProfile
+          ? `${response.user.userProfile.firstName} ${response.user.userProfile.lastName}`
+          : response.user.email,
+        email: response.user.email,
+        role: response.user.role,
+        phone: response.user.userProfile?.phone || '',
+        salesTarget: 0,
+        totalSales: 0,
+        commission: 0,
+        createdAt: new Date(response.user.createdAt),
+      };
       set((state) => ({
         employees: state.employees.map((e) =>
           e.id === id ? updatedEmployee : e
@@ -242,7 +273,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   deleteEmployee: async (id) => {
     try {
-      await localDb.deleteEmployee(id);
+      await api.users.deactivateUser(id);
       set((state) => ({
         employees: state.employees.filter((e) => e.id !== id),
       }));
@@ -256,8 +287,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchSales: async () => {
     set((state) => ({ loading: { ...state.loading, sales: true } }));
     try {
-      const sales = await localDb.fetchSales();
-      set({ sales });
+      const response = await api.sales.getAllSales({ limit: 100 });
+      set({ sales: response.sales });
     } catch (error) {
       console.error('Failed to fetch sales:', error);
     } finally {
@@ -267,19 +298,15 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   addSale: async (saleData) => {
     try {
-      const newSale: Sale = {
-        ...saleData,
-        id: crypto.randomUUID().slice(0, 8).toUpperCase(), // Short ID for sales
-        createdAt: new Date(),
-      };
+      const response = await api.sales.createSale(saleData);
+      const createdSale = response.sale;
 
-      const sale = await localDb.addSale(newSale);
-      set((state) => ({ sales: [sale, ...state.sales] }));
+      set((state) => ({ sales: [createdSale, ...state.sales] }));
 
-      // Update product stock after successful sale
-      sale.items.forEach((item) => {
-        get().updateStock(item.product.id, -item.quantity);
-      });
+      // Refresh products to get updated stock
+      await get().fetchProducts();
+
+      return createdSale;
     } catch (error) {
       console.error('Failed to add sale:', error);
       throw error;
@@ -289,8 +316,21 @@ export const useDataStore = create<DataStore>((set, get) => ({
   // Stock records
   fetchStockRecords: async () => {
     try {
-      const stockRecords = await localDb.fetchStockRecords();
-      set({ stockRecords });
+      const response = await api.inventory.getLedger({ limit: 50 });
+      // Map backend entries to frontend StockRecord type
+      const records: StockRecord[] = response.entries.map((e: any) => ({
+        id: e.id,
+        productId: e.productId,
+        productName: e.product.name,
+        type: e.transactionType,
+        quantity: Number(e.quantity),
+        previousStock: Number(e.previousStock),
+        newStock: Number(e.newStock),
+        reason: e.notes || '',
+        createdAt: new Date(e.createdAt),
+        createdBy: e.creator.email,
+      }));
+      set({ stockRecords: records });
     } catch (error) {
       console.error('Failed to fetch stock records:', error);
     }
@@ -298,13 +338,17 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   addStockRecord: async (recordData) => {
     try {
-      const newRecord: StockRecord = {
-        ...recordData,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-      };
-      const record = await localDb.addStockRecord(newRecord);
-      set((state) => ({ stockRecords: [record, ...state.stockRecords] }));
+      await api.inventory.adjustStock({
+        productId: recordData.productId,
+        quantity: recordData.quantity,
+        type: recordData.type as any,
+        reason: recordData.reason,
+      });
+      // Refresh products and records
+      await Promise.all([
+        get().fetchProducts(),
+        get().fetchStockRecords(),
+      ]);
     } catch (error) {
       console.error('Failed to add stock record:', error);
       throw error;

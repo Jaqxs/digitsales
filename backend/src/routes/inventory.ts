@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
+import * as inventoryController from '../controllers/inventoryController';
 
 const router = Router();
 
-// Placeholder routes - to be implemented
-router.get('/', requireAuth, (req, res) => {
-  res.json({ message: 'Inventory endpoint - Coming soon' });
-});
+router.get('/ledger', requireAuth, inventoryController.getLedger);
+router.get('/low-stock', requireAuth, inventoryController.getLowStock);
+router.post('/adjust', requireAuth, inventoryController.adjustStock);
 
 export default router;
