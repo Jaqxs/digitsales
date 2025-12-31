@@ -90,6 +90,21 @@ enum AccountType {
   expense
 }
 
+enum TargetType {
+  sales_revenue
+  sales_quantity
+  customer_acquisition
+  profit_margin
+  task_completion
+}
+
+enum TargetPeriod {
+  weekly
+  monthly
+  quarterly
+  yearly
+}
+
 // ==========================================
 // MODELS
 // ==========================================
@@ -121,6 +136,8 @@ model User {
   receivedPOs     PurchaseOrder[] @relation("POReceiver")
   paymentTransactions PaymentTransaction[]
   generalLedger   GeneralLedger[]
+  employeeTargets EmployeeTargets[] @relation("UserTargets")
+  createdEmployeeTargets EmployeeTargets[] @relation("TargetCreator")
 
   @@map("users")
 }
@@ -514,4 +531,26 @@ model GeneralLedger {
   creator User            @relation(fields: [createdBy], references: [id])
 
   @@map("general_ledger")
+}
+
+model EmployeeTargets {
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String       @db.Uuid
+  targetType     TargetType
+  targetValue    Decimal      @db.Decimal(15, 2)
+  currentValue   Decimal      @default(0) @db.Decimal(15, 2)
+  period         TargetPeriod @default(monthly)
+  startDate      DateTime     @db.Timestamp
+  endDate        DateTime     @db.Timestamp
+  commissionRate Decimal?     @db.Decimal(5, 2)
+  bonusAmount    Decimal?     @db.Decimal(15, 2)
+  isActive       Boolean      @default(true)
+  createdBy      String       @db.Uuid
+  createdAt      DateTime     @default(now()) @db.Timestamp
+  updatedAt      DateTime     @default(now()) @updatedAt @db.Timestamp
+
+  user    User @relation("UserTargets", fields: [userId], references: [id])
+  creator User @relation("TargetCreator", fields: [createdBy], references: [id])
+
+  @@map("employee_targets")
 }
