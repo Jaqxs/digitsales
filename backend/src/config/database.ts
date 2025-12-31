@@ -29,10 +29,22 @@ export const testDatabaseConnection = async (): Promise<void> => {
     console.log('✅ Database connection established successfully');
 
     // Test query
-    const result = await prisma.$queryRaw`SELECT 1 as test`;
-    console.log('✅ Database query test passed');
-  } catch (error) {
-    console.error('❌ Database connection failed:', error);
+    const result = await prisma.$queryRaw`SELECT version() as version`;
+    console.log(`✅ Database query test passed. Version: ${(result as any)[0].version}`);
+  } catch (error: any) {
+    console.error('❌ Database connection failed:', error.message || error);
+
+    if (error.code === 'P1000') {
+      console.error('\n💡 DIAGNOSTIC: Authentication failed.');
+      console.error('   This usually means the password in .env does not match the database.');
+      console.error('   Note: If you have a local PostgreSQL service (postgres.exe) running on Windows,');
+      console.error('   it might be taking port 5432, preventing your Docker container from being reached.');
+    } else if (error.code === 'P1001') {
+      console.error('\n💡 DIAGNOSTIC: Database unreachable.');
+      console.error('   Ensure your database is running and the hostname is correct.');
+      console.error('   Inside Docker? Use the service name (e.g., "postgres") instead of "localhost".');
+    }
+
     throw error;
   }
 };
