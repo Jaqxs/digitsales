@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   login,
+  register,
   refreshToken,
   getCurrentUser,
   updateCurrentUserProfile,
@@ -18,6 +19,7 @@ const router = Router();
 
 // Public routes
 router.post('/login', login);
+router.post('/register', register);
 router.post('/refresh', refreshToken);
 
 // Protected routes (require authentication)

@@ -55,6 +55,12 @@ export const authAPI = {
       body: JSON.stringify({ email, password }),
     }),
 
+  register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) =>
+    apiRequest<{ user: any; tokens: any }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   refreshToken: (refreshToken: string) =>
     apiRequest<{ user: any; tokens: any }>('/auth/refresh', {
       method: 'POST',

@@ -103,7 +103,60 @@ export class AuthService {
     return { user, tokens };
   }
 
-  // Create new user (admin only)
+  // Register new user
+  static async register(userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+  }): Promise<{
+    user: UserWithProfile;
+    tokens: AuthTokens;
+  }> {
+    const { email, password, firstName, lastName, phone } = userData;
+
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new Error('Email already registered');
+    }
+
+    // Hash password
+    const passwordHash = await hashPassword(password);
+
+    // Create user and profile in transaction
+    const user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        role: UserRole.sales, // Default role for new registrations
+        isActive: true,
+        userProfile: {
+          create: {
+            firstName,
+            lastName,
+            phone,
+          },
+        },
+      },
+      include: {
+        userProfile: true,
+      },
+    });
+
+    // Generate tokens
+    const tokens = generateTokens({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    return { user, tokens };
+  }
   static async createUser(userData: {
     email: string;
     password: string;

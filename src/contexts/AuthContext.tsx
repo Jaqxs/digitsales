@@ -9,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   hasPermission: (allowedRoles: UserRole[]) => boolean;
 }
@@ -71,6 +72,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const register = async (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    try {
+      const response = await api.auth.register(data);
+      const contextUser = mapApiUserToUser(response.user);
+
+      localStorage.setItem(STORAGE_KEYS.TOKEN, response.tokens.accessToken);
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(contextUser));
+
+      setUser(contextUser);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      return {
+        success: false,
+        error: error.message || 'Registration failed'
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem(STORAGE_KEYS.TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER);
@@ -89,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!user,
       isLoading,
       login,
+      register,
       logout: handleLogout,
       hasPermission,
     }}>

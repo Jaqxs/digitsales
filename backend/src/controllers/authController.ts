@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/authService';
-import { loginSchema, refreshTokenSchema, changePasswordSchema, createUserSchema, updateUserSchema, updateUserProfileSchema } from '../validations/auth';
+import { loginSchema, registerSchema, refreshTokenSchema, changePasswordSchema, createUserSchema, updateUserSchema, updateUserProfileSchema } from '../validations/auth';
 import { ApiError } from '../middleware/errorHandler';
 
 const createApiError = (message: string, statusCode: number = 500): ApiError => {
@@ -35,6 +35,36 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
         tokens,
       },
       message: 'Login successful',
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// Register controller
+export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    // Validate input
+    const { body } = registerSchema.parse(req);
+
+    // Register user
+    const { user, tokens } = await AuthService.register(body);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive,
+          profile: user.userProfile,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
+        tokens,
+      },
+      message: 'Registration successful',
     });
   } catch (error: any) {
     next(error);
