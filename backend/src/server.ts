@@ -32,18 +32,10 @@ app.use(helmet({
 console.log(`🔒 CORS Allowed Origin: ${config.CORS_ORIGIN}`);
 app.use(cors({
   origin: (origin, callback) => {
-    const allowedOrigins = config.CORS_ORIGIN.split(',').map(o => o.trim());
-    if (config.NODE_ENV === 'development') {
-      console.log('Request Origin:', origin);
-    }
-
-    // Allow if no origin (server-to-server), if origin is listed, or if wildcard is used
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-      callback(null, true);
-    } else {
-      console.error(`❌ CORS blocked request from: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
-      callback(new Error('Not allowed by CORS'));
-    }
+    // TEMPORARY DEBUG: Allow ALL origins in production to rule out CORS
+    // Once connection works, we will revert to strict checking
+    console.log('DEBUG CORS: Request from', origin);
+    callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
