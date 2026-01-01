@@ -8,6 +8,16 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 5173,
+    proxy: {
+      '/api': {
+        target: 'https://65.109.140.250',
+        changeOrigin: true,
+        secure: false, // needed if using IP with HTTPS
+        headers: {
+          Host: 'zantrixgroup.com'
+        }
+      }
+    },
   },
   preview: {
     allowedHosts: ["zantrixpos.onrender.com"],
