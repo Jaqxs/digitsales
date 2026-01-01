@@ -7,7 +7,7 @@ export const config = {
   // Server Configuration
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT || '3001', 10),
-  HOST: process.env.HOST || '0.0.0.0',
+  HOST: '0.0.0.0', // Force binding to 0.0.0.0
 
   // Database Configuration
   DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/zantrix_pos',
