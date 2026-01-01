@@ -33,9 +33,15 @@ console.log(`🔒 CORS Allowed Origin: ${config.CORS_ORIGIN}`);
 app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = config.CORS_ORIGIN.split(',').map(o => o.trim());
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (config.NODE_ENV === 'development') {
+      console.log('Request Origin:', origin);
+    }
+
+    // Allow if no origin (server-to-server), if origin is listed, or if wildcard is used
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
       callback(null, true);
     } else {
+      console.error(`❌ CORS blocked request from: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
