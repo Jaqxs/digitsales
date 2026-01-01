@@ -1,0 +1,29 @@
+
+# -----------------------------------------------------------------------------
+# DOKPLOY ENV VARS
+# -----------------------------------------------------------------------------
+# Copy and paste these values into your Dokploy Environment Variables section.
+# Replace the <placeholder> values with your actual domains.
+
+# === BACKEND SERVICE ===
+# (Dokploy -> Applications -> zantrix-backend -> Environment)
+
+PORT=3001
+NODE_ENV=production
+
+# Database Connection (If using Dokploy Database, use the internal connection string)
+DATABASE_URL=postgresql://postgres:password@postgres:5432/zantrix_pos
+
+# Security
+JWT_SECRET=replace_this_with_a_long_random_string_xyz123
+
+# CORS (Allow your frontend to talk to this backend)
+# IMPORTANT: Replace these URLs with your actual Dokploy URLs
+CORS_ORIGIN=https://<YOUR-FRONTEND-URL>,http://localhost:5173
+
+# === FRONTEND SERVICE ===
+# (Dokploy -> Applications -> zantrix-frontend -> Environment)
+
+# Point this to your Backend URL
+# IMPORTANT: Must end with /api/v1
+VITE_API_URL=https://<YOUR-BACKEND-URL>/api/v1
