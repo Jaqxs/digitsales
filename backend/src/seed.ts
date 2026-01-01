@@ -7,12 +7,15 @@ async function main() {
     console.log('🌱 Starting seeding...');
 
     // 1. Create Admin User
-    const adminEmail = 'admin@zantrix.com';
+    const adminEmail = 'admin@zantrix.co.tz';
     const hashedPassword = await bcrypt.hash('admin123', 10);
 
     const admin = await prisma.user.upsert({
         where: { email: adminEmail },
-        update: {},
+        update: {
+            passwordHash: hashedPassword,
+            isActive: true,
+        },
         create: {
             email: adminEmail,
             passwordHash: hashedPassword,
@@ -30,9 +33,62 @@ async function main() {
 
     console.log(`✅ Admin user created: ${admin.email}`);
 
+    // 1.1 Create Manager User
+    const managerEmail = 'manager@zantrix.co.tz';
+    const managerHashedPassword = await bcrypt.hash('manager123', 10);
+    await prisma.user.upsert({
+        where: { email: managerEmail },
+        update: {
+            passwordHash: managerHashedPassword,
+            isActive: true,
+        },
+        create: {
+            email: managerEmail,
+            passwordHash: managerHashedPassword,
+            role: UserRole.manager,
+            isActive: true,
+            userProfile: {
+                create: {
+                    firstName: 'Store',
+                    lastName: 'Manager',
+                    phone: '+255 700 000 001',
+                },
+            },
+        },
+    });
+    console.log(`✅ Manager user created: ${managerEmail}`);
+
+    // 1.2 Create Sales User
+    const salesEmail = 'sales@zantrix.co.tz';
+    const salesHashedPassword = await bcrypt.hash('sales123', 10);
+    await prisma.user.upsert({
+        where: { email: salesEmail },
+        update: {
+            passwordHash: salesHashedPassword,
+            isActive: true,
+        },
+        create: {
+            email: salesEmail,
+            passwordHash: salesHashedPassword,
+            role: UserRole.sales,
+            isActive: true,
+            userProfile: {
+                create: {
+                    firstName: 'Sales',
+                    lastName: 'Associate',
+                    phone: '+255 700 000 002',
+                },
+            },
+        },
+    });
+    console.log(`✅ Sales user created: ${salesEmail}`);
+
     // 2. Create Stock Location
-    const location = await prisma.stockLocation.create({
-        data: {
+    const location = await prisma.stockLocation.upsert({
+        where: { id: '550e8400-e29b-41d4-a716-446655440001' },
+        update: {},
+        create: {
+            id: '550e8400-e29b-41d4-a716-446655440001',
             name: 'Main Warehouse',
             type: LocationType.warehouse,
             address: '123 Main Street, Dar es Salaam',
@@ -42,8 +98,11 @@ async function main() {
     console.log(`✅ Stock location created: ${location.name}`);
 
     // 3. Create Product Category
-    const category = await prisma.productCategory.create({
-        data: {
+    const category = await prisma.productCategory.upsert({
+        where: { id: '550e8400-e29b-41d4-a716-446655440002' },
+        update: {},
+        create: {
+            id: '550e8400-e29b-41d4-a716-446655440002',
             name: 'Construction Tools',
             description: 'Power tools and equipment',
         },
@@ -52,8 +111,11 @@ async function main() {
     console.log(`✅ Product category created: ${category.name}`);
 
     // 4. Create Sample Customer
-    const customer = await prisma.customer.create({
-        data: {
+    const customer = await prisma.customer.upsert({
+        where: { id: '550e8400-e29b-41d4-a716-446655440003' },
+        update: {},
+        create: {
+            id: '550e8400-e29b-41d4-a716-446655440003',
             firstName: 'John',
             lastName: 'Kamau',
             email: 'john.kamau@email.com',
@@ -66,8 +128,10 @@ async function main() {
     console.log(`✅ Sample customer created: ${customer.firstName} ${customer.lastName}`);
 
     // 5. Create Sample Product
-    const product = await prisma.product.create({
-        data: {
+    const product = await prisma.product.upsert({
+        where: { sku: 'PWR-000002' },
+        update: {},
+        create: {
             name: 'Bosch Professional Drill',
             sku: 'PWR-000002',
             barcode: '8901234567891',
