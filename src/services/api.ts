@@ -28,15 +28,21 @@ async function apiRequest<T>(
 
   try {
     const response = await fetch(url, config);
+    const json = await response.json().catch(() => ({ success: false, error: { message: 'An error occurred' } }));
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'An error occurred' }));
-      throw new Error(errorData.message || `HTTP ${response.status}`);
+    if (!response.ok || (json.success === false)) {
+      const errorMessage = json.error?.message || json.message || `HTTP ${response.status}`;
+      throw new Error(errorMessage);
     }
 
-    return response.json();
-  } catch (error) {
-    console.error('API request failed:', error);
+    // Backend uses { success: true, data: { ... } }
+    return json.data !== undefined ? json.data : json;
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.warn('API request aborted');
+    } else {
+      console.error('API request failed:', error.message || error);
+    }
     throw error;
   }
 }
@@ -318,6 +324,61 @@ export const reportAPI = {
     apiRequest<{ totalCost: number; totalSelling: number; productCount: number }>(
       '/reports/valuation'
     ),
+};
+
+// Employee API functions
+export const employeeAPI = {
+  getAllEmployees: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    isActive?: boolean;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.role) searchParams.append('role', params.role);
+    if (params?.isActive !== undefined) searchParams.append('isActive', params.isActive.toString());
+
+    const queryString = searchParams.toString();
+    return apiRequest<{ employees: any[]; pagination: any }>(
+      `/employees${queryString ? `?${queryString}` : ''}`
+    );
+  },
+
+  getEmployeeById: (id: string) =>
+    apiRequest<{ employee: any }>(`/employees/${id}`),
+
+  createEmployee: (data: any) =>
+    apiRequest<{ employee: any }>('/employees', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateEmployee: (id: string, data: any) =>
+    apiRequest<{ employee: any }>(`/employees/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteEmployee: (id: string) =>
+    apiRequest(`/employees/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // Employee targets
+  getEmployeeTargets: (params?: { employeeId?: string; isActive?: boolean }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.employeeId) searchParams.append('employeeId', params.employeeId);
+    if (params?.isActive !== undefined) searchParams.append('isActive', params.isActive.toString());
+
+    const queryString = searchParams.toString();
+    return apiRequest<{ targets: any[]; pagination: any }>(
+      `/employees/targets${queryString ? `?${queryString}` : ''}`
+    );
+  },
 };
 
 // Export all APIs
