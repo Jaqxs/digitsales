@@ -7,7 +7,7 @@ async function diagnose() {
     console.log('🔍 Starting Database Connectivity Diagnosis...\n');
 
     for (const host of hosts) {
-        const url = `postgresql://postgres:password@${host}:5432/zantrix_pos`;
+        const url = `postgresql://postgres:Jackson%402024@${host}:5432/zantrix_pos`;
         console.log(`📡 Testing connection to: ${host}...`);
 
         const client = new PrismaClient({

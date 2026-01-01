@@ -62,6 +62,26 @@ export interface Employee {
   createdAt: Date;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatar?: string;
+  // Additional fields from backend
+  isActive?: boolean;
+  lastLoginAt?: string | null;
+  profile?: {
+    firstName: string;
+    lastName: string;
+    phone?: string | null;
+    avatarUrl?: string | null;
+    employeeId?: string | null;
+  } | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'support';
 
 export interface Customer {

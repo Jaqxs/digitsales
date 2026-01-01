@@ -2,27 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/services/api';
 
-export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'support';
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  avatar?: string;
-  // Additional fields from backend
-  isActive?: boolean;
-  lastLoginAt?: string | null;
-  profile?: {
-    firstName: string;
-    lastName: string;
-    phone?: string | null;
-    avatarUrl?: string | null;
-    employeeId?: string | null;
-  } | null;
-  createdAt?: string;
-  updatedAt?: string;
-}
+import { User, UserRole } from '@/types/pos';
 
 interface AuthContextType {
   user: User | null;
@@ -40,42 +20,22 @@ const STORAGE_KEYS = {
   USER: 'zantrix_user',
 };
 
-// Convert API user to context user
-const convertApiUserToContextUser = (apiUser: any): User => {
-  return {
-    id: apiUser.id,
-    name: apiUser.userProfile
-      ? `${apiUser.userProfile.firstName} ${apiUser.userProfile.lastName}`
-      : apiUser.email,
-    email: apiUser.email,
-    role: apiUser.role as UserRole,
-    avatar: apiUser.userProfile?.avatarUrl || undefined,
-    isActive: apiUser.isActive,
-    lastLoginAt: apiUser.lastLoginAt,
-    profile: apiUser.userProfile ? {
-      firstName: apiUser.userProfile.firstName || '',
-      lastName: apiUser.userProfile.lastName || '',
-      phone: apiUser.userProfile.phone,
-      avatarUrl: apiUser.userProfile.avatarUrl,
-      employeeId: apiUser.userProfile.employeeId,
-    } : null,
-    createdAt: apiUser.createdAt,
-    updatedAt: apiUser.updatedAt,
-  };
-};
+import { mapApiUserToUser } from '@/lib/api-converters';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  console.log("AuthProvider: Rendering");
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("AuthProvider: Running checkAuth effect");
     const checkAuth = async () => {
       const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
       if (token) {
         try {
           const response = await api.auth.getCurrentUser();
-          const contextUser = convertApiUserToContextUser(response.user);
+          const contextUser = mapApiUserToUser(response.user);
           setUser(contextUser);
           localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(contextUser));
         } catch (error) {
@@ -93,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const response = await api.auth.login(email, password);
-      const contextUser = convertApiUserToContextUser(response.user);
+      const contextUser = mapApiUserToUser(response.user);
 
       localStorage.setItem(STORAGE_KEYS.TOKEN, response.tokens.accessToken);
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(contextUser));

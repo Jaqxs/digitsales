@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Product, Customer, Employee, Sale, CartItem, PaymentMethod, ProductCategory } from '@/types/pos';
 import { api } from '@/services/api';
+import { mapApiUserToEmployee } from '@/lib/api-converters';
 
 interface DataStore {
   // Loading states
@@ -247,19 +248,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   updateEmployee: async (id, updates) => {
     try {
       const response = await api.users.updateUser(id, updates as any);
-      const updatedEmployee: Employee = {
-        id: response.user.id,
-        name: response.user.userProfile
-          ? `${response.user.userProfile.firstName} ${response.user.userProfile.lastName}`
-          : response.user.email,
-        email: response.user.email,
-        role: response.user.role,
-        phone: response.user.userProfile?.phone || '',
-        salesTarget: 0,
-        totalSales: 0,
-        commission: 0,
-        createdAt: new Date(response.user.createdAt),
-      };
+      const updatedEmployee = mapApiUserToEmployee(response.user);
       set((state) => ({
         employees: state.employees.map((e) =>
           e.id === id ? updatedEmployee : e
