@@ -29,6 +29,7 @@ app.use(helmet({
 }));
 
 // CORS configuration
+console.log(`🔒 CORS Allowed Origin: ${config.CORS_ORIGIN}`);
 app.use(cors({
   origin: config.CORS_ORIGIN,
   credentials: true,

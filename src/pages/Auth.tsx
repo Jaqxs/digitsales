@@ -75,7 +75,7 @@ const Auth = () => {
       } else {
         toast({
           title: 'Registration failed',
-          description: result.error,
+          description: result.error || 'An unexpected error occurred. Please check your connection.',
           variant: 'destructive',
         });
       }

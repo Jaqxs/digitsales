@@ -1,6 +1,6 @@
 // API service for Zantrix POS backend integration
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 // Generic API request function
 async function apiRequest<T>(
@@ -27,11 +27,22 @@ async function apiRequest<T>(
   }
 
   try {
+    if (import.meta.env.DEV) {
+      console.log(`🚀 API Request: ${options.method || 'GET'} ${url}`);
+    }
+
     const response = await fetch(url, config);
     const json = await response.json().catch(() => ({ success: false, error: { message: 'An error occurred' } }));
 
     if (!response.ok || (json.success === false)) {
-      const errorMessage = json.error?.message || json.message || `HTTP ${response.status}`;
+      let errorMessage = json.error?.message || json.message || `HTTP ${response.status}`;
+
+      // Add field-specific validation errors if they exist
+      if (json.error?.errors && Array.isArray(json.error.errors)) {
+        const details = json.error.errors.map((e: any) => `${e.field}: ${e.message}`).join(', ');
+        errorMessage = `${errorMessage} (${details})`;
+      }
+
       throw new Error(errorMessage);
     }
 
@@ -41,7 +52,7 @@ async function apiRequest<T>(
     if (error.name === 'AbortError') {
       console.warn('API request aborted');
     } else {
-      console.error('API request failed:', error.message || error);
+      console.error(`❌ API request failed to ${url}:`, error.message || error);
     }
     throw error;
   }
