@@ -1,6 +1,9 @@
 // API service for Zantrix POS backend integration
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+console.log('🔌 API Service Initialized');
+console.log('📡 Backend URL:', API_BASE_URL);
+console.log('🌍 Mode:', import.meta.env.MODE);
 
 // Generic API request function
 async function apiRequest<T>(
