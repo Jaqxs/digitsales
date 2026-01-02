@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
 import { useDataStore } from '@/stores/dataStore';
 import { Customer } from '@/types/pos';
@@ -33,10 +33,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const Customers = () => {
-  const { customers, deleteCustomer } = useDataStore();
+  const { customers, deleteCustomer, fetchCustomers } = useDataStore();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch customers on mount
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
 
   // Modal states
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
@@ -126,7 +131,7 @@ const Customers = () => {
               <Mail className="h-4 w-4 mr-2" />
               Email
             </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => handleDelete(customer)}
               className="text-destructive focus:text-destructive"
             >

@@ -145,7 +145,15 @@ export const useDataStore = create<DataStore>((set, get) => ({
     set((state) => ({ loading: { ...state.loading, customers: true } }));
     try {
       const response = await api.customers.getAllCustomers({ limit: 100 });
-      set({ customers: response.customers });
+      // Map backend fields to frontend Customer interface
+      const mappedCustomers: Customer[] = response.customers.map((c: any) => ({
+        ...c,
+        name: c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unnamed Customer',
+        loyaltyPoints: c.loyaltyPoints || 0,
+        totalPurchases: c.totalPurchases || 0,
+        createdAt: new Date(c.createdAt),
+      }));
+      set({ customers: mappedCustomers });
     } catch (error) {
       console.error('Failed to fetch customers:', error);
     } finally {
@@ -193,19 +201,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchEmployees: async () => {
     set((state) => ({ loading: { ...state.loading, employees: true } }));
     try {
-      const response = await api.users.getAllUsers({ role: 'sales', limit: 100 });
-      // Map backend users to frontend employee type
-      const employees: Employee[] = response.users.map((u: any) => ({
-        id: u.id,
-        name: u.userProfile ? `${u.userProfile.firstName} ${u.userProfile.lastName}` : u.email,
-        email: u.email,
-        role: u.role,
-        phone: u.userProfile?.phone || '',
-        salesTarget: 0, // Need to fetch separately or update backend
-        totalSales: 0,
-        commission: 0,
-        createdAt: new Date(u.createdAt),
-      }));
+      const response = await api.users.getAllUsers({ limit: 100 });
+      const employees = response.users.map(mapApiUserToEmployee);
       set({ employees });
     } catch (error) {
       console.error('Failed to fetch employees:', error);
@@ -224,20 +221,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
         lastName: (employeeData as any).name.split(' ')[1] || '',
       });
 
-      const newEmployee: Employee = {
-        id: response.user.id,
-        name: response.user.userProfile
-          ? `${response.user.userProfile.firstName} ${response.user.userProfile.lastName}`
-          : response.user.email,
-        email: response.user.email,
-        role: response.user.role,
-        phone: response.user.userProfile?.phone || '',
-        salesTarget: 0,
-        totalSales: 0,
-        commission: 0,
-        createdAt: new Date(response.user.createdAt),
-      };
-
+      const newEmployee = mapApiUserToEmployee(response.user);
       set((state) => ({ employees: [...state.employees, newEmployee] }));
     } catch (error) {
       console.error('Failed to add employee:', error);
