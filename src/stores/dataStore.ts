@@ -30,7 +30,7 @@ interface DataStore {
   // Employees
   employees: Employee[];
   fetchEmployees: () => Promise<void>;
-  addEmployee: (employee: Omit<Employee, 'id' | 'createdAt' | 'totalSales'>) => Promise<void>;
+  addEmployee: (employee: Omit<Employee, 'id' | 'createdAt' | 'totalSales'> & { password?: string, employeeId?: string }) => Promise<void>;
   updateEmployee: (id: string, employee: Partial<Employee>) => Promise<void>;
   deleteEmployee: (id: string) => Promise<void>;
 
@@ -214,10 +214,13 @@ export const useDataStore = create<DataStore>((set, get) => ({
     try {
       // Logic for adding employee via auth/users
       const response = await api.users.createUser({
-        ...employeeData,
-        password: 'temporaryPassword123!', // Admin sets temporary password
-        firstName: (employeeData as any).name.split(' ')[0],
-        lastName: (employeeData as any).name.split(' ')[1] || '',
+        email: employeeData.email,
+        password: employeeData.password || 'temporaryPassword123!',
+        role: employeeData.role,
+        firstName: (employeeData as any).firstName || employeeData.name.split(' ')[0],
+        lastName: (employeeData as any).lastName || employeeData.name.split(' ')[1] || '',
+        phone: employeeData.phone,
+        employeeId: employeeData.employeeId,
       });
 
       const newEmployee = mapApiUserToEmployee(response.user);

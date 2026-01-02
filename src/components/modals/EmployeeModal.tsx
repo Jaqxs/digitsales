@@ -130,13 +130,17 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
         // Create new employee
         await addEmployee({
           name: fullName,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           email: formData.email,
+          password: formData.password,
           role: formData.role,
           phone: formData.phone,
+          employeeId: formData.employeeId,
           avatar: '',
           salesTarget: formData.salesTarget,
           commission: formData.commission,
-        });
+        } as any);
         toast({
           title: 'Employee added',
           description: `${fullName} has been added.`
@@ -214,6 +218,25 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
                   placeholder="Enter password"
                   required
                 />
+                {formData.password && (
+                  <div className="text-xs space-y-1 mt-2">
+                    <p className={formData.password.length >= 8 ? "text-success" : "text-muted-foreground"}>
+                      ✓ At least 8 characters
+                    </p>
+                    <p className={/[A-Z]/.test(formData.password) ? "text-success" : "text-muted-foreground"}>
+                      ✓ One uppercase letter
+                    </p>
+                    <p className={/[a-z]/.test(formData.password) ? "text-success" : "text-muted-foreground"}>
+                      ✓ One lowercase letter
+                    </p>
+                    <p className={/\d/.test(formData.password) ? "text-success" : "text-muted-foreground"}>
+                      ✓ One number
+                    </p>
+                    <p className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? "text-success" : "text-muted-foreground"}>
+                      ✓ One special character
+                    </p>
+                  </div>
+                )}
               </div>
             )}
             <div className="space-y-2">
