@@ -151,14 +151,11 @@ const PointOfSale = () => {
       // Create sale object structured for backend
       const saleData = {
         employeeId: currentUser?.id || '',
-        customerId: null, // Optional for now
+        customerId: null,
         subtotal: Number(subtotal),
-        discount: 0, // Frontend interface compatibility
         discountAmount: 0,
-        vat: Number(vat), // Frontend interface compatibility
-        taxAmount: Number(vat), // Map VAT to taxAmount
-        total: Number(total), // Frontend interface compatibility
-        totalAmount: Number(total), // Map total to totalAmount
+        taxAmount: Number(vat),
+        totalAmount: Number(total),
         paymentMethod: (selectedPayment === 'bank-transfer' ? 'bank_transfer' : selectedPayment) as PaymentMethod,
         status: 'completed' as const,
         items: cart.map(item => ({
@@ -169,7 +166,7 @@ const PointOfSale = () => {
           taxAmount: calculateVAT(item.product.sellingPrice * item.quantity),
           lineTotal: (item.product.sellingPrice * item.quantity) + calculateVAT(item.product.sellingPrice * item.quantity)
         })),
-      } as Omit<Sale, 'id' | 'createdAt'>;
+      } as any;
 
       // Add sale to store and get the persistent sale object
       const completedSale = await addSale(saleData);

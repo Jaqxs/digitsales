@@ -102,13 +102,27 @@ export const mapApiUserToUser = (apiUser: any): User => {
 export const mapApiSaleToSale = (apiSale: any): Sale => {
     if (!apiSale) return {} as Sale;
 
+    const items = (apiSale.saleItems || []).map((item: any) => ({
+        product: {
+            ...mapApiProductToProduct(item.product),
+            sellingPrice: Number(item.unitPrice), // Use historical price
+        },
+        quantity: Number(item.quantity),
+        discount: Number(item.discountAmount),
+    }));
+
+    const customerName = apiSale.customer
+        ? `${apiSale.customer.firstName || ''} ${apiSale.customer.lastName || ''}`.trim() || apiSale.customer.companyName
+        : apiSale.notes?.startsWith('Customer: ') ? apiSale.notes.replace('Customer: ', '') : undefined;
+
     return {
         ...apiSale,
-        items: apiSale.saleItems || [],
+        items: items as any,
         subtotal: Number(apiSale.subtotal),
         discount: Number(apiSale.discountAmount),
         vat: Number(apiSale.taxAmount),
         total: Number(apiSale.totalAmount),
+        customerName,
         paymentMethod: apiSale.paymentMethod === 'bank_transfer' ? 'bank-transfer' : apiSale.paymentMethod,
         createdAt: new Date(apiSale.createdAt),
     };

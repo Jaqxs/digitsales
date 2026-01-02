@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDataStore } from '@/stores/dataStore';
-import { formatCurrency } from '@/lib/pos-utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatCurrency, calculateVAT } from '@/lib/pos-utils';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 
 export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
   const { products, addSale } = useDataStore();
+  const { user: currentUser } = useAuth();
   const { business } = useSettingsStore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,18 +74,25 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    addSale({
-      items: [{ product, quantity, discount: 0 }],
-      subtotal,
-      discount: 0,
-      vat,
-      total,
-      paymentMethod,
-      customerId: undefined, // Or selected customer ID if we had a dropdown
-      customerName: customerName || 'Walk-in Customer',
-      employeeId: '1',
+    await addSale({
+      items: [{
+        productId: product.id,
+        quantity,
+        unitPrice: product.sellingPrice,
+        discountAmount: 0,
+        taxAmount: calculateVAT(product.sellingPrice * quantity),
+        lineTotal: (product.sellingPrice * quantity) + calculateVAT(product.sellingPrice * quantity)
+      }] as any,
+      subtotal: Number(subtotal),
+      discountAmount: 0,
+      taxAmount: Number(vat),
+      totalAmount: Number(total),
+      paymentMethod: paymentMethod === 'bank-transfer' ? 'bank_transfer' : paymentMethod,
+      customerId: null,
+      notes: customerName ? `Customer: ${customerName}` : 'Walk-in Customer',
+      employeeId: currentUser?.id || '',
       status: 'completed',
-    });
+    } as any);
 
     toast({
       title: 'Sale recorded',
