@@ -131,12 +131,11 @@ const Reports = () => {
     <MainLayout>
       <PageContent>
         <PageHeader title="Reports" description="Generate and view business analytics">
-          <div className="hidden sm:block">
-            <DateRangePicker date={dateRange} setDate={setDateRange} />
-          </div>
-          <Button className="gap-2" onClick={() => exportToCSV(sales, 'All_Sales_Export')}>
+          <DateRangePicker date={dateRange} setDate={setDateRange} />
+          <Button className="gap-2" size="sm" onClick={() => exportToCSV(sales, 'All_Sales_Export')}>
             <Download className="h-4 w-4" />
-            Export All
+            <span className="hidden sm:inline">Export All</span>
+            <span className="sm:hidden">Export</span>
           </Button>
         </PageHeader>
 
@@ -157,13 +156,13 @@ const Reports = () => {
         </div>
 
         {/* Profit & Loss Chart */}
-        <div className="mt-6 rounded-xl border border-border bg-card p-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mt-6 rounded-xl border border-border bg-card p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Profit & Loss Overview</h3>
-              <p className="text-sm text-muted-foreground">Revenue vs Cost vs Profit</p>
+              <h3 className="text-base sm:text-lg font-semibold text-foreground">Profit & Loss Overview</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Revenue vs Cost vs Profit</p>
             </div>
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+            <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto" onClick={() => {
               const mapData = profitData.map(d => [d.month, formatCurrency(d.revenue), formatCurrency(d.cost), formatCurrency(d.profit)]);
               exportToPDF('Profit and Loss', ['Month', 'Revenue', 'Cost', 'Profit'], mapData, 'Profit_Loss_Report');
             }}>
@@ -171,7 +170,7 @@ const Reports = () => {
               Export PDF
             </Button>
           </div>
-          <div className="h-[300px]">
+          <div className="h-[250px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={profitData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -204,11 +203,11 @@ const Reports = () => {
         </div>
 
         {/* Category & Summary Row */}
-        <div className="grid gap-6 mt-6 lg:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 mt-4 sm:mt-6 lg:grid-cols-2">
           {/* Category Breakdown */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-6">Sales by Category</h3>
-            <div className="h-[250px] flex items-center">
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6">Sales by Category</h3>
+            <div className="h-[250px] flex flex-col sm:flex-row items-center">
               <ResponsiveContainer width="50%" height="100%">
                 <PieChart>
                   <Pie
@@ -251,24 +250,32 @@ const Reports = () => {
           </div>
 
           {/* Summary Stats */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-6">Monthly Summary</h3>
-            <div className="space-y-4">
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 sm:mb-6">Monthly Summary</h3>
+            <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between p-4 rounded-lg bg-success-light/50">
                 <span className="text-sm font-medium text-foreground">Total Revenue</span>
-                <span className="text-lg font-bold text-success">{formatCurrency(96800000)}</span>
+                <span className="text-lg font-bold text-success">
+                  {formatCurrency(profitData.reduce((sum, m) => sum + m.revenue, 0))}
+                </span>
               </div>
               <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
                 <span className="text-sm font-medium text-foreground">Total Costs</span>
-                <span className="text-lg font-bold text-muted-foreground">{formatCurrency(68100000)}</span>
+                <span className="text-lg font-bold text-muted-foreground">
+                  {formatCurrency(profitData.reduce((sum, m) => sum + m.cost, 0))}
+                </span>
               </div>
               <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10">
                 <span className="text-sm font-medium text-foreground">Net Profit</span>
-                <span className="text-lg font-bold text-primary">{formatCurrency(28700000)}</span>
+                <span className="text-lg font-bold text-primary">
+                  {formatCurrency(profitData.reduce((sum, m) => sum + m.profit, 0))}
+                </span>
               </div>
               <div className="flex items-center justify-between p-4 rounded-lg bg-warning-light/50">
                 <span className="text-sm font-medium text-foreground">VAT Collected (18%)</span>
-                <span className="text-lg font-bold text-warning">{formatCurrency(17424000)}</span>
+                <span className="text-lg font-bold text-warning">
+                  {formatCurrency(profitData.reduce((sum, m) => sum + m.revenue, 0) * 0.18)}
+                </span>
               </div>
             </div>
           </div>
