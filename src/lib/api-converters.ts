@@ -1,4 +1,4 @@
-import { User, Employee, UserRole, Product, Customer } from '@/types/pos';
+import { User, Employee, UserRole, Product, Customer, Sale } from '@/types/pos';
 
 export const mapApiUserToEmployee = (apiUser: any): Employee => {
     if (!apiUser) {
@@ -97,5 +97,19 @@ export const mapApiUserToUser = (apiUser: any): User => {
         } : null,
         createdAt: apiUser.createdAt || new Date().toISOString(),
         updatedAt: apiUser.updatedAt || new Date().toISOString(),
+    };
+};
+export const mapApiSaleToSale = (apiSale: any): Sale => {
+    if (!apiSale) return {} as Sale;
+
+    return {
+        ...apiSale,
+        items: apiSale.saleItems || [],
+        subtotal: Number(apiSale.subtotal),
+        discount: Number(apiSale.discountAmount),
+        vat: Number(apiSale.taxAmount),
+        total: Number(apiSale.totalAmount),
+        paymentMethod: apiSale.paymentMethod === 'bank_transfer' ? 'bank-transfer' : apiSale.paymentMethod,
+        createdAt: new Date(apiSale.createdAt),
     };
 };

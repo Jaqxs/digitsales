@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Product, Customer, Employee, Sale, CartItem, PaymentMethod, ProductCategory } from '@/types/pos';
 import { api } from '@/services/api';
-import { mapApiUserToEmployee, mapApiProductToProduct, mapApiCustomerToCustomer } from '@/lib/api-converters';
+import { mapApiUserToEmployee, mapApiProductToProduct, mapApiCustomerToCustomer, mapApiSaleToSale } from '@/lib/api-converters';
 
 interface DataStore {
   // Loading states
@@ -245,7 +245,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   deleteEmployee: async (id) => {
     try {
-      await api.users.deactivateUser(id);
+      await api.users.deleteUser(id);
       set((state) => ({
         employees: state.employees.filter((e) => e.id !== id),
       }));
@@ -260,7 +260,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
     set((state) => ({ loading: { ...state.loading, sales: true } }));
     try {
       const response = await api.sales.getAllSales({ limit: 100 });
-      set({ sales: response.sales });
+      const mappedSales = response.sales.map(mapApiSaleToSale);
+      set({ sales: mappedSales });
     } catch (error) {
       console.error('Failed to fetch sales:', error);
     } finally {
@@ -271,7 +272,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   addSale: async (saleData) => {
     try {
       const response = await api.sales.createSale(saleData);
-      const createdSale = response.sale;
+      const createdSale = mapApiSaleToSale(response);
 
       set((state) => ({ sales: [createdSale, ...state.sales] }));
 

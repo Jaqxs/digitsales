@@ -446,6 +446,35 @@ export class AuthService {
     return user;
   }
 
+  // Delete user (admin only)
+  static async deleteUser(userId: string): Promise<void> {
+    try {
+      // Try hard delete first
+      await prisma.user.delete({
+        where: { id: userId },
+      });
+    } catch (error: any) {
+      // If code is P2003 (Prisma foreign key error), we can't delete history
+      // Fallback: Deactivate and rename email to free it up
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            isActive: false,
+            email: `deleted_${Date.now()}_${user.email}`, // Scramble email to free original
+          },
+        });
+
+        // Also clear employeeId in profile if it exists to avoid unique constraint issues
+        await prisma.userProfile.update({
+          where: { userId },
+          data: { employeeId: null }
+        }).catch(() => { });
+      }
+    }
+  }
+
   // Deactivate user (admin only)
   static async deactivateUser(userId: string): Promise<void> {
     await prisma.user.update({

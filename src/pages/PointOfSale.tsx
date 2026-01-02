@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { MainLayout, PageContent } from '@/components/layout';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDataStore } from '@/stores/dataStore';
 import { Product, CartItem, PaymentMethod, Sale } from '@/types/pos';
 import { formatCurrency, calculateVAT } from '@/lib/pos-utils';
@@ -48,6 +49,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 
 const PointOfSale = () => {
   const { products, addSale, fetchProducts } = useDataStore();
+  const { user: currentUser } = useAuth();
   const { business } = useSettingsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -146,21 +148,28 @@ const PointOfSale = () => {
     }
 
     try {
-      // Create sale object
-      const saleData: Omit<Sale, 'id' | 'createdAt'> = {
+      // Create sale object structured for backend
+      const saleData = {
+        employeeId: currentUser?.id || '',
+        customerId: null, // Optional for now
+        subtotal: Number(subtotal),
+        discount: 0, // Frontend interface compatibility
+        discountAmount: 0,
+        vat: Number(vat), // Frontend interface compatibility
+        taxAmount: Number(vat), // Map VAT to taxAmount
+        total: Number(total), // Frontend interface compatibility
+        totalAmount: Number(total), // Map total to totalAmount
+        paymentMethod: (selectedPayment === 'bank-transfer' ? 'bank_transfer' : selectedPayment) as PaymentMethod,
+        status: 'completed' as const,
         items: cart.map(item => ({
-          product: item.product,
+          productId: item.product.id,
           quantity: item.quantity,
-          discount: item.discount,
+          unitPrice: item.product.sellingPrice,
+          discountAmount: 0,
+          taxAmount: calculateVAT(item.product.sellingPrice * item.quantity),
+          lineTotal: (item.product.sellingPrice * item.quantity) + calculateVAT(item.product.sellingPrice * item.quantity)
         })),
-        subtotal,
-        discount: 0,
-        vat,
-        total,
-        paymentMethod: selectedPayment,
-        employeeId: '1',
-        status: 'completed',
-      };
+      } as Omit<Sale, 'id' | 'createdAt'>;
 
       // Add sale to store and get the persistent sale object
       const completedSale = await addSale(saleData);

@@ -159,6 +159,11 @@ export const userAPI = {
     apiRequest(`/auth/users/${id}/reactivate`, {
       method: 'PUT',
     }),
+
+  deleteUser: (id: string) =>
+    apiRequest(`/auth/users/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // Product API functions
@@ -279,7 +284,7 @@ export const saleAPI = {
     apiRequest<{ sale: any }>(`/sales/${id}`),
 
   createSale: (data: any) =>
-    apiRequest<{ sale: any }>('/sales', {
+    apiRequest<any>('/sales', {
       method: 'POST',
       body: JSON.stringify(data),
     }),

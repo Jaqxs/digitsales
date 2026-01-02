@@ -318,6 +318,20 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+// Delete user (admin only)
+export const deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id } = req.params;
+    await AuthService.deleteUser(id);
+    res.status(200).json({
+      success: true,
+      message: 'User deleted successfully',
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
 // Deactivate user (admin only)
 export const deactivateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

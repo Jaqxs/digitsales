@@ -12,6 +12,7 @@ import {
   updateUser,
   deactivateUser,
   reactivateUser,
+  deleteUser,
 } from '../controllers/authController';
 import { requireAuth, requireAdminAuth } from '../middleware/auth';
 
@@ -34,5 +35,6 @@ router.get('/users/:id', requireAdminAuth, getUserById);
 router.put('/users/:id', requireAdminAuth, updateUser);
 router.put('/users/:id/deactivate', requireAdminAuth, deactivateUser);
 router.put('/users/:id/reactivate', requireAdminAuth, reactivateUser);
+router.delete('/users/:id', requireAdminAuth, deleteUser);
 
 export default router;
