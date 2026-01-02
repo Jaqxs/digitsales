@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MainLayout, PageContent } from '@/components/layout';
 import { useDataStore } from '@/stores/dataStore';
 import { Product, CartItem, PaymentMethod, Sale } from '@/types/pos';
@@ -47,7 +47,7 @@ const paymentMethods: { id: PaymentMethod; name: string; icon: React.ElementType
 import { useSettingsStore } from '@/stores/settingsStore';
 
 const PointOfSale = () => {
-  const { products, addSale } = useDataStore();
+  const { products, addSale, fetchProducts } = useDataStore();
   const { business } = useSettingsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -57,6 +57,11 @@ const PointOfSale = () => {
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [lastSale, setLastSale] = useState<Sale | null>(null);
   const { toast } = useToast();
+
+  // Fetch products on mount
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {

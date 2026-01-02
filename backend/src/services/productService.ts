@@ -73,19 +73,80 @@ export class ProductService {
 
     // Create product
     static async createProduct(data: any, createdBy: string) {
+        const { category, ...rest } = data;
+        let categoryId = data.categoryId;
+
+        // Resolve category name to ID if needed
+        if (!categoryId && category) {
+            const foundCategory = await prisma.productCategory.findFirst({
+                where: {
+                    OR: [
+                        { name: { contains: category, mode: 'insensitive' } },
+                        { id: typeof category === 'string' && category.length === 36 ? category : undefined }
+                    ].filter(Boolean) as any
+                }
+            });
+            if (foundCategory) {
+                categoryId = foundCategory.id;
+            } else {
+                const newCategory = await prisma.productCategory.create({
+                    data: { name: category }
+                });
+                categoryId = newCategory.id;
+            }
+        }
+
+        // Final fallback if no category is found/provided
+        if (!categoryId) {
+            const firstCategory = await prisma.productCategory.findFirst();
+            if (firstCategory) categoryId = firstCategory.id;
+            else throw new Error('No product categories available. Please create a category first.');
+        }
+
+        // Clean data for Prisma (remove frontend-only fields)
+        const { quantity, lowStockThreshold, ...prismaData } = rest;
+
         return prisma.product.create({
             data: {
-                ...data,
+                name: prismaData.name,
+                sku: prismaData.sku,
+                barcode: prismaData.barcode,
+                description: prismaData.description,
+                unit: prismaData.unit || 'unit',
+                costPrice: Number(prismaData.costPrice) || 0,
+                sellingPrice: Number(prismaData.sellingPrice) || 0,
+                currentStock: Number(quantity) || 0,
+                minStockLevel: Number(lowStockThreshold) || 10,
+                isActive: true,
+                categoryId,
                 createdBy,
             },
+            include: {
+                category: true,
+            }
         });
     }
 
     // Update product
     static async updateProduct(id: string, data: any) {
+        const { quantity, lowStockThreshold, category, categoryId, ...rest } = data;
+
+        const updateData: any = {
+            ...rest,
+            costPrice: rest.costPrice !== undefined ? Number(rest.costPrice) : undefined,
+            sellingPrice: rest.sellingPrice !== undefined ? Number(rest.sellingPrice) : undefined,
+            currentStock: quantity !== undefined ? Number(quantity) : undefined,
+            minStockLevel: lowStockThreshold !== undefined ? Number(lowStockThreshold) : undefined,
+        };
+
+        if (categoryId) updateData.categoryId = categoryId;
+
         return prisma.product.update({
             where: { id },
-            data,
+            data: updateData,
+            include: {
+                category: true,
+            },
         });
     }
 

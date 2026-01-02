@@ -33,7 +33,8 @@ export class AuthService {
     user: UserWithProfile;
     tokens: AuthTokens;
   }> {
-    const { email, password } = credentials;
+    const email = credentials.email.toLowerCase();
+    const password = credentials.password;
 
     // Find user with profile
     const user = await prisma.user.findUnique({
@@ -114,7 +115,8 @@ export class AuthService {
     user: UserWithProfile;
     tokens: AuthTokens;
   }> {
-    const { email, password, firstName, lastName, phone } = userData;
+    const email = userData.email.toLowerCase();
+    const { password, firstName, lastName, phone } = userData;
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
@@ -166,7 +168,8 @@ export class AuthService {
     phone?: string;
     employeeId?: string;
   }, createdBy: string): Promise<UserWithProfile> {
-    const { email, password, role, firstName, lastName, phone, employeeId } = userData;
+    const email = userData.email.toLowerCase();
+    const { password, role, firstName, lastName, phone, employeeId } = userData;
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({

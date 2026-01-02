@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
 import { useDataStore } from '@/stores/dataStore';
 import { Product } from '@/types/pos';
@@ -56,12 +56,17 @@ const categoryLabels: Record<string, string> = {
 };
 
 const Inventory = () => {
-  const { products, deleteProduct } = useDataStore();
+  const { products, deleteProduct, fetchProducts } = useDataStore();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
+
+  // Fetch products on mount
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   // Modal states
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -186,7 +191,7 @@ const Inventory = () => {
               <RefreshCw className="h-4 w-4 mr-2" />
               Adjust Stock
             </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => handleDelete(product)}
               className="text-destructive focus:text-destructive"
             >

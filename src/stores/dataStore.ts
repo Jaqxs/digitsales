@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Product, Customer, Employee, Sale, CartItem, PaymentMethod, ProductCategory } from '@/types/pos';
 import { api } from '@/services/api';
-import { mapApiUserToEmployee } from '@/lib/api-converters';
+import { mapApiUserToEmployee, mapApiProductToProduct, mapApiCustomerToCustomer } from '@/lib/api-converters';
 
 interface DataStore {
   // Loading states
@@ -76,8 +76,9 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchProducts: async () => {
     set((state) => ({ loading: { ...state.loading, products: true } }));
     try {
-      const response = await api.products.getAllProducts({ limit: 100 });
-      set({ products: response.products });
+      const response = await api.products.getAllProducts({ limit: 100, isActive: true });
+      const mappedProducts = response.products.map(mapApiProductToProduct);
+      set({ products: mappedProducts });
     } catch (error) {
       console.error('Failed to fetch products:', error);
     } finally {
@@ -88,7 +89,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
   addProduct: async (productData) => {
     try {
       const response = await api.products.createProduct(productData);
-      set((state) => ({ products: [...state.products, response.product] }));
+      const newProduct = mapApiProductToProduct(response);
+      set((state) => ({ products: [...state.products, newProduct] }));
     } catch (error) {
       console.error('Failed to add product:', error);
       throw error;
@@ -98,9 +100,10 @@ export const useDataStore = create<DataStore>((set, get) => ({
   updateProduct: async (id, updates) => {
     try {
       const response = await api.products.updateProduct(id, updates);
+      const updatedProduct = mapApiProductToProduct(response);
       set((state) => ({
         products: state.products.map((p) =>
-          p.id === id ? response.product : p
+          p.id === id ? updatedProduct : p
         ),
       }));
     } catch (error) {
@@ -127,11 +130,12 @@ export const useDataStore = create<DataStore>((set, get) => ({
         productId,
         quantityChange,
         type,
-        reason
+        reason,
       });
+      const updatedProduct = mapApiProductToProduct(response);
       set((state) => ({
         products: state.products.map((p) =>
-          p.id === productId ? response.product : p
+          p.id === productId ? updatedProduct : p
         ),
       }));
     } catch (error) {
@@ -144,15 +148,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchCustomers: async () => {
     set((state) => ({ loading: { ...state.loading, customers: true } }));
     try {
-      const response = await api.customers.getAllCustomers({ limit: 100 });
-      // Map backend fields to frontend Customer interface
-      const mappedCustomers: Customer[] = response.customers.map((c: any) => ({
-        ...c,
-        name: c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim() || 'Unnamed Customer',
-        loyaltyPoints: c.loyaltyPoints || 0,
-        totalPurchases: c.totalPurchases || 0,
-        createdAt: new Date(c.createdAt),
-      }));
+      const response = await api.customers.getAllCustomers({ limit: 100, isActive: true });
+      const mappedCustomers = response.customers.map(mapApiCustomerToCustomer);
       set({ customers: mappedCustomers });
     } catch (error) {
       console.error('Failed to fetch customers:', error);
@@ -164,7 +161,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
   addCustomer: async (customerData) => {
     try {
       const response = await api.customers.createCustomer(customerData);
-      set((state) => ({ customers: [...state.customers, response.customer] }));
+      const newCustomer = mapApiCustomerToCustomer(response);
+      set((state) => ({ customers: [...state.customers, newCustomer] }));
     } catch (error) {
       console.error('Failed to add customer:', error);
       throw error;
@@ -174,9 +172,10 @@ export const useDataStore = create<DataStore>((set, get) => ({
   updateCustomer: async (id, updates) => {
     try {
       const response = await api.customers.updateCustomer(id, updates);
+      const updatedCustomer = mapApiCustomerToCustomer(response);
       set((state) => ({
         customers: state.customers.map((c) =>
-          c.id === id ? response.customer : c
+          c.id === id ? updatedCustomer : c
         ),
       }));
     } catch (error) {
@@ -201,7 +200,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchEmployees: async () => {
     set((state) => ({ loading: { ...state.loading, employees: true } }));
     try {
-      const response = await api.users.getAllUsers({ limit: 100 });
+      const response = await api.users.getAllUsers({ limit: 100, isActive: true });
       const employees = response.users.map(mapApiUserToEmployee);
       set({ employees });
     } catch (error) {

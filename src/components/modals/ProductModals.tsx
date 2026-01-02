@@ -62,7 +62,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.sku) {
       toast({
         title: 'Missing required fields',
@@ -76,10 +76,10 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
     await new Promise(resolve => setTimeout(resolve, 300));
 
     if (product) {
-      updateProduct(product.id, formData);
+      await updateProduct(product.id, formData);
       toast({ title: 'Product updated', description: `${formData.name} has been updated.` });
     } else {
-      addProduct(formData);
+      await addProduct(formData);
       toast({ title: 'Product added', description: `${formData.name} has been added to inventory.` });
     }
 
@@ -274,7 +274,7 @@ export function StockAdjustmentModal({ open, onOpenChange, product }: StockAdjus
       return;
     }
 
-    updateStock(product.id, change);
+    await updateStock(product.id, change, type, reason || `Stock ${type}`);
     addStockRecord({
       productId: product.id,
       productName: product.name,
