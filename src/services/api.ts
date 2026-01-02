@@ -30,12 +30,10 @@ async function apiRequest<T>(
   }
 
   try {
-    if (import.meta.env.DEV) {
-      console.log(`🚀 API Request: ${options.method || 'GET'} ${url}`);
-    }
+    console.log(`🚀 API Request: ${options.method || 'GET'} ${url}`);
 
     const response = await fetch(url, config);
-    const json = await response.json().catch(() => ({ success: false, error: { message: 'An error occurred' } }));
+    const json = await response.json().catch(() => ({ success: false, error: { message: 'Invalid server response' } }));
 
     if (!response.ok || (json.success === false)) {
       let errorMessage = json.error?.message || json.message || `HTTP ${response.status}`;
@@ -46,14 +44,22 @@ async function apiRequest<T>(
         errorMessage = `${errorMessage} (${details})`;
       }
 
+      console.error(`❌ API Error Response:`, { status: response.status, message: errorMessage, url });
       throw new Error(errorMessage);
     }
 
     // Backend uses { success: true, data: { ... } }
     return json.data !== undefined ? json.data : json;
   } catch (error: any) {
+    // Network errors (no internet, CORS, DNS failure, etc.)
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.error(`❌ Network Error: Cannot reach ${API_BASE_URL}`);
+      console.error('💡 Possible causes: No internet, CORS issue, or backend is down');
+      throw new Error('Network error: Cannot connect to server. Please check your internet connection.');
+    }
+
     if (error.name === 'AbortError') {
-      console.warn('API request aborted');
+      console.warn('⚠️ API request aborted');
     } else {
       console.error(`❌ API request failed to ${url}:`, error.message || error);
     }
