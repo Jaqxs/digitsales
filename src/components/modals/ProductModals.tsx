@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Product, ProductCategory } from '@/types/pos';
 import { useDataStore } from '@/stores/dataStore';
 import { formatCurrency } from '@/lib/pos-utils';
@@ -47,18 +47,36 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: product?.name || '',
-    sku: product?.sku || '',
-    barcode: product?.barcode || '',
-    category: product?.category || 'hand-tools' as ProductCategory,
-    description: product?.description || '',
-    costPrice: product?.costPrice || 0,
-    sellingPrice: product?.sellingPrice || 0,
-    quantity: product?.quantity || 0,
-    lowStockThreshold: product?.lowStockThreshold || 10,
-    supplier: product?.supplier || '',
-    unit: product?.unit || 'unit',
+    name: '',
+    sku: '',
+    barcode: '',
+    category: 'hand-tools' as ProductCategory,
+    description: '',
+    costPrice: 0,
+    sellingPrice: 0,
+    quantity: 0,
+    lowStockThreshold: 10,
+    supplier: '',
+    unit: 'unit',
   });
+
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        name: product?.name || '',
+        sku: product?.sku || '',
+        barcode: product?.barcode || '',
+        category: product?.category || 'hand-tools' as ProductCategory,
+        description: product?.description || '',
+        costPrice: product?.costPrice || 0,
+        sellingPrice: product?.sellingPrice || 0,
+        quantity: product?.quantity || 0,
+        lowStockThreshold: product?.lowStockThreshold || 10,
+        supplier: product?.supplier || '',
+        unit: product?.unit || 'unit',
+      });
+    }
+  }, [open, product]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
