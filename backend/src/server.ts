@@ -67,6 +67,15 @@ if (config.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// This handles the root URL so you don't see a "Not Found" error
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'online',
+    message: 'Zantrix Backend API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
