@@ -37,3 +37,12 @@ export const createSale = async (req: Request, res: Response, next: NextFunction
         next(error);
     }
 };
+
+export const deleteAllSales = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        await SaleService.deleteAllSales();
+        res.status(200).json({ success: true, message: 'All sales deleted successfully' });
+    } catch (error) {
+        next(error);
+    }
+};

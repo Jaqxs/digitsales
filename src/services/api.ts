@@ -294,6 +294,11 @@ export const saleAPI = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  deleteAllSales: () =>
+    apiRequest('/sales', {
+      method: 'DELETE',
+    }),
 };
 
 // Inventory API functions

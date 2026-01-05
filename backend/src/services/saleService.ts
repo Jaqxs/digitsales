@@ -124,4 +124,8 @@ export class SaleService {
             return sale;
         });
     }
+
+    static async deleteAllSales() {
+        return prisma.sale.deleteMany({});
+    }
 }

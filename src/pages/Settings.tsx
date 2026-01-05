@@ -12,9 +12,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Bell, Shield, Printer, Globe, Save } from 'lucide-react';
+import { Building2, Bell, Shield, Printer, Globe, Save, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import zantrixLogo from '@/assets/zantrix-logo.png';
+import { api } from '@/services/api';
 
 import { useSettingsStore } from '@/stores/settingsStore';
 
@@ -27,6 +28,24 @@ const Settings = () => {
       title: 'Settings saved',
       description: 'Your changes have been saved successfully.',
     });
+  };
+
+  const handleClearSales = async () => {
+    if (confirm('Are you sure you want to delete ALL sales? This cannot be undone.')) {
+      try {
+        await api.sales.deleteAllSales();
+        toast({
+          title: 'Success',
+          description: 'All sales data has been cleared.'
+        });
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to clear sales data.',
+          variant: 'destructive'
+        });
+      }
+    }
   };
 
   return (
@@ -367,6 +386,21 @@ const Settings = () => {
                   <Button onClick={handleSave} className="gap-2">
                     <Save className="h-4 w-4" />
                     Save Changes
+                  </Button>
+                </div>
+
+                <Separator />
+
+                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trash2 className="h-5 w-5 text-destructive" />
+                    <h4 className="font-semibold text-destructive">Danger Zone</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Irreversible actions. Please be certain.
+                  </p>
+                  <Button variant="destructive" onClick={handleClearSales}>
+                    Clear All Sales Data
                   </Button>
                 </div>
               </div>
