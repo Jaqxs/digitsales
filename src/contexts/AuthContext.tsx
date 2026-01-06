@@ -57,6 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const contextUser = mapApiUserToUser(response.user);
 
       localStorage.setItem(STORAGE_KEYS.TOKEN, response.tokens.accessToken);
+      if (response.tokens.refreshToken) {
+        localStorage.setItem('zantrix_refreshToken', response.tokens.refreshToken);
+      }
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(contextUser));
 
       setUser(contextUser);
@@ -79,6 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const contextUser = mapApiUserToUser(response.user);
 
       localStorage.setItem(STORAGE_KEYS.TOKEN, response.tokens.accessToken);
+      if (response.tokens.refreshToken) {
+        localStorage.setItem('zantrix_refreshToken', response.tokens.refreshToken);
+      }
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(contextUser));
 
       setUser(contextUser);
@@ -96,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleLogout = () => {
     localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem('zantrix_refreshToken');
     localStorage.removeItem(STORAGE_KEYS.USER);
     setUser(null);
     navigate('/auth');

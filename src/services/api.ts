@@ -33,6 +33,45 @@ async function apiRequest<T>(
     console.log(`🚀 API Request: ${options.method || 'GET'} ${url}`);
 
     const response = await fetch(url, config);
+
+    // Handle 401 Unauthorized (Token Expired)
+    if (response.status === 401 && endpoint !== '/auth/refresh' && endpoint !== '/auth/login') {
+      const refreshTokenValue = localStorage.getItem('zantrix_refreshToken') || localStorage.getItem('zantrix_refresh_token');
+      if (refreshTokenValue) {
+        try {
+          console.log('🔄 Token expired, attempting refresh...');
+          const refreshResponse = await authAPI.refreshToken(refreshTokenValue);
+
+          // Store new tokens
+          if (refreshResponse.tokens) {
+            localStorage.setItem('zantrix_token', refreshResponse.tokens.accessToken);
+            if (refreshResponse.tokens.refreshToken) {
+              localStorage.setItem('zantrix_refreshToken', refreshResponse.tokens.refreshToken);
+            }
+
+            // Retry the original request with the new token
+            const retryConfig = {
+              ...config,
+              headers: {
+                ...config.headers,
+                Authorization: `Bearer ${refreshResponse.tokens.accessToken}`,
+              },
+            };
+            const retryResponse = await fetch(url, retryConfig);
+            const retryJson = await retryResponse.json().catch(() => ({ success: false }));
+            return retryJson.data !== undefined ? retryJson.data : retryJson;
+          }
+        } catch (refreshError) {
+          console.error('❌ Token refresh failed:', refreshError);
+          // If refresh fails, we should logout by removing tokens
+          localStorage.removeItem('zantrix_token');
+          localStorage.removeItem('zantrix_refreshToken');
+          window.location.href = '/auth';
+          throw new Error('Session expired. Please log in again.');
+        }
+      }
+    }
+
     const json = await response.json().catch(() => ({ success: false, error: { message: 'Invalid server response' } }));
 
     if (!response.ok || (json.success === false)) {
