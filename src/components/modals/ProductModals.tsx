@@ -383,7 +383,7 @@ interface DeleteConfirmModalProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description: string;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
 }
 
 export function DeleteConfirmModal({ open, onOpenChange, title, description, onConfirm }: DeleteConfirmModalProps) {
@@ -391,8 +391,8 @@ export function DeleteConfirmModal({ open, onOpenChange, title, description, onC
 
   const handleConfirm = async () => {
     setIsDeleting(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
-    onConfirm();
+    // Minimal wait for UI feedback, but rely on the actual async operation
+    await onConfirm();
     setIsDeleting(false);
     onOpenChange(false);
   };

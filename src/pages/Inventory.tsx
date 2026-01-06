@@ -151,9 +151,9 @@ const Inventory = () => {
     setDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (selectedProduct) {
-      deleteProduct(selectedProduct.id);
+      await deleteProduct(selectedProduct.id);
       toast({ title: 'Product deleted', description: `${selectedProduct.name} has been removed.` });
     }
   };
