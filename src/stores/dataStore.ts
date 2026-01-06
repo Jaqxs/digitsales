@@ -29,7 +29,7 @@ interface DataStore {
 
   // Employees
   employees: Employee[];
-  fetchEmployees: () => Promise<void>;
+  fetchEmployees: (params?: { isActive?: boolean }) => Promise<void>;
   addEmployee: (employee: Omit<Employee, 'id' | 'createdAt' | 'totalSales'> & { password?: string, employeeId?: string }) => Promise<void>;
   updateEmployee: (id: string, employee: Partial<Employee>) => Promise<void>;
   deleteEmployee: (id: string) => Promise<void>;
@@ -197,10 +197,19 @@ export const useDataStore = create<DataStore>((set, get) => ({
   },
 
   // Employees
-  fetchEmployees: async () => {
+  fetchEmployees: async (params?: { isActive?: boolean }) => {
     set((state) => ({ loading: { ...state.loading, employees: true } }));
     try {
-      const response = await api.users.getAllUsers({ limit: 100, isActive: true });
+      const isActive = params?.isActive !== undefined ? params.isActive : true;
+      // If isActive is active (true/false), pass it. If it's explicitly undefined (meaning 'all'), we might need to handle logic differently if the API requires explicit param.
+      // But looking at previous code: api.users.getAllUsers({ limit: 100, isActive: true })
+      // The API definition likely takes isActive?: boolean.
+      // Let's assume we want to support 'all' by passing undefined if params.isActive is undefined, BUT we default to true if params is missing.
+
+      const response = await api.users.getAllUsers({
+        limit: 100,
+        isActive: params?.isActive
+      });
       const employees = response.users.map(mapApiUserToEmployee);
       set({ employees });
     } catch (error) {

@@ -25,6 +25,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const roleColors: Record<string, string> = {
   admin: 'bg-primary text-primary-foreground',
@@ -49,6 +56,7 @@ const Employees = () => {
   } = useDataStore();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('active');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
@@ -67,11 +75,12 @@ const Employees = () => {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await fetchEmployees();
+      const isActive = statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
+      await fetchEmployees({ isActive });
       setLoading(false);
     };
     loadData();
-  }, [fetchEmployees]);
+  }, [fetchEmployees, statusFilter]);
 
   // Filter and paginate employees
   const filteredEmployees = useMemo(() => {
@@ -192,15 +201,27 @@ const Employees = () => {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="relative mt-4 sm:mt-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search employees..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        {/* Search and Filter */}
+        <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search employees..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Deactivated</SelectItem>
+              <SelectItem value="all">All Accounts</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Employee Cards - Responsive grid */}
@@ -383,7 +404,10 @@ const Employees = () => {
         open={employeeModalOpen}
         onOpenChange={setEmployeeModalOpen}
         employee={selectedEmployee}
-        onSuccess={() => fetchEmployees(currentPage, searchQuery)}
+        onSuccess={() => {
+          const isActive = statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
+          fetchEmployees({ isActive });
+        }}
       />
       <DeleteConfirmModal
         open={deleteModalOpen}
@@ -397,7 +421,10 @@ const Employees = () => {
         open={targetModalOpen}
         onOpenChange={setTargetModalOpen}
         employee={selectedEmployee}
-        onSuccess={() => fetchEmployees(currentPage, searchQuery)}
+        onSuccess={() => {
+          const isActive = statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
+          fetchEmployees({ isActive });
+        }}
       />
 
       {/* View Employee Modal */}
