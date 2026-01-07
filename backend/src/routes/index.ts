@@ -54,27 +54,30 @@ export const setupRoutes = (): Router => {
   router.get('/force-sync-db', async (req, res) => {
     try {
       const { prisma } = await import('../config/database');
-      console.log('--- EMERGENCY DB SYNC STARTED ---');
-      // 1. Add missing enum values via raw SQL
-      await prisma.$executeRawUnsafe(`ALTER TYPE "SaleStatus" ADD VALUE IF NOT EXISTS 'awaiting_delivery'`);
-      await prisma.$executeRawUnsafe(`ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'stock_keeper'`);
+      const results: string[] = [];
+      const runSql = async (sql: string, desc: string) => {
+        try {
+          await prisma.$executeRawUnsafe(sql);
+          results.push(`✅ ${desc}`);
+        } catch (e: any) {
+          results.push(`❌ ${desc}: ${e.message}`);
+        }
+      };
 
-      // 2. Add missing columns if they don't exist
-      await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "confirmedAt" TIMESTAMP(6)`);
-      await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "confirmedBy" UUID`);
-
-      // 3. Ensure table defaults
-      await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ALTER COLUMN "status" SET DEFAULT 'awaiting_delivery'`);
-
-      // 4. Fix any existing nulls
-      await prisma.$executeRawUnsafe(`UPDATE "sales" SET "status" = 'awaiting_delivery' WHERE "status" IS NULL`);
+      results.push('--- EMERGENCY DB SYNC STARTED ---');
+      await runSql(`ALTER TYPE "SaleStatus" ADD VALUE IF NOT EXISTS 'awaiting_delivery'`, 'Enum SaleStatus');
+      await runSql(`ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'stock_keeper'`, 'Enum UserRole');
+      await runSql(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "confirmedAt" TIMESTAMP(6)`, 'Column confirmedAt');
+      await runSql(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "confirmedBy" UUID`, 'Column confirmedBy');
+      await runSql(`ALTER TABLE "sales" ALTER COLUMN "status" SET DEFAULT 'awaiting_delivery'`, 'Default status');
+      await runSql(`UPDATE "sales" SET "status" = 'awaiting_delivery' WHERE "status" IS NULL`, 'Fix nulls');
 
       res.json({
         success: true,
-        message: "Remote database synchronized. Please restart the Dokploy service to refresh the Prisma Client."
+        summary: results,
+        message: "Check the summary above. If all steps are green, restart Dokploy."
       });
     } catch (e: any) {
-      console.error('Sync failed:', e);
       res.status(500).json({ success: false, error: e.message });
     }
   });
