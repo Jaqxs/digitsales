@@ -27,6 +27,9 @@ export const testDatabaseConnection = async (): Promise<void> => {
   try {
     await prisma.$connect();
     console.log('✅ Database connection established successfully');
+    const databaseUrl = process.env.DATABASE_URL || '';
+    const maskedUrl = databaseUrl.replace(/:([^@]+)@/, ':****@');
+    console.log(`📡 Connected to: ${maskedUrl}`);
 
     // Test query
     const result = await prisma.$queryRaw`SELECT version() as version`;
