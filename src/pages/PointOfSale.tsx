@@ -180,10 +180,15 @@ const PointOfSale = () => {
       });
       clearCart();
       setShowCart(false);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Sale creation error:', error);
+      const errorMessage = error.response?.data?.error?.message
+        || error.message
+        || 'There was an error processing the sale. Please try again.';
+
       toast({
         title: 'Sale failed',
-        description: 'There was an error processing the sale. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
