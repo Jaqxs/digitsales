@@ -43,7 +43,10 @@ export const errorHandler = (
         break;
       default:
         statusCode = 400;
-        message = 'Database operation failed';
+        message = `Database operation failed (${error.code})`;
+        if (process.env.NODE_ENV === 'development' || true) { // Force for now to debug production
+          message += `: ${error.message}`;
+        }
     }
   }
 
