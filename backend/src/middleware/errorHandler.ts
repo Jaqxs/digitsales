@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
+const SERVER_SIG = 'ZANTRIX-B-' + Date.now();
+console.log('Server Signature:', SERVER_SIG);
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 
@@ -81,7 +83,8 @@ export const errorHandler = (
       ...(errors.length > 0 && { errors }),
       ...(isDevelopment && {
         stack: error.stack,
-        details: error.message
+        details: error.message,
+        serverSignature: SERVER_SIG
       })
     },
     timestamp: new Date().toISOString(),

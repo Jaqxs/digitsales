@@ -96,7 +96,7 @@ export class SaleService {
                     notes,
                     createdBy,
                     saleNumber: `SL-${Date.now()}`,
-                    status: SaleStatus.awaiting_delivery,
+                    status: 'awaiting_delivery' as any,
                     saleItems: {
                         create: items.map((item: any) => ({
                             productId: item.productId,
