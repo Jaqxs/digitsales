@@ -1,4 +1,5 @@
 import { prisma } from '../config/database';
+import { SaleStatus } from '@prisma/client';
 
 export class SaleService {
     static async getAllSales(options?: {
@@ -95,7 +96,7 @@ export class SaleService {
                     notes,
                     createdBy,
                     saleNumber: `SL-${Date.now()}`,
-                    status: 'awaiting_delivery',
+                    status: SaleStatus.awaiting_delivery,
                     saleItems: {
                         create: items.map((item: any) => ({
                             productId: item.productId,

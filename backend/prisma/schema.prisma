@@ -1,4 +1,3 @@
-// Prisma schema for Zantrix POS System
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,9 +7,409 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==========================================
-// ENUMS
-// ==========================================
+model User {
+  id                     String               @id @default(uuid()) @db.Uuid
+  email                  String               @unique
+  passwordHash           String
+  role                   UserRole             @default(sales)
+  isActive               Boolean              @default(true)
+  lastLoginAt            DateTime?            @db.Timestamp(6)
+  createdAt              DateTime             @default(now()) @db.Timestamp(6)
+  updatedAt              DateTime             @default(now()) @updatedAt @db.Timestamp(6)
+  createdCustomers       Customer[]           @relation("CustomerCreatedBy")
+  createdEmployeeTargets EmployeeTargets[]    @relation("TargetCreator")
+  employeeTargets        EmployeeTargets[]    @relation("UserTargets")
+  generalLedger          GeneralLedger[]
+  paymentTransactions    PaymentTransaction[]
+  createdProducts        Product[]            @relation("ProductCreatedBy")
+  approvedPOs            PurchaseOrder[]      @relation("POApprover")
+  purchaseOrders         PurchaseOrder[]
+  receivedPOs            PurchaseOrder[]      @relation("POReceiver")
+  confirmedSales         Sale[]               @relation("SaleConfirmer")
+  createdSales           Sale[]               @relation("SaleCreatedBy")
+  sales                  Sale[]               @relation("SaleEmployee")
+  approvedAdjustments    StockAdjustment[]    @relation("AdjustmentApprover")
+  stockAdjustments       StockAdjustment[]
+  stockLedger            StockLedger[]
+  createdSuppliers       Supplier[]           @relation("SupplierCreatedBy")
+  userProfile            UserProfile?
+  userSessions           UserSession[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  userId     String  @id @db.Uuid
+  firstName  String
+  lastName   String
+  phone      String?
+  avatarUrl  String? @db.VarChar(500)
+  employeeId String? @unique @db.VarChar(20)
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model UserSession {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  sessionToken String   @unique
+  ipAddress    String?  @db.Inet
+  userAgent    String?
+  expiresAt    DateTime @db.Timestamp(6)
+  createdAt    DateTime @default(now()) @db.Timestamp(6)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model ProductCategory {
+  id          String            @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  parentId    String?           @db.Uuid
+  isActive    Boolean           @default(true)
+  sortOrder   Int               @default(0)
+  createdAt   DateTime          @default(now()) @db.Timestamp(6)
+  parent      ProductCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    ProductCategory[] @relation("CategoryHierarchy")
+  products    Product[]
+
+  @@map("product_categories")
+}
+
+model Product {
+  id                 String              @id @default(uuid()) @db.Uuid
+  sku                String              @unique
+  barcode            String?             @unique @db.VarChar(100)
+  name               String
+  description        String?
+  categoryId         String              @db.Uuid
+  unit               String              @default("unit")
+  costPrice          Decimal             @db.Decimal(15, 2)
+  sellingPrice       Decimal             @db.Decimal(15, 2)
+  wholesalePrice     Decimal?            @db.Decimal(15, 2)
+  minStockLevel      Int                 @default(0)
+  maxStockLevel      Int?
+  currentStock       Decimal             @default(0) @db.Decimal(12, 3)
+  isActive           Boolean             @default(true)
+  isTaxable          Boolean             @default(true)
+  taxRate            Decimal             @default(18.00) @db.Decimal(5, 2)
+  imageUrl           String?             @db.VarChar(500)
+  createdBy          String              @db.Uuid
+  createdAt          DateTime            @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime            @default(now()) @updatedAt @db.Timestamp(6)
+  suppliers          ProductSupplier[]
+  variants           ProductVariant[]
+  category           ProductCategory     @relation(fields: [categoryId], references: [id])
+  creator            User                @relation("ProductCreatedBy", fields: [createdBy], references: [id])
+  purchaseOrderItems PurchaseOrderItem[]
+  saleItems          SaleItem[]
+  stockAdjustments   StockAdjustment[]
+  stockLedger        StockLedger[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id              String     @id @default(uuid()) @db.Uuid
+  productId       String     @db.Uuid
+  variantName     String
+  variantValue    String
+  skuSuffix       String?    @db.VarChar(20)
+  additionalPrice Decimal    @default(0) @db.Decimal(10, 2)
+  stockAdjustment Decimal    @default(0) @db.Decimal(8, 3)
+  createdAt       DateTime   @default(now()) @db.Timestamp(6)
+  product         Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  saleItems       SaleItem[]
+
+  @@map("product_variants")
+}
+
+model Supplier {
+  id             String            @id @default(uuid()) @db.Uuid
+  name           String
+  email          String?
+  phone          String?
+  address        String?
+  contactPerson  String?           @db.VarChar(100)
+  paymentTerms   String?           @db.VarChar(100)
+  taxId          String?           @db.VarChar(50)
+  isActive       Boolean           @default(true)
+  createdBy      String            @db.Uuid
+  createdAt      DateTime          @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime          @default(now()) @updatedAt @db.Timestamp(6)
+  products       ProductSupplier[]
+  purchaseOrders PurchaseOrder[]
+  creator        User              @relation("SupplierCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("suppliers")
+}
+
+model ProductSupplier {
+  productId            String   @db.Uuid
+  supplierId           String   @db.Uuid
+  isPrimary            Boolean  @default(false)
+  supplierSku          String?  @db.VarChar(50)
+  leadTimeDays         Int?
+  minimumOrderQuantity Int      @default(1)
+  createdAt            DateTime @default(now()) @db.Timestamp(6)
+  product              Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplier             Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@id([productId, supplierId])
+  @@map("product_suppliers")
+}
+
+model StockLocation {
+  id               String            @id @default(uuid()) @db.Uuid
+  name             String
+  type             LocationType      @default(warehouse)
+  address          String?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now()) @db.Timestamp(6)
+  purchaseOrders   PurchaseOrder[]
+  sales            Sale[]
+  stockAdjustments StockAdjustment[]
+  stockLedger      StockLedger[]
+
+  @@map("stock_locations")
+}
+
+model StockLedger {
+  id              String               @id @default(uuid()) @db.Uuid
+  productId       String               @db.Uuid
+  locationId      String?              @db.Uuid
+  transactionType StockTransactionType
+  quantity        Decimal              @db.Decimal(12, 3)
+  previousStock   Decimal              @db.Decimal(12, 3)
+  newStock        Decimal              @db.Decimal(12, 3)
+  referenceType   String?
+  referenceId     String?              @db.Uuid
+  notes           String?
+  createdBy       String               @db.Uuid
+  createdAt       DateTime             @default(now()) @db.Timestamp(6)
+  creator         User                 @relation(fields: [createdBy], references: [id])
+  location        StockLocation?       @relation(fields: [locationId], references: [id])
+  product         Product              @relation(fields: [productId], references: [id])
+
+  @@map("stock_ledger")
+}
+
+model StockAdjustment {
+  id             String         @id @default(uuid()) @db.Uuid
+  productId      String         @db.Uuid
+  locationId     String?        @db.Uuid
+  adjustmentType AdjustmentType
+  quantity       Decimal        @db.Decimal(12, 3)
+  reason         String
+  approvedBy     String?        @db.Uuid
+  createdBy      String         @db.Uuid
+  createdAt      DateTime       @default(now()) @db.Timestamp(6)
+  approver       User?          @relation("AdjustmentApprover", fields: [approvedBy], references: [id])
+  creator        User           @relation(fields: [createdBy], references: [id])
+  location       StockLocation? @relation(fields: [locationId], references: [id])
+  product        Product        @relation(fields: [productId], references: [id])
+
+  @@map("stock_adjustments")
+}
+
+model Customer {
+  id             String       @id @default(uuid()) @db.Uuid
+  customerType   CustomerType @default(individual)
+  firstName      String?
+  lastName       String?
+  companyName    String?
+  email          String?
+  phone          String?
+  mobile         String?
+  address        String?
+  city           String?
+  region         String?
+  postalCode     String?
+  taxId          String?      @db.VarChar(50)
+  loyaltyPoints  Int          @default(0)
+  totalPurchases Decimal      @default(0) @db.Decimal(15, 2)
+  creditLimit    Decimal      @default(0) @db.Decimal(15, 2)
+  currentBalance Decimal      @default(0) @db.Decimal(15, 2)
+  isActive       Boolean      @default(true)
+  createdBy      String       @db.Uuid
+  createdAt      DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime     @default(now()) @updatedAt @db.Timestamp(6)
+  creator        User         @relation("CustomerCreatedBy", fields: [createdBy], references: [id])
+  sales          Sale[]
+
+  @@map("customers")
+}
+
+model Sale {
+  id                  String               @id @default(uuid()) @db.Uuid
+  saleNumber          String               @unique
+  customerId          String?              @db.Uuid
+  employeeId          String               @db.Uuid
+  locationId          String?              @db.Uuid
+  saleDate            DateTime             @default(now()) @db.Timestamp(6)
+  dueDate             DateTime?            @db.Timestamp(6)
+  subtotal            Decimal              @db.Decimal(15, 2)
+  discountAmount      Decimal              @default(0) @db.Decimal(15, 2)
+  discountPercentage  Decimal?             @db.Decimal(5, 2)
+  taxAmount           Decimal              @default(0) @db.Decimal(15, 2)
+  totalAmount         Decimal              @db.Decimal(15, 2)
+  paymentStatus       PaymentStatus        @default(pending)
+  paymentMethod       PaymentMethod?
+  amountPaid          Decimal              @default(0) @db.Decimal(15, 2)
+  changeAmount        Decimal              @default(0) @db.Decimal(15, 2)
+  status              SaleStatus           @default(awaiting_delivery)
+  notes               String?
+  createdBy           String               @db.Uuid
+  createdAt           DateTime             @default(now()) @db.Timestamp(6)
+  updatedAt           DateTime             @default(now()) @updatedAt @db.Timestamp(6)
+  confirmedAt         DateTime?            @db.Timestamp(6)
+  confirmedBy         String?              @db.Uuid
+  paymentTransactions PaymentTransaction[]
+  saleItems           SaleItem[]
+  confirmer           User?                @relation("SaleConfirmer", fields: [confirmedBy], references: [id])
+  creator             User                 @relation("SaleCreatedBy", fields: [createdBy], references: [id])
+  customer            Customer?            @relation(fields: [customerId], references: [id])
+  employee            User                 @relation("SaleEmployee", fields: [employeeId], references: [id])
+  location            StockLocation?       @relation(fields: [locationId], references: [id])
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id                 String          @id @default(uuid()) @db.Uuid
+  saleId             String          @db.Uuid
+  productId          String          @db.Uuid
+  variantId          String?         @db.Uuid
+  quantity           Decimal         @db.Decimal(10, 3)
+  unitPrice          Decimal         @db.Decimal(12, 2)
+  discountAmount     Decimal         @default(0) @db.Decimal(10, 2)
+  discountPercentage Decimal?        @db.Decimal(5, 2)
+  taxAmount          Decimal         @default(0) @db.Decimal(10, 2)
+  lineTotal          Decimal         @db.Decimal(12, 2)
+  createdAt          DateTime        @default(now()) @db.Timestamp(6)
+  product            Product         @relation(fields: [productId], references: [id])
+  sale               Sale            @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  variant            ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@map("sale_items")
+}
+
+model PaymentTransaction {
+  id                   String        @id @default(uuid()) @db.Uuid
+  saleId               String        @db.Uuid
+  paymentMethod        PaymentMethod
+  amount               Decimal       @db.Decimal(15, 2)
+  transactionReference String?       @db.VarChar(255)
+  paymentDate          DateTime      @default(now()) @db.Timestamp(6)
+  processedBy          String        @db.Uuid
+  notes                String?
+  createdAt            DateTime      @default(now()) @db.Timestamp(6)
+  processor            User          @relation(fields: [processedBy], references: [id])
+  sale                 Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@map("payment_transactions")
+}
+
+model PurchaseOrder {
+  id                   String              @id @default(uuid()) @db.Uuid
+  poNumber             String              @unique
+  supplierId           String              @db.Uuid
+  locationId           String?             @db.Uuid
+  orderDate            DateTime            @default(now()) @db.Timestamp(6)
+  expectedDeliveryDate DateTime?           @db.Timestamp(6)
+  status               PurchaseOrderStatus @default(draft)
+  subtotal             Decimal             @default(0) @db.Decimal(15, 2)
+  taxAmount            Decimal             @default(0) @db.Decimal(15, 2)
+  discountAmount       Decimal             @default(0) @db.Decimal(15, 2)
+  totalAmount          Decimal             @default(0) @db.Decimal(15, 2)
+  approvedBy           String?             @db.Uuid
+  approvedAt           DateTime?           @db.Timestamp(6)
+  receivedBy           String?             @db.Uuid
+  receivedAt           DateTime?           @db.Timestamp(6)
+  notes                String?
+  createdBy            String              @db.Uuid
+  createdAt            DateTime            @default(now()) @db.Timestamp(6)
+  updatedAt            DateTime            @default(now()) @updatedAt @db.Timestamp(6)
+  purchaseOrderItems   PurchaseOrderItem[]
+  approver             User?               @relation("POApprover", fields: [approvedBy], references: [id])
+  creator              User                @relation(fields: [createdBy], references: [id])
+  location             StockLocation?      @relation(fields: [locationId], references: [id])
+  receiver             User?               @relation("POReceiver", fields: [receivedBy], references: [id])
+  supplier             Supplier            @relation(fields: [supplierId], references: [id])
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id                   String        @id @default(uuid()) @db.Uuid
+  poId                 String        @db.Uuid
+  productId            String        @db.Uuid
+  quantityOrdered      Decimal       @db.Decimal(10, 3)
+  quantityReceived     Decimal       @default(0) @db.Decimal(10, 3)
+  unitCost             Decimal       @db.Decimal(12, 2)
+  lineTotal            Decimal       @db.Decimal(12, 2)
+  expectedDeliveryDate DateTime?     @db.Timestamp(6)
+  createdAt            DateTime      @default(now()) @db.Timestamp(6)
+  purchaseOrder        PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  product              Product       @relation(fields: [productId], references: [id])
+
+  @@map("purchase_order_items")
+}
+
+model ChartOfAccounts {
+  id              String            @id @default(uuid()) @db.Uuid
+  accountCode     String            @unique @db.VarChar(20)
+  accountName     String
+  accountType     AccountType
+  parentAccountId String?           @db.Uuid
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now()) @db.Timestamp(6)
+  parent          ChartOfAccounts?  @relation("AccountHierarchy", fields: [parentAccountId], references: [id])
+  children        ChartOfAccounts[] @relation("AccountHierarchy")
+  generalLedger   GeneralLedger[]
+
+  @@map("chart_of_accounts")
+}
+
+model GeneralLedger {
+  id              String          @id @default(uuid()) @db.Uuid
+  transactionDate DateTime        @db.Date
+  accountId       String          @db.Uuid
+  debit           Decimal         @default(0) @db.Decimal(15, 2)
+  credit          Decimal         @default(0) @db.Decimal(15, 2)
+  description     String?
+  referenceType   String?
+  referenceId     String?         @db.Uuid
+  createdBy       String          @db.Uuid
+  createdAt       DateTime        @default(now()) @db.Timestamp(6)
+  account         ChartOfAccounts @relation(fields: [accountId], references: [id])
+  creator         User            @relation(fields: [createdBy], references: [id])
+
+  @@map("general_ledger")
+}
+
+model EmployeeTargets {
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String       @db.Uuid
+  targetType     TargetType
+  targetValue    Decimal      @db.Decimal(15, 2)
+  currentValue   Decimal      @default(0) @db.Decimal(15, 2)
+  period         TargetPeriod @default(monthly)
+  startDate      DateTime     @db.Timestamp(6)
+  endDate        DateTime     @db.Timestamp(6)
+  commissionRate Decimal?     @db.Decimal(5, 2)
+  bonusAmount    Decimal?     @db.Decimal(15, 2)
+  isActive       Boolean      @default(true)
+  createdBy      String       @db.Uuid
+  createdAt      DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime     @default(now()) @updatedAt @db.Timestamp(6)
+  creator        User         @relation("TargetCreator", fields: [createdBy], references: [id])
+  user           User         @relation("UserTargets", fields: [userId], references: [id])
+
+  @@map("employee_targets")
+}
 
 enum UserRole {
   admin
@@ -105,458 +504,4 @@ enum TargetPeriod {
   monthly
   quarterly
   yearly
-}
-
-// ==========================================
-// MODELS
-// ==========================================
-
-// Users & Authentication
-model User {
-  id          String   @id @default(uuid()) @db.Uuid
-  email       String   @unique
-  passwordHash String
-  role        UserRole @default(sales)
-  isActive    Boolean  @default(true)
-  lastLoginAt DateTime? @db.Timestamp
-  createdAt   DateTime @default(now()) @db.Timestamp
-  updatedAt   DateTime @default(now()) @updatedAt @db.Timestamp
-
-  // Relations
-  userProfile     UserProfile?
-  userSessions    UserSession[]
-  createdProducts Product[]     @relation("ProductCreatedBy")
-  createdSuppliers Supplier[]   @relation("SupplierCreatedBy")
-  createdCustomers Customer[]   @relation("CustomerCreatedBy")
-  sales           Sale[]        @relation("SaleEmployee")
-  createdSales    Sale[]        @relation("SaleCreatedBy")
-  stockLedger     StockLedger[]
-  stockAdjustments StockAdjustment[]
-  approvedAdjustments StockAdjustment[] @relation("AdjustmentApprover")
-  purchaseOrders  PurchaseOrder[]
-  approvedPOs     PurchaseOrder[] @relation("POApprover")
-  receivedPOs     PurchaseOrder[] @relation("POReceiver")
-  paymentTransactions PaymentTransaction[]
-  generalLedger   GeneralLedger[]
-  employeeTargets EmployeeTargets[] @relation("UserTargets")
-  createdEmployeeTargets EmployeeTargets[] @relation("TargetCreator")
-  confirmedSales  Sale[]        @relation("SaleConfirmer")
-
-  @@map("users")
-}
-
-model UserProfile {
-  userId     String  @id @db.Uuid
-  firstName  String
-  lastName   String
-  phone      String?
-  avatarUrl  String? @db.VarChar(500)
-  employeeId String? @unique @db.VarChar(20)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_profiles")
-}
-
-model UserSession {
-  id            String   @id @default(uuid()) @db.Uuid
-  userId        String   @db.Uuid
-  sessionToken  String   @unique
-  ipAddress     String?  @db.Inet
-  userAgent     String?
-  expiresAt     DateTime @db.Timestamp
-  createdAt     DateTime @default(now()) @db.Timestamp
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_sessions")
-}
-
-// Products & Inventory
-model ProductCategory {
-  id          String  @id @default(uuid()) @db.Uuid
-  name        String
-  description String?
-  parentId    String? @db.Uuid
-  isActive    Boolean @default(true)
-  sortOrder   Int     @default(0)
-  createdAt   DateTime @default(now()) @db.Timestamp
-
-  // Relations
-  parent       ProductCategory? @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children     ProductCategory[] @relation("CategoryHierarchy")
-  products     Product[]
-
-  @@map("product_categories")
-}
-
-model Product {
-  id              String  @id @default(uuid()) @db.Uuid
-  sku             String  @unique
-  barcode         String? @unique @db.VarChar(100)
-  name            String
-  description     String?
-  categoryId      String  @db.Uuid
-  unit            String  @default("unit")
-  costPrice       Decimal @db.Decimal(15, 2)
-  sellingPrice    Decimal @db.Decimal(15, 2)
-  wholesalePrice  Decimal? @db.Decimal(15, 2)
-  minStockLevel   Int     @default(0)
-  maxStockLevel   Int?
-  currentStock    Decimal @default(0) @db.Decimal(12, 3)
-  isActive        Boolean @default(true)
-  isTaxable       Boolean @default(true)
-  taxRate         Decimal @default(18.00) @db.Decimal(5, 2)
-  imageUrl        String? @db.VarChar(500)
-  createdBy       String  @db.Uuid
-  createdAt       DateTime @default(now()) @db.Timestamp
-  updatedAt       DateTime @default(now()) @updatedAt @db.Timestamp
-
-  // Relations
-  category        ProductCategory @relation(fields: [categoryId], references: [id])
-  creator         User            @relation("ProductCreatedBy", fields: [createdBy], references: [id])
-  variants        ProductVariant[]
-  suppliers       ProductSupplier[]
-  saleItems       SaleItem[]
-  stockLedger     StockLedger[]
-  stockAdjustments StockAdjustment[]
-  purchaseOrderItems PurchaseOrderItem[]
-
-  @@map("products")
-}
-
-model ProductVariant {
-  id             String  @id @default(uuid()) @db.Uuid
-  productId      String  @db.Uuid
-  variantName    String
-  variantValue   String
-  skuSuffix      String? @db.VarChar(20)
-  additionalPrice Decimal @default(0) @db.Decimal(10, 2)
-  stockAdjustment Decimal @default(0) @db.Decimal(8, 3)
-  createdAt      DateTime @default(now()) @db.Timestamp
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  saleItems SaleItem[]
-
-  @@map("product_variants")
-}
-
-model Supplier {
-  id           String  @id @default(uuid()) @db.Uuid
-  name         String
-  email        String?
-  phone        String?
-  address      String?
-  contactPerson String? @db.VarChar(100)
-  paymentTerms String? @db.VarChar(100)
-  taxId        String? @db.VarChar(50)
-  isActive     Boolean @default(true)
-  createdBy    String  @db.Uuid
-  createdAt    DateTime @default(now()) @db.Timestamp
-  updatedAt    DateTime @default(now()) @updatedAt @db.Timestamp
-
-  // Relations
-  creator      User             @relation("SupplierCreatedBy", fields: [createdBy], references: [id])
-  products     ProductSupplier[]
-  purchaseOrders PurchaseOrder[]
-
-  @@map("suppliers")
-}
-
-model ProductSupplier {
-  productId   String @db.Uuid
-  supplierId  String @db.Uuid
-  isPrimary   Boolean @default(false)
-  supplierSku String? @db.VarChar(50)
-  leadTimeDays Int?
-  minimumOrderQuantity Int @default(1)
-  createdAt   DateTime @default(now()) @db.Timestamp
-
-  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-
-  @@id([productId, supplierId])
-  @@map("product_suppliers")
-}
-
-// Inventory Management
-model StockLocation {
-  id       String  @id @default(uuid()) @db.Uuid
-  name     String
-  type     LocationType @default(warehouse)
-  address  String?
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now()) @db.Timestamp
-
-  // Relations
-  stockLedger StockLedger[]
-  stockAdjustments StockAdjustment[]
-  sales Sale[]
-  purchaseOrders PurchaseOrder[]
-
-  @@map("stock_locations")
-}
-
-model StockLedger {
-  id               String  @id @default(uuid()) @db.Uuid
-  productId        String  @db.Uuid
-  locationId       String? @db.Uuid
-  transactionType  StockTransactionType
-  quantity         Decimal @db.Decimal(12, 3)
-  previousStock    Decimal @db.Decimal(12, 3)
-  newStock         Decimal @db.Decimal(12, 3)
-  referenceType    String?
-  referenceId      String? @db.Uuid
-  notes            String?
-  createdBy        String  @db.Uuid
-  createdAt        DateTime @default(now()) @db.Timestamp
-
-  product  Product       @relation(fields: [productId], references: [id])
-  location StockLocation? @relation(fields: [locationId], references: [id])
-  creator  User          @relation(fields: [createdBy], references: [id])
-
-  @@map("stock_ledger")
-}
-
-model StockAdjustment {
-  id             String  @id @default(uuid()) @db.Uuid
-  productId      String  @db.Uuid
-  locationId     String? @db.Uuid
-  adjustmentType AdjustmentType
-  quantity       Decimal @db.Decimal(12, 3)
-  reason         String
-  approvedBy     String? @db.Uuid
-  createdBy      String  @db.Uuid
-  createdAt      DateTime @default(now()) @db.Timestamp
-
-  product   Product        @relation(fields: [productId], references: [id])
-  location  StockLocation? @relation(fields: [locationId], references: [id])
-  creator   User           @relation(fields: [createdBy], references: [id])
-  approver  User?          @relation("AdjustmentApprover", fields: [approvedBy], references: [id])
-
-  @@map("stock_adjustments")
-}
-
-// Sales & Customers
-model Customer {
-  id           String  @id @default(uuid()) @db.Uuid
-  customerType CustomerType @default(individual)
-  firstName    String?
-  lastName     String?
-  companyName  String?
-  email        String?
-  phone        String?
-  mobile       String?
-  address      String?
-  city         String?
-  region       String?
-  postalCode   String?
-  taxId        String? @db.VarChar(50)
-  loyaltyPoints Int     @default(0)
-  totalPurchases Decimal @default(0) @db.Decimal(15, 2)
-  creditLimit  Decimal @default(0) @db.Decimal(15, 2)
-  currentBalance Decimal @default(0) @db.Decimal(15, 2)
-  isActive     Boolean @default(true)
-  createdBy    String  @db.Uuid
-  createdAt    DateTime @default(now()) @db.Timestamp
-  updatedAt    DateTime @default(now()) @updatedAt @db.Timestamp
-
-  // Relations
-  creator User    @relation("CustomerCreatedBy", fields: [createdBy], references: [id])
-  sales   Sale[]
-
-  @@map("customers")
-}
-
-model Sale {
-  id            String  @id @default(uuid()) @db.Uuid
-  saleNumber    String  @unique
-  customerId    String? @db.Uuid
-  employeeId    String  @db.Uuid
-  locationId    String? @db.Uuid
-  saleDate      DateTime @default(now()) @db.Timestamp
-  dueDate       DateTime? @db.Timestamp
-
-  // Financials
-  subtotal      Decimal @db.Decimal(15, 2)
-  discountAmount Decimal @default(0) @db.Decimal(15, 2)
-  discountPercentage Decimal? @db.Decimal(5, 2)
-  taxAmount     Decimal @default(0) @db.Decimal(15, 2)
-  totalAmount   Decimal @db.Decimal(15, 2)
-
-  // Payment info
-  paymentStatus PaymentStatus @default(pending)
-  paymentMethod PaymentMethod?
-  amountPaid    Decimal @default(0) @db.Decimal(15, 2)
-  changeAmount  Decimal @default(0) @db.Decimal(15, 2)
-
-  // Status and notes
-  status        SaleStatus @default(awaiting_delivery)
-  notes         String?
-  confirmedAt   DateTime? @db.Timestamp
-  confirmedBy   String?   @db.Uuid
-  createdBy     String  @db.Uuid
-  createdAt     DateTime @default(now()) @db.Timestamp
-  updatedAt     DateTime @default(now()) @updatedAt @db.Timestamp
-
-  // Relations
-  customer      Customer?           @relation(fields: [customerId], references: [id])
-  employee      User                @relation("SaleEmployee", fields: [employeeId], references: [id])
-  location      StockLocation?      @relation(fields: [locationId], references: [id])
-  confirmer     User?               @relation("SaleConfirmer", fields: [confirmedBy], references: [id])
-  creator       User                @relation("SaleCreatedBy", fields: [createdBy], references: [id])
-  saleItems     SaleItem[]
-  paymentTransactions PaymentTransaction[]
-
-  @@map("sales")
-}
-
-model SaleItem {
-  id             String  @id @default(uuid()) @db.Uuid
-  saleId         String  @db.Uuid
-  productId      String  @db.Uuid
-  variantId      String? @db.Uuid
-  quantity       Decimal @db.Decimal(10, 3)
-  unitPrice      Decimal @db.Decimal(12, 2)
-  discountAmount Decimal @default(0) @db.Decimal(10, 2)
-  discountPercentage Decimal? @db.Decimal(5, 2)
-  taxAmount      Decimal @default(0) @db.Decimal(10, 2)
-  lineTotal      Decimal @db.Decimal(12, 2)
-  createdAt      DateTime @default(now()) @db.Timestamp
-
-  sale     Sale            @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product  Product         @relation(fields: [productId], references: [id])
-  variant  ProductVariant? @relation(fields: [variantId], references: [id])
-
-  @@map("sale_items")
-}
-
-model PaymentTransaction {
-  id                String  @id @default(uuid()) @db.Uuid
-  saleId            String  @db.Uuid
-  paymentMethod     PaymentMethod
-  amount            Decimal @db.Decimal(15, 2)
-  transactionReference String? @db.VarChar(255)
-  paymentDate       DateTime @default(now()) @db.Timestamp
-  processedBy       String  @db.Uuid
-  notes             String?
-  createdAt         DateTime @default(now()) @db.Timestamp
-
-  sale       Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  processor  User @relation(fields: [processedBy], references: [id])
-
-  @@map("payment_transactions")
-}
-
-// Purchase Orders & Procurement
-model PurchaseOrder {
-  id                   String  @id @default(uuid()) @db.Uuid
-  poNumber             String  @unique
-  supplierId           String  @db.Uuid
-  locationId           String? @db.Uuid
-  orderDate            DateTime @default(now()) @db.Timestamp
-  expectedDeliveryDate DateTime? @db.Timestamp
-  status               PurchaseOrderStatus @default(draft)
-
-  // Financials
-  subtotal             Decimal @default(0) @db.Decimal(15, 2)
-  taxAmount            Decimal @default(0) @db.Decimal(15, 2)
-  discountAmount       Decimal @default(0) @db.Decimal(15, 2)
-  totalAmount          Decimal @default(0) @db.Decimal(15, 2)
-
-  // Tracking
-  approvedBy           String? @db.Uuid
-  approvedAt           DateTime? @db.Timestamp
-  receivedBy           String? @db.Uuid
-  receivedAt           DateTime? @db.Timestamp
-
-  notes                String?
-  createdBy            String  @db.Uuid
-  createdAt            DateTime @default(now()) @db.Timestamp
-  updatedAt            DateTime @default(now()) @updatedAt @db.Timestamp
-
-  // Relations
-  supplier             Supplier            @relation(fields: [supplierId], references: [id])
-  location             StockLocation?      @relation(fields: [locationId], references: [id])
-  approver             User?               @relation("POApprover", fields: [approvedBy], references: [id])
-  receiver             User?               @relation("POReceiver", fields: [receivedBy], references: [id])
-  creator              User                @relation(fields: [createdBy], references: [id])
-  purchaseOrderItems   PurchaseOrderItem[]
-
-  @@map("purchase_orders")
-}
-
-model PurchaseOrderItem {
-  id                   String  @id @default(uuid()) @db.Uuid
-  poId                 String  @db.Uuid
-  productId            String  @db.Uuid
-  quantityOrdered      Decimal @db.Decimal(10, 3)
-  quantityReceived     Decimal @default(0) @db.Decimal(10, 3)
-  unitCost             Decimal @db.Decimal(12, 2)
-  lineTotal            Decimal @db.Decimal(12, 2)
-  expectedDeliveryDate DateTime? @db.Timestamp
-  createdAt            DateTime @default(now()) @db.Timestamp
-
-  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
-  product       Product       @relation(fields: [productId], references: [id])
-
-  @@map("purchase_order_items")
-}
-
-// Accounting & Financial
-model ChartOfAccounts {
-  id           String  @id @default(uuid()) @db.Uuid
-  accountCode  String  @unique @db.VarChar(20)
-  accountName  String
-  accountType  AccountType
-  parentAccountId String? @db.Uuid
-  isActive     Boolean @default(true)
-  createdAt    DateTime @default(now()) @db.Timestamp
-
-  // Relations
-  parent       ChartOfAccounts? @relation("AccountHierarchy", fields: [parentAccountId], references: [id])
-  children     ChartOfAccounts[] @relation("AccountHierarchy")
-  generalLedger GeneralLedger[]
-
-  @@map("chart_of_accounts")
-}
-
-model GeneralLedger {
-  id            String  @id @default(uuid()) @db.Uuid
-  transactionDate DateTime @db.Date
-  accountId     String  @db.Uuid
-  debit         Decimal @default(0) @db.Decimal(15, 2)
-  credit        Decimal @default(0) @db.Decimal(15, 2)
-  description   String?
-  referenceType String?
-  referenceId   String? @db.Uuid
-  createdBy     String  @db.Uuid
-  createdAt     DateTime @default(now()) @db.Timestamp
-
-  account ChartOfAccounts @relation(fields: [accountId], references: [id])
-  creator User            @relation(fields: [createdBy], references: [id])
-
-  @@map("general_ledger")
-}
-
-model EmployeeTargets {
-  id             String       @id @default(uuid()) @db.Uuid
-  userId         String       @db.Uuid
-  targetType     TargetType
-  targetValue    Decimal      @db.Decimal(15, 2)
-  currentValue   Decimal      @default(0) @db.Decimal(15, 2)
-  period         TargetPeriod @default(monthly)
-  startDate      DateTime     @db.Timestamp
-  endDate        DateTime     @db.Timestamp
-  commissionRate Decimal?     @db.Decimal(5, 2)
-  bonusAmount    Decimal?     @db.Decimal(15, 2)
-  isActive       Boolean      @default(true)
-  createdBy      String       @db.Uuid
-  createdAt      DateTime     @default(now()) @db.Timestamp
-  updatedAt      DateTime     @default(now()) @updatedAt @db.Timestamp
-
-  user    User @relation("UserTargets", fields: [userId], references: [id])
-  creator User @relation("TargetCreator", fields: [createdBy], references: [id])
-
-  @@map("employee_targets")
 }
