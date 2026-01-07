@@ -157,7 +157,7 @@ const PointOfSale = () => {
         taxAmount: Number(vat),
         totalAmount: Number(total),
         paymentMethod: (selectedPayment === 'bank-transfer' ? 'bank_transfer' : selectedPayment) as PaymentMethod,
-        status: 'completed' as const,
+        status: 'awaiting_delivery' as const,
         items: cart.map(item => ({
           productId: item.product.id,
           quantity: item.quantity,
@@ -175,8 +175,8 @@ const PointOfSale = () => {
       setReceiptOpen(true);
 
       toast({
-        title: 'Sale completed!',
-        description: `Total: ${formatCurrency(total)} via ${selectedPayment}`,
+        title: 'Order processed!',
+        description: `Total: ${formatCurrency(total)}. Sent to Stock Keeper for confirmation.`,
       });
       clearCart();
       setShowCart(false);
@@ -432,7 +432,7 @@ const PointOfSale = () => {
                   disabled={cart.length === 0}
                 >
                   <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Complete Sale
+                  Process Order
                 </Button>
               </div>
             </div>

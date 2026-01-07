@@ -115,7 +115,9 @@ const Sales = () => {
         (new Date(sale.originalSale.createdAt) >= dateRange.from &&
           new Date(sale.originalSale.createdAt) <= endOfDay(dateRange.to || dateRange.from)) : true;
 
-      return matchesSearch && matchesDate;
+      const matchesStatus = sale.status === 'completed';
+
+      return matchesSearch && matchesDate && matchesStatus;
     });
   }, [allSales, searchQuery, dateRange]);
 
@@ -130,12 +132,15 @@ const Sales = () => {
 
   const getStatusBadge = (status: string) => {
     if (status === 'completed') {
-      return <Badge className="bg-success text-success-foreground text-xs">Completed</Badge>;
+      return <Badge className="bg-success text-success-foreground text-xs font-semibold">Completed</Badge>;
     }
     if (status === 'refunded') {
-      return <Badge variant="destructive" className="text-xs">Refunded</Badge>;
+      return <Badge variant="destructive" className="text-xs font-semibold">Refunded</Badge>;
     }
-    return <Badge variant="secondary" className="text-xs">{status}</Badge>;
+    if (status === 'awaiting_delivery') {
+      return <Badge className="bg-warning text-warning-foreground text-xs font-semibold border-warning/20">Awaiting Delivery</Badge>;
+    }
+    return <Badge variant="secondary" className="text-xs font-semibold">{status}</Badge>;
   };
 
   const handleViewSale = (sale: any) => {

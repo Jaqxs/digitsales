@@ -44,7 +44,7 @@ export interface Sale {
   customerName?: string;
   employeeId: string;
   createdAt: Date;
-  status: 'completed' | 'refunded' | 'partial-refund';
+  status: 'completed' | 'refunded' | 'partial-refund' | 'awaiting_delivery';
 }
 
 export type PaymentMethod = 'cash' | 'card' | 'mpesa' | 'bank-transfer';
@@ -82,7 +82,7 @@ export interface User {
   updatedAt?: string;
 }
 
-export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'support';
+export type UserRole = 'admin' | 'manager' | 'sales' | 'inventory' | 'support' | 'stock_keeper';
 
 export interface Customer {
   id: string;

@@ -8,6 +8,7 @@ export class SaleService {
         employeeId?: string;
         startDate?: Date;
         endDate?: Date;
+        status?: string;
     }) {
         const {
             page = 1,
@@ -16,6 +17,7 @@ export class SaleService {
             employeeId,
             startDate,
             endDate,
+            status,
         } = options || {};
 
         const skip = (page - 1) * limit;
@@ -23,6 +25,7 @@ export class SaleService {
 
         if (customerId) where.customerId = customerId;
         if (employeeId) where.employeeId = employeeId;
+        if (status) where.status = status;
         if (startDate || endDate) {
             where.saleDate = {};
             if (startDate) where.saleDate.gte = startDate;
@@ -75,6 +78,7 @@ export class SaleService {
                     ...rest,
                     createdBy,
                     saleNumber: `SL-${Date.now()}`,
+                    status: 'awaiting_delivery',
                     saleItems: {
                         create: items.map((item: any) => ({
                             productId: item.productId,
@@ -127,5 +131,28 @@ export class SaleService {
 
     static async deleteAllSales() {
         return prisma.sale.deleteMany({});
+    }
+
+    static async confirmSale(saleId: string, confirmedBy: string) {
+        return prisma.$transaction(async (tx) => {
+            const sale = await tx.sale.findUnique({
+                where: { id: saleId },
+                include: { saleItems: true }
+            });
+
+            if (!sale) throw new Error('Sale not found');
+            if (sale.status !== 'awaiting_delivery') {
+                throw new Error(`Sale cannot be confirmed. Current status: ${sale.status}`);
+            }
+
+            return tx.sale.update({
+                where: { id: saleId },
+                data: {
+                    status: 'completed',
+                    confirmedAt: new Date(),
+                    confirmedBy,
+                },
+            });
+        });
     }
 }

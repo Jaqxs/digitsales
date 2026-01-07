@@ -41,6 +41,7 @@ const navigation = [
   { name: 'Customers', href: '/customers', icon: Users, route: 'customers' },
   { name: 'Employees', href: '/employees', icon: UserCircle, route: 'employees' },
   { name: 'Reports', href: '/reports', icon: BarChart3, route: 'reports' },
+  { name: 'Stock Movement', href: '/stock-movement', icon: Activity, route: 'stock-movement' },
   { name: 'System Logs', href: '/system-logs', icon: Activity, route: 'system-logs' },
   { name: 'Settings', href: '/settings', icon: Settings, route: 'settings' },
 ];

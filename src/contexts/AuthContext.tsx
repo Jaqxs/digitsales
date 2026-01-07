@@ -138,11 +138,12 @@ export function useAuth() {
 
 // Role permissions mapping
 export const rolePermissions: Record<UserRole, string[]> = {
-  admin: ['dashboard', 'pos', 'inventory', 'sales', 'customers', 'employees', 'reports', 'settings', 'system-logs'],
-  manager: ['dashboard', 'pos', 'inventory', 'sales', 'customers', 'employees', 'reports'],
-  sales: ['dashboard', 'pos', 'customers'],
-  inventory: ['dashboard', 'inventory'],
+  admin: ['dashboard', 'pos', 'inventory', 'sales', 'customers', 'employees', 'reports', 'settings', 'system-logs', 'stock-movement'],
+  manager: ['dashboard', 'pos', 'inventory', 'sales', 'customers', 'employees', 'reports', 'stock-movement'],
+  sales: ['dashboard', 'pos', 'customers', 'sales'],
+  inventory: ['dashboard', 'inventory', 'stock-movement'],
   support: ['dashboard', 'customers'],
+  stock_keeper: ['dashboard', 'inventory', 'stock-movement'],
 };
 
 export const canAccessRoute = (role: UserRole, route: string): boolean => {

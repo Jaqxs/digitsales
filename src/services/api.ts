@@ -310,6 +310,7 @@ export const saleAPI = {
     employeeId?: string;
     startDate?: string;
     endDate?: string;
+    status?: string;
   }) => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append('page', params.page.toString());
@@ -318,6 +319,7 @@ export const saleAPI = {
     if (params?.employeeId) searchParams.append('employeeId', params.employeeId);
     if (params?.startDate) searchParams.append('startDate', params.startDate);
     if (params?.endDate) searchParams.append('endDate', params.endDate);
+    if (params?.status) searchParams.append('status', params.status);
 
     const queryString = searchParams.toString();
     return apiRequest<{ sales: any[]; pagination: any }>(
@@ -337,6 +339,10 @@ export const saleAPI = {
   deleteAllSales: () =>
     apiRequest('/sales', {
       method: 'DELETE',
+    }),
+  confirmSale: (id: string) =>
+    apiRequest<any>(`/sales/${id}/confirm`, {
+      method: 'POST',
     }),
 };
 

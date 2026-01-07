@@ -91,7 +91,7 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
       customerId: null,
       notes: customerName ? `Customer: ${customerName}` : 'Walk-in Customer',
       employeeId: currentUser?.id || '',
-      status: 'completed',
+      status: 'awaiting_delivery',
     } as any);
 
     toast({
@@ -251,7 +251,7 @@ export function RecordInventoryModal({ open, onOpenChange }: RecordInventoryModa
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    updateStock(product.id, change);
+    updateStock(product.id, change, type as any, reason || `Stock ${type}`);
     addStockRecord({
       productId: product.id,
       productName: product.name,

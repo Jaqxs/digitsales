@@ -18,6 +18,7 @@ enum UserRole {
   sales
   inventory
   support
+  stock_keeper
 }
 
 enum CustomerType {
@@ -67,6 +68,7 @@ enum PaymentMethod {
 
 enum SaleStatus {
   pending
+  awaiting_delivery
   completed
   cancelled
   refunded
@@ -138,6 +140,7 @@ model User {
   generalLedger   GeneralLedger[]
   employeeTargets EmployeeTargets[] @relation("UserTargets")
   createdEmployeeTargets EmployeeTargets[] @relation("TargetCreator")
+  confirmedSales  Sale[]        @relation("SaleConfirmer")
 
   @@map("users")
 }
@@ -388,8 +391,10 @@ model Sale {
   changeAmount  Decimal @default(0) @db.Decimal(15, 2)
 
   // Status and notes
-  status        SaleStatus @default(completed)
+  status        SaleStatus @default(awaiting_delivery)
   notes         String?
+  confirmedAt   DateTime? @db.Timestamp
+  confirmedBy   String?   @db.Uuid
   createdBy     String  @db.Uuid
   createdAt     DateTime @default(now()) @db.Timestamp
   updatedAt     DateTime @default(now()) @updatedAt @db.Timestamp
@@ -398,6 +403,7 @@ model Sale {
   customer      Customer?           @relation(fields: [customerId], references: [id])
   employee      User                @relation("SaleEmployee", fields: [employeeId], references: [id])
   location      StockLocation?      @relation(fields: [locationId], references: [id])
+  confirmer     User?               @relation("SaleConfirmer", fields: [confirmedBy], references: [id])
   creator       User                @relation("SaleCreatedBy", fields: [createdBy], references: [id])
   saleItems     SaleItem[]
   paymentTransactions PaymentTransaction[]

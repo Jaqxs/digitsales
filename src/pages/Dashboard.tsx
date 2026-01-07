@@ -36,7 +36,8 @@ const Dashboard = () => {
       const saleDate = new Date(sale.createdAt);
       const matchesDate = dateRange?.from ?
         (saleDate >= dateRange.from && saleDate <= endOfDay(dateRange.to || dateRange.from)) : true;
-      return matchesDate;
+      const isCompleted = sale.status === 'completed';
+      return matchesDate && isCompleted;
     });
   }, [sales, dateRange]);
 

@@ -18,6 +18,7 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import SystemLogs from "./pages/SystemLogs";
 import Auth from "./pages/Auth";
+import StockMovement from "./pages/StockMovement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,7 @@ const App = () => {
                   <Route path="/employees" element={<ProtectedRoute routeName="employees"><Employees /></ProtectedRoute>} />
                   <Route path="/reports" element={<ProtectedRoute routeName="reports"><Reports /></ProtectedRoute>} />
                   <Route path="/settings" element={<ProtectedRoute routeName="settings"><Settings /></ProtectedRoute>} />
+                  <Route path="/stock-movement" element={<ProtectedRoute routeName="stock-movement"><StockMovement /></ProtectedRoute>} />
                   <Route path="/system-logs" element={<ProtectedRoute allowedRoles={['admin']}><SystemLogs /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

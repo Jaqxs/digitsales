@@ -279,6 +279,7 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
                     <SelectItem value="manager">Manager</SelectItem>
                     <SelectItem value="sales">Sales Staff</SelectItem>
                     <SelectItem value="inventory">Inventory Clerk</SelectItem>
+                    <SelectItem value="stock_keeper">Stock Keeper</SelectItem>
                     <SelectItem value="support">Customer Support</SelectItem>
                   </SelectContent>
                 </Select>

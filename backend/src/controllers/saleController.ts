@@ -46,3 +46,13 @@ export const deleteAllSales = async (req: Request, res: Response, next: NextFunc
         next(error);
     }
 };
+
+export const confirmSale = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) throw new Error('Unauthorized');
+        const sale = await SaleService.confirmSale(req.params.id, req.user.id);
+        res.status(200).json({ success: true, data: sale });
+    } catch (error) {
+        next(error);
+    }
+};
