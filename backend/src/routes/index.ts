@@ -58,9 +58,15 @@ export const setupRoutes = (): Router => {
       // 1. Add missing enum values via raw SQL
       await prisma.$executeRawUnsafe(`ALTER TYPE "SaleStatus" ADD VALUE IF NOT EXISTS 'awaiting_delivery'`);
       await prisma.$executeRawUnsafe(`ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'stock_keeper'`);
-      // 2. Ensure table defaults
+
+      // 2. Add missing columns if they don't exist
+      await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "confirmedAt" TIMESTAMP(6)`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "confirmedBy" UUID`);
+
+      // 3. Ensure table defaults
       await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ALTER COLUMN "status" SET DEFAULT 'awaiting_delivery'`);
-      // 3. Fix any existing nulls
+
+      // 4. Fix any existing nulls
       await prisma.$executeRawUnsafe(`UPDATE "sales" SET "status" = 'awaiting_delivery' WHERE "status" IS NULL`);
 
       res.json({
