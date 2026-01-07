@@ -55,6 +55,10 @@ export const setupRoutes = (): Router => {
     try {
       const { prisma } = await import('../config/database');
       const results: string[] = [];
+
+      const tables: any[] = await prisma.$queryRawUnsafe(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`);
+      results.push(`Found tables: ${tables.map(t => t.table_name).join(', ')}`);
+
       const runSql = async (sql: string, desc: string) => {
         try {
           await prisma.$executeRawUnsafe(sql);
@@ -66,16 +70,18 @@ export const setupRoutes = (): Router => {
 
       results.push('--- EMERGENCY DB SYNC STARTED ---');
       await runSql(`ALTER TYPE "SaleStatus" ADD VALUE IF NOT EXISTS 'awaiting_delivery'`, 'Enum SaleStatus');
-      await runSql(`ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'stock_keeper'`, 'Enum UserRole');
-      await runSql(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "confirmedAt" TIMESTAMP(6)`, 'Column confirmedAt');
-      await runSql(`ALTER TABLE "sales" ADD COLUMN IF NOT EXISTS "confirmedBy" UUID`, 'Column confirmedBy');
-      await runSql(`ALTER TABLE "sales" ALTER COLUMN "status" SET DEFAULT 'awaiting_delivery'`, 'Default status');
-      await runSql(`UPDATE "sales" SET "status" = 'awaiting_delivery' WHERE "status" IS NULL`, 'Fix nulls');
+
+      // Try both "sales" and "Sale" just in case
+      for (const t of ['sales', 'Sale']) {
+        await runSql(`ALTER TABLE "${t}" ADD COLUMN IF NOT EXISTS "confirmedAt" TIMESTAMP(6)`, `Column confirmedAt on ${t}`);
+        await runSql(`ALTER TABLE "${t}" ADD COLUMN IF NOT EXISTS "confirmedBy" UUID`, `Column confirmedBy on ${t}`);
+        await runSql(`ALTER TABLE "${t}" ALTER COLUMN "status" SET DEFAULT 'awaiting_delivery'`, `Default status on ${t}`);
+      }
 
       res.json({
         success: true,
         summary: results,
-        message: "Check the summary above. If all steps are green, restart Dokploy."
+        message: "Check the summary. If you see Green checks for 'sales', restart Dokploy."
       });
     } catch (e: any) {
       res.status(500).json({ success: false, error: e.message });
