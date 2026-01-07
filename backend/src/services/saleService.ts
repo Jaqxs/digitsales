@@ -69,29 +69,56 @@ export class SaleService {
     }
 
     static async createSale(saleData: any, createdBy: string) {
-        const { items, ...rest } = saleData;
+        const {
+            employeeId,
+            customerId,
+            subtotal,
+            discountAmount,
+            taxAmount,
+            totalAmount,
+            paymentMethod,
+            notes,
+            items
+        } = saleData;
 
         return prisma.$transaction(async (tx) => {
             // 1. Create the sale
             const sale = await tx.sale.create({
                 data: {
-                    ...rest,
+                    employeeId,
+                    customerId,
+                    subtotal: Number(subtotal),
+                    discountAmount: Number(discountAmount || 0),
+                    taxAmount: Number(taxAmount || 0),
+                    totalAmount: Number(totalAmount),
+                    paymentMethod,
+                    notes,
                     createdBy,
                     saleNumber: `SL-${Date.now()}`,
                     status: 'awaiting_delivery',
                     saleItems: {
                         create: items.map((item: any) => ({
                             productId: item.productId,
-                            quantity: item.quantity,
-                            unitPrice: item.unitPrice,
-                            taxAmount: item.taxAmount || 0,
-                            discountAmount: item.discountAmount || 0,
-                            lineTotal: item.lineTotal,
+                            quantity: Number(item.quantity),
+                            unitPrice: Number(item.unitPrice),
+                            taxAmount: Number(item.taxAmount || 0),
+                            discountAmount: Number(item.discountAmount || 0),
+                            lineTotal: Number(item.lineTotal),
                         })),
                     },
                 },
                 include: {
-                    saleItems: true,
+                    customer: true,
+                    employee: {
+                        include: {
+                            userProfile: true
+                        }
+                    },
+                    saleItems: {
+                        include: {
+                            product: true
+                        }
+                    },
                 },
             });
 
@@ -141,7 +168,7 @@ export class SaleService {
             });
 
             if (!sale) throw new Error('Sale not found');
-            if (sale.status !== 'awaiting_delivery') {
+            if ((sale.status as string) !== 'awaiting_delivery') {
                 throw new Error(`Sale cannot be confirmed. Current status: ${sale.status}`);
             }
 
@@ -151,7 +178,7 @@ export class SaleService {
                     status: 'completed',
                     confirmedAt: new Date(),
                     confirmedBy,
-                },
+                } as any,
             });
         });
     }

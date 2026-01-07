@@ -150,7 +150,7 @@ const PointOfSale = () => {
     try {
       // Create sale object structured for backend
       const saleData = {
-        employeeId: currentUser?.id || '',
+        employeeId: currentUser?.id || undefined,
         customerId: null,
         subtotal: Number(subtotal),
         discountAmount: 0,

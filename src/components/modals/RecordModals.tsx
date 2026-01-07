@@ -90,7 +90,7 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
       paymentMethod: paymentMethod === 'bank-transfer' ? 'bank_transfer' : paymentMethod,
       customerId: null,
       notes: customerName ? `Customer: ${customerName}` : 'Walk-in Customer',
-      employeeId: currentUser?.id || '',
+      employeeId: currentUser?.id || undefined,
       status: 'awaiting_delivery',
     } as any);
 
