@@ -4,7 +4,7 @@
   "description": "Backend API for Zantrix POS System",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx prisma generate && tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "clean": "rm -rf dist",

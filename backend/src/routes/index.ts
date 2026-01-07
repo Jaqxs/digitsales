@@ -50,6 +50,29 @@ export const setupRoutes = (): Router => {
     }
   });
 
+  // EMERGENCY FIX ROUTE for Remote Databases
+  router.get('/force-sync-db', async (req, res) => {
+    try {
+      const { prisma } = await import('../config/database');
+      console.log('--- EMERGENCY DB SYNC STARTED ---');
+      // 1. Add missing enum values via raw SQL
+      await prisma.$executeRawUnsafe(`ALTER TYPE "SaleStatus" ADD VALUE IF NOT EXISTS 'awaiting_delivery'`);
+      await prisma.$executeRawUnsafe(`ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'stock_keeper'`);
+      // 2. Ensure table defaults
+      await prisma.$executeRawUnsafe(`ALTER TABLE "sales" ALTER COLUMN "status" SET DEFAULT 'awaiting_delivery'`);
+      // 3. Fix any existing nulls
+      await prisma.$executeRawUnsafe(`UPDATE "sales" SET "status" = 'awaiting_delivery' WHERE "status" IS NULL`);
+
+      res.json({
+        success: true,
+        message: "Remote database synchronized. Please restart the Dokploy service to refresh the Prisma Client."
+      });
+    } catch (e: any) {
+      console.error('Sync failed:', e);
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
   // API routes
   router.use('/auth', authRoutes);
   router.use('/employees', employeeRoutes);
