@@ -26,7 +26,10 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
     const receiptTotal = sale?.total || total || 0;
     const receiptPayment = sale?.paymentMethod || paymentMethod || 'cash';
     const receiptDate = sale?.createdAt ? new Date(sale.createdAt) : new Date();
-    const receiptId = sale?.id || `REC-${Date.now().toString().slice(-8)}`;
+    // Simplified, cleaner receipt number (last 8 chars if it's a long hex ID)
+    const receiptId = sale?.id
+      ? (sale.id.length > 10 ? sale.id.slice(-8).toUpperCase() : sale.id.toUpperCase())
+      : `TXN${Date.now().toString().slice(-6)}`;
     const receiptCustomer = sale?.customerName || customerName || 'Walk-in Customer';
 
     const paymentLabels: Record<string, string> = {
@@ -58,24 +61,26 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
           </div>
         </div>
 
-        {/* Reference Section - Well Arranged */}
-        <div className="bg-zinc-50 rounded-lg p-3 mb-4 space-y-1.5 border border-zinc-100">
-          <div className="flex justify-between items-center text-[10px]">
-            <span className="text-zinc-500 font-semibold uppercase">Receipt No</span>
-            <span className="font-bold text-zinc-900">#{receiptId}</span>
+        {/* Simplified & Clean Reference Section */}
+        <div className="mb-6 border-y-2 border-zinc-100 py-4 space-y-4">
+          <div className="text-center">
+            <p className="text-[9px] text-zinc-400 uppercase font-black tracking-[0.2em] mb-1">Receipt Number</p>
+            <p className="text-xl font-black text-zinc-900 tracking-tighter">#{receiptId}</p>
           </div>
-          <div className="flex justify-between items-center text-[10px]">
-            <span className="text-zinc-500 font-semibold uppercase">Date & Time</span>
-            <span className="font-medium">{formatDateTime(receiptDate)}</span>
-          </div>
-          <div className="h-px bg-zinc-200 my-1" />
-          <div className="flex justify-between items-center text-[10px]">
-            <span className="text-zinc-500 font-semibold uppercase">Cashier</span>
-            <span className="font-medium uppercase">{cashierName || 'POS Admin'}</span>
-          </div>
-          <div className="flex justify-between items-center text-[10px]">
-            <span className="text-zinc-500 font-semibold uppercase">Customer</span>
-            <span className="font-bold text-primary truncate max-w-[140px]">{receiptCustomer}</span>
+
+          <div className="grid grid-cols-2 gap-y-2.5 px-1">
+            <div className="space-y-0.5 text-left font-medium">
+              <p className="text-[8px] text-zinc-400 uppercase tracking-widest leading-none">Date & Time</p>
+              <p className="text-[10px] text-zinc-800 leading-none">{formatDateTime(receiptDate)}</p>
+            </div>
+            <div className="space-y-0.5 text-right font-medium">
+              <p className="text-[8px] text-zinc-400 uppercase tracking-widest leading-none">Cashier</p>
+              <p className="text-[10px] text-zinc-800 leading-none uppercase">{cashierName || 'John Doe'}</p>
+            </div>
+            <div className="space-y-0.5 text-left font-medium col-span-2 pt-1 border-t border-zinc-50">
+              <p className="text-[8px] text-zinc-400 uppercase tracking-widest leading-none">Customer Information</p>
+              <p className="text-[11px] text-primary font-black leading-none">{receiptCustomer}</p>
+            </div>
           </div>
         </div>
 

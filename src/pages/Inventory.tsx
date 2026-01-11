@@ -230,7 +230,7 @@ const Inventory = () => {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button size="sm" className="gap-2" onClick={handleAddNew}>
+          <Button size="sm" className="gap-2 btn-brand-orange" onClick={handleAddNew}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Add</span> Product
           </Button>

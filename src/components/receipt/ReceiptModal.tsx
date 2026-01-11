@@ -97,6 +97,7 @@ export function ReceiptModal({
               .border-zinc-200 { border-color: #e4e4e7; }
               .border-t { border-top: 1px solid #18181b; }
               .border-t-2 { border-top: 2px solid #18181b; }
+              .border-y-2 { border-top: 2px solid #f4f4f5; border-bottom: 2px solid #f4f4f5; }
               .border-dashed { border-style: dashed; }
               .font-bold { font-weight: 700; }
               .font-black { font-weight: 900; }
@@ -107,11 +108,17 @@ export function ReceiptModal({
               .lowercase { text-transform: lowercase; }
               .flex { display: flex; }
               .flex-col { flex-direction: column; }
+              .grid { display: grid; }
+              .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+              .col-span-2 { grid-column: span 2 / span 2; }
               .justify-between { justify-content: space-between; }
+              .justify-center { justify-content: center; }
               .items-center { align-items: center; }
               .gap-0\\.5 { gap: 2px; }
               .gap-1\\.5 { gap: 6px; }
+              .gap-2\\.5 { gap: 10px; }
               .gap-4 { gap: 16px; }
+              .mb-1 { margin-bottom: 4px; }
               .mb-2 { margin-bottom: 8px; }
               .mb-3 { margin-bottom: 12px; }
               .mb-4 { margin-bottom: 16px; }
@@ -119,19 +126,38 @@ export function ReceiptModal({
               .mt-1 { margin-top: 4px; }
               .mt-2 { margin-top: 8px; }
               .my-1 { margin-top: 4px; margin-bottom: 4px; }
+              .p-2 { padding: 8px; }
               .p-3 { padding: 12px; }
+              .p-4 { padding: 16px; }
               .p-6 { padding: 24px; }
+              .px-1 { padding-left: 4px; padding-right: 4px; }
+              .py-2 { padding-top: 8px; padding-bottom: 8px; }
+              .py-4 { padding-top: 16px; padding-bottom: 16px; }
+              .pt-1 { padding-top: 4px; }
               .pt-3 { padding-top: 12px; }
               .pt-4 { padding-top: 16px; }
               .pb-2 { padding-bottom: 8px; }
+              .space-y-0\\.5 > * + * { margin-top: 2px; }
+              .space-y-1 { margin-top: 4px; }
+              .space-y-1\\.5 > * + * { margin-top: 6px; }
+              .space-y-2 > * + * { margin-top: 8px; }
+              .space-y-3 > * + * { margin-top: 12px; }
+              .space-y-4 > * + * { margin-top: 16px; }
+              .text-left { text-align: left; }
               .rounded-lg { border-radius: 8px; }
               .rounded { border-radius: 4px; }
               .tracking-tight { letter-spacing: -0.025em; }
+              .tracking-tighter { letter-spacing: -0.05em; }
               .tracking-wider { letter-spacing: 0.05em; }
               .tracking-widest { letter-spacing: 0.1em; }
               .text-base { font-size: 14px; }
               .text-xs { font-size: 11px; }
               .text-lg { font-size: 16px; }
+              .text-xl { font-size: 20px; }
+              .text-\\[10px\\] { font-size: 10px; }
+              .text-\\[9px\\] { font-size: 9px; }
+              .text-\\[8px\\] { font-size: 8px; }
+              .text-\\[11px\\] { font-size: 11px; }
               .text-primary { color: hsl(221, 66%, 45%); }
               .bg-primary { background-color: hsl(221, 66%, 45%); }
               .text-primary-foreground { color: #f8fafc; }
@@ -235,6 +261,7 @@ export function ReceiptModal({
               .border-zinc-200 { border-color: #e4e4e7; }
               .border-t { border-top: 1px solid #18181b; }
               .border-t-2 { border-top: 2px solid #18181b; }
+              .border-y-2 { border-top: 2px solid #f4f4f5; border-bottom: 2px solid #f4f4f5; }
               .border-dashed { border-style: dashed; }
               .font-bold { font-weight: 700; }
               .font-black { font-weight: 900; }
@@ -245,11 +272,17 @@ export function ReceiptModal({
               .lowercase { text-transform: lowercase; }
               .flex { display: flex; }
               .flex-col { flex-direction: column; }
+              .grid { display: grid; }
+              .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+              .col-span-2 { grid-column: span 2 / span 2; }
               .justify-between { justify-content: space-between; }
+              .justify-center { justify-content: center; }
               .items-center { align-items: center; }
               .gap-0\\.5 { gap: 2px; }
               .gap-1\\.5 { gap: 6px; }
+              .gap-2\\.5 { gap: 10px; }
               .gap-4 { gap: 16px; }
+              .mb-1 { margin-bottom: 4px; }
               .mb-2 { margin-bottom: 8px; }
               .mb-3 { margin-bottom: 12px; }
               .mb-4 { margin-bottom: 16px; }
@@ -257,19 +290,38 @@ export function ReceiptModal({
               .mt-1 { margin-top: 4px; }
               .mt-2 { margin-top: 8px; }
               .my-1 { margin-top: 4px; margin-bottom: 4px; }
+              .p-2 { padding: 8px; }
               .p-3 { padding: 12px; }
+              .p-4 { padding: 16px; }
               .p-6 { padding: 24px; }
+              .px-1 { padding-left: 4px; padding-right: 4px; }
+              .py-2 { padding-top: 8px; padding-bottom: 8px; }
+              .py-4 { padding-top: 16px; padding-bottom: 16px; }
+              .pt-1 { padding-top: 4px; }
               .pt-3 { padding-top: 12px; }
               .pt-4 { padding-top: 16px; }
               .pb-2 { padding-bottom: 8px; }
+              .space-y-0\\.5 > * + * { margin-top: 2px; }
+              .space-y-1 { margin-top: 4px; }
+              .space-y-1\\.5 > * + * { margin-top: 6px; }
+              .space-y-2 > * + * { margin-top: 8px; }
+              .space-y-3 > * + * { margin-top: 12px; }
+              .space-y-4 > * + * { margin-top: 16px; }
+              .text-left { text-align: left; }
               .rounded-lg { border-radius: 8px; }
               .rounded { border-radius: 4px; }
               .tracking-tight { letter-spacing: -0.025em; }
+              .tracking-tighter { letter-spacing: -0.05em; }
               .tracking-wider { letter-spacing: 0.05em; }
               .tracking-widest { letter-spacing: 0.1em; }
               .text-base { font-size: 14px; }
               .text-xs { font-size: 11px; }
               .text-lg { font-size: 16px; }
+              .text-xl { font-size: 20px; }
+              .text-\\[10px\\] { font-size: 10px; }
+              .text-\\[9px\\] { font-size: 9px; }
+              .text-\\[8px\\] { font-size: 8px; }
+              .text-\\[11px\\] { font-size: 11px; }
               .text-primary { color: hsl(221, 66%, 45%); }
               .bg-primary { background-color: hsl(221, 66%, 45%); }
               .text-primary-foreground { color: #f8fafc; }

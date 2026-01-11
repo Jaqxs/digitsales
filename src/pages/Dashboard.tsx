@@ -117,7 +117,7 @@ const Dashboard = () => {
             <Package className="h-4 w-4" />
             <span className="hidden sm:inline">Record</span> Inventory
           </Button>
-          <Button size="sm" className="gap-2" onClick={() => setRecordSaleOpen(true)}>
+          <Button size="sm" className="gap-2 btn-brand-orange" onClick={() => setRecordSaleOpen(true)}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Record</span> Sale
           </Button>
@@ -150,14 +150,14 @@ const Dashboard = () => {
             value={formatNumber(totalOrders)}
             change={0}
             icon={<ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />}
-            iconColor="primary"
+            iconColor="brand"
           />
           <StatsCard
             title="Products"
             value={formatNumber(products.length)}
             change={0}
             icon={<Package className="h-5 w-5 sm:h-6 sm:w-6" />}
-            iconColor="info"
+            iconColor="primary"
           />
           <StatsCard
             title="Low Stock"

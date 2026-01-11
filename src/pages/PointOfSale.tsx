@@ -432,7 +432,7 @@ const PointOfSale = () => {
                   Hold
                 </Button>
                 <Button
-                  className="flex-1 gap-1.5 sm:gap-2 h-10 sm:h-11 text-xs sm:text-sm"
+                  className="flex-1 gap-1.5 sm:gap-2 h-10 sm:h-11 text-xs sm:text-sm btn-brand-orange"
                   onClick={handleCheckout}
                   disabled={cart.length === 0}
                 >

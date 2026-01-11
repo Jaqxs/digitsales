@@ -101,7 +101,7 @@ export function MobileHeader() {
                   cn(
                     'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-gradient-to-r from-primary to-primary-dark text-primary-foreground shadow-lg'
+                      ? 'bg-accent text-accent-foreground shadow-lg'
                       : 'text-sidebar-foreground hover:bg-sidebar-accent'
                   )
                 }
@@ -195,7 +195,7 @@ export function AppSidebar({ className }: SidebarProps) {
               className={cn(
                 'group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300',
                 isActive
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                  ? 'bg-accent/10 text-accent font-bold shadow-sm border-r-4 border-accent translate-x-1'
                   : 'text-foreground/70 hover:bg-white/50 hover:text-primary hover:shadow-sm',
                 isSidebarCollapsed && 'justify-center px-0'
               )}

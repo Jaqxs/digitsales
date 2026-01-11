@@ -266,7 +266,7 @@ const Sales = () => {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button size="sm" className="gap-2" onClick={() => setRecordSaleOpen(true)}>
+          <Button size="sm" className="gap-2 btn-brand-orange" onClick={() => setRecordSaleOpen(true)}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Record</span> Sale
           </Button>

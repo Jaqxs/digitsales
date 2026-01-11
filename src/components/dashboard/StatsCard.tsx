@@ -8,7 +8,7 @@ interface StatsCardProps {
   change?: number;
   changeLabel?: string;
   icon: ReactNode;
-  iconColor?: 'primary' | 'success' | 'warning' | 'destructive' | 'info';
+  iconColor?: 'primary' | 'success' | 'warning' | 'destructive' | 'info' | 'brand';
   className?: string;
 }
 
@@ -18,6 +18,7 @@ const iconColors = {
   warning: 'bg-warning-light text-warning border-warning/20',
   destructive: 'bg-destructive-light text-destructive border-destructive/20',
   info: 'bg-info-light text-info border-info/20',
+  brand: 'bg-accent/10 text-accent border-accent/20',
 };
 
 const glowColors = {
@@ -26,6 +27,7 @@ const glowColors = {
   warning: 'hover:shadow-[0_0_30px_hsl(var(--warning)/0.15)]',
   destructive: 'hover:shadow-[0_0_30px_hsl(var(--destructive)/0.15)]',
   info: 'hover:shadow-[0_0_30px_hsl(var(--info)/0.15)]',
+  brand: 'hover:shadow-[0_0_30px_hsl(var(--accent)/0.15)]',
 };
 
 export function StatsCard({
@@ -57,7 +59,7 @@ export function StatsCard({
     >
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/[0.02] pointer-events-none" />
-      
+
       <div className="relative flex items-start justify-between">
         <div className="space-y-2 sm:space-y-3">
           <p className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wide">{title}</p>

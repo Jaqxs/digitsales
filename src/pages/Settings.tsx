@@ -173,7 +173,7 @@ const Settings = () => {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSave} className="gap-2">
+                  <Button onClick={handleSave} variant="brand" className="gap-2">
                     <Save className="h-4 w-4" />
                     Save Changes
                   </Button>
@@ -241,7 +241,7 @@ const Settings = () => {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSave} className="gap-2">
+                  <Button onClick={handleSave} variant="brand" className="gap-2">
                     <Save className="h-4 w-4" />
                     Save Changes
                   </Button>
@@ -316,7 +316,7 @@ const Settings = () => {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSave} className="gap-2">
+                  <Button onClick={handleSave} variant="brand" className="gap-2">
                     <Save className="h-4 w-4" />
                     Save Changes
                   </Button>
@@ -383,7 +383,7 @@ const Settings = () => {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSave} className="gap-2">
+                  <Button onClick={handleSave} variant="brand" className="gap-2">
                     <Save className="h-4 w-4" />
                     Save Changes
                   </Button>

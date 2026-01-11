@@ -280,7 +280,7 @@ const Auth = () => {
                 <div className="pt-4">
                   <Button
                     type="submit"
-                    variant="glow"
+                    variant="brand"
                     size="lg"
                     className="w-full gap-2 h-14 rounded-2xl text-base font-bold shadow-lg"
                     disabled={isSubmitting}

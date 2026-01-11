@@ -18,6 +18,8 @@ const buttonVariants = cva(
         glow: "bg-primary text-primary-foreground shadow-glow hover:shadow-glow-lg hover:bg-primary/90 hover:-translate-y-0.5",
         gradient: "gradient-primary text-primary-foreground shadow-lg hover:shadow-xl hover:-translate-y-0.5 btn-glow",
         success: "bg-success text-success-foreground shadow-md hover:bg-success/90 hover:shadow-lg",
+        brand: "bg-accent text-accent-foreground shadow-md hover:bg-accent/90 hover:shadow-lg hover:-translate-y-0.5",
+        brandOutline: "border-2 border-accent text-accent hover:bg-accent hover:text-accent-foreground shadow-sm",
       },
       size: {
         default: "h-10 px-5 py-2",
@@ -36,7 +38,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 

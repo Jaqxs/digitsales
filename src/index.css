@@ -273,6 +273,27 @@
   .btn-glow:hover::before {
     transform: translateX(100%);
   }
+
+  /* Orange Brand Utilities */
+  .btn-brand-orange {
+    @apply bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all duration-300;
+  }
+
+  .btn-brand-orange-outline {
+    @apply border-2 border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300;
+  }
+
+  .bg-brand-orange-light {
+    @apply bg-accent/10 text-accent;
+  }
+
+  .border-brand-orange {
+    @apply border-accent/30 focus-within:border-accent;
+  }
+
+  .sidebar-item-active {
+    @apply bg-accent/10 text-accent font-semibold shadow-sm border-r-2 border-accent;
+  }
 }
 
 @layer utilities {
