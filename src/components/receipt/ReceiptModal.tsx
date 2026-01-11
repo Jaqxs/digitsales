@@ -8,8 +8,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Receipt } from './Receipt';
 import { Sale, CartItem } from '@/types/pos';
-import { Printer, Download, X } from 'lucide-react';
+import { Printer, Download, Truck, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DeliveryNoteModal } from './';
+import { useState } from 'react';
 
 interface ReceiptModalProps {
   open: boolean;
@@ -38,6 +40,7 @@ export function ReceiptModal({
 }: ReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [deliveryNoteOpen, setDeliveryNoteOpen] = useState(false);
 
   const handlePrint = () => {
     if (!receiptRef.current) return;
@@ -367,7 +370,18 @@ export function ReceiptModal({
       <DialogContent className="max-w-sm sm:max-w-md p-0 overflow-hidden max-h-[90vh]">
         <DialogHeader className="p-4 pb-0">
           <DialogTitle className="flex items-center justify-between">
-            <span>Receipt</span>
+            <div className="flex items-center gap-2">
+              <span>Receipt</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1 text-[10px] font-bold border-accent text-accent hover:bg-accent hover:text-white"
+                onClick={() => setDeliveryNoteOpen(true)}
+              >
+                <Truck className="h-3 w-3" />
+                Delivery Note
+              </Button>
+            </div>
             <Button
               variant="ghost"
               size="icon"
@@ -414,6 +428,16 @@ export function ReceiptModal({
           </Button>
         </div>
       </DialogContent>
-    </Dialog>
+
+      {
+        sale && (
+          <DeliveryNoteModal
+            open={deliveryNoteOpen}
+            onOpenChange={setDeliveryNoteOpen}
+            sale={sale}
+          />
+        )
+      }
+    </Dialog >
   );
 }

@@ -40,10 +40,11 @@ import {
   Plus,
   Printer,
   FileText,
+  Truck,
   MoreVertical,
 } from 'lucide-react';
 import { RecordSaleModal } from '@/components/modals';
-import { ReceiptModal, InvoiceModal } from '@/components/receipt';
+import { ReceiptModal, InvoiceModal, DeliveryNoteModal } from '@/components/receipt';
 import {
   Dialog,
   DialogContent,
@@ -69,6 +70,7 @@ const Sales = () => {
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<any>(null);
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
+  const [deliveryNoteOpen, setDeliveryNoteOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
@@ -196,6 +198,28 @@ const Sales = () => {
     setInvoiceOpen(true);
   };
 
+  const handlePrintDeliveryNote = (sale: any) => {
+    if (sale.originalSale) {
+      setReceiptSale(sale.originalSale);
+    } else {
+      const vatRate = business.vatRate / 100;
+      const subtotal = sale.total / (1 + vatRate);
+      setReceiptSale({
+        id: sale.id.replace('#', ''),
+        items: [],
+        subtotal: subtotal,
+        discount: 0,
+        vat: sale.total - subtotal,
+        total: sale.total,
+        paymentMethod: sale.payment.toLowerCase() as any,
+        employeeId: '1',
+        createdAt: new Date(sale.date),
+        status: sale.status as any,
+      });
+    }
+    setDeliveryNoteOpen(true);
+  };
+
   const handleExport = () => {
     // Export mostly what's visible or all sales
     const dataToExport = filteredSales.map(s => ({
@@ -241,6 +265,10 @@ const Sales = () => {
             <DropdownMenuItem onClick={() => handlePrintInvoice(sale)}>
               <FileText className="h-4 w-4 mr-2" />
               Print Invoice
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handlePrintDeliveryNote(sale)}>
+              <Truck className="h-4 w-4 mr-2" />
+              Print Delivery Note
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -432,6 +460,10 @@ const Sales = () => {
                                 <FileText className="h-4 w-4 mr-2" />
                                 Print Invoice
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handlePrintDeliveryNote(sale)}>
+                                <Truck className="h-4 w-4 mr-2" />
+                                Print Delivery Note
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -533,6 +565,14 @@ const Sales = () => {
         <InvoiceModal
           open={invoiceOpen}
           onOpenChange={setInvoiceOpen}
+          sale={receiptSale}
+        />
+      )}
+
+      {receiptSale && (
+        <DeliveryNoteModal
+          open={deliveryNoteOpen}
+          onOpenChange={setDeliveryNoteOpen}
           sale={receiptSale}
         />
       )}

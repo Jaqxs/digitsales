@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Printer, Download, FileText } from 'lucide-react';
+import { Printer, Download, FileText, Truck } from 'lucide-react';
 import Invoice from './Invoice';
+import DeliveryNoteModal from './DeliveryNoteModal';
 import { Sale } from '@/types/pos';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -28,6 +29,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({ open, onOpenChange, sale })
     tin: '',
     vrn: '',
   });
+  const [deliveryNoteOpen, setDeliveryNoteOpen] = useState(false);
 
   const handlePrint = () => {
     const printContent = document.getElementById('invoice-content');
@@ -140,9 +142,20 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({ open, onOpenChange, sale })
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Generate Invoice
+          <DialogTitle>
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Generate Invoice
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-4 h-7 gap-1 text-[10px] font-bold border-accent text-accent hover:bg-accent hover:text-white"
+                onClick={() => setDeliveryNoteOpen(true)}
+              >
+                <Truck className="h-3 w-3" />
+                Delivery Note
+              </Button>
+            </div>
           </DialogTitle>
         </DialogHeader>
 
@@ -248,8 +261,8 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({ open, onOpenChange, sale })
 
           <TabsContent value="preview" className="mt-4">
             <div className="border rounded-lg overflow-auto max-h-[60vh] bg-gray-100 p-4">
-              <Invoice 
-                sale={sale} 
+              <Invoice
+                sale={sale}
                 invoiceType={invoiceType}
                 customerInfo={customerInfo}
                 printedBy={user?.name || 'System'}
@@ -269,6 +282,12 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({ open, onOpenChange, sale })
           </Button>
         </div>
       </DialogContent>
+
+      <DeliveryNoteModal
+        open={deliveryNoteOpen}
+        onOpenChange={setDeliveryNoteOpen}
+        sale={sale}
+      />
     </Dialog>
   );
 };
