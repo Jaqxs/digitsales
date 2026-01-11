@@ -113,7 +113,7 @@ const Auth = () => {
 
             <h1 className="text-4xl xl:text-5xl font-display font-bold text-white mb-6 leading-tight">
               Powerful POS for
-              <span className="block text-gradient bg-gradient-to-r from-primary to-orange-400">Construction Retail</span>
+              <span className="block text-gradient bg-gradient-to-r from-primary to-accent">Construction Retail</span>
             </h1>
 
             <p className="text-lg text-white/70 mb-12 leading-relaxed">

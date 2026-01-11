@@ -219,7 +219,7 @@ export function AppSidebar({ className }: SidebarProps) {
           'flex items-center gap-3 rounded-xl p-2 transition-all duration-300',
           !isSidebarCollapsed && 'bg-white/50 border border-white/40 shadow-sm'
         )}>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary to-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md ring-2 ring-white">
+          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md ring-2 ring-white">
             {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
           </div>
           {!isSidebarCollapsed && (

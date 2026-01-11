@@ -21,6 +21,7 @@ interface ReceiptModalProps {
   total?: number;
   paymentMethod?: string;
   customerName?: string;
+  cashierName?: string;
 }
 
 export function ReceiptModal({
@@ -33,6 +34,7 @@ export function ReceiptModal({
   total,
   paymentMethod,
   customerName,
+  cashierName,
 }: ReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -42,7 +44,7 @@ export function ReceiptModal({
 
     const printContent = receiptRef.current.innerHTML;
     const printWindow = window.open('', '_blank', 'width=320,height=600');
-    
+
     if (printWindow) {
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -50,74 +52,102 @@ export function ReceiptModal({
           <head>
             <title>Receipt - Zantrix POS</title>
             <style>
+              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+              
+              :root {
+                --primary: 221 66% 45%;
+                --primary-foreground: 210 40% 98%;
+              }
+
               * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
               }
               body {
-                font-family: 'Courier New', Courier, monospace;
-                font-size: 10px;
-                line-height: 1.3;
-                color: #000;
+                font-family: 'Inter', -apple-system, sans-serif;
+                font-size: 11px;
+                line-height: 1.4;
+                color: #18181b;
                 background: #fff;
-                padding: 8px;
-                width: 80mm; /* Thermal printer width */
+                width: 80mm;
                 max-width: 80mm;
+              }
+              .receipt-container {
+                width: 100%;
+                padding: 10mm 4mm;
               }
               img {
                 max-width: 100%;
                 height: auto;
               }
-              .receipt-container {
-                width: 100%;
-              }
               .text-center { text-align: center; }
               .text-right { text-align: right; }
-              .font-bold { font-weight: bold; }
+              .text-zinc-900 { color: #18181b; }
+              .text-zinc-800 { color: #27272a; }
+              .text-zinc-500 { color: #71717a; }
+              .text-zinc-400 { color: #a1a1aa; }
+              .text-zinc-300 { color: #d4d4d8; }
+              .bg-zinc-50 { background-color: #fafafa; }
+              .bg-zinc-200 { background-color: #e4e4e7; }
+              .border-zinc-100 { border: 1px solid #f4f4f5; }
+              .border-zinc-50 { border-bottom: 1px solid #fafafa; }
+              .border-zinc-200 { border-color: #e4e4e7; }
+              .border-t { border-top: 1px solid #18181b; }
+              .border-t-2 { border-top: 2px solid #18181b; }
+              .border-dashed { border-style: dashed; }
+              .font-bold { font-weight: 700; }
+              .font-black { font-weight: 900; }
+              .font-medium { font-weight: 500; }
+              .font-semibold { font-weight: 600; }
+              .italic { font-style: italic; }
+              .uppercase { text-transform: uppercase; }
+              .lowercase { text-transform: lowercase; }
               .flex { display: flex; }
+              .flex-col { flex-direction: column; }
               .justify-between { justify-content: space-between; }
               .items-center { align-items: center; }
-              .flex-1 { flex: 1; }
-              .truncate { 
-                overflow: hidden; 
-                text-overflow: ellipsis; 
-                white-space: nowrap; 
-              }
-              .space-y-1 > * + * { margin-top: 4px; }
+              .gap-0\\.5 { gap: 2px; }
+              .gap-1\\.5 { gap: 6px; }
+              .gap-4 { gap: 16px; }
               .mb-2 { margin-bottom: 8px; }
               .mb-3 { margin-bottom: 12px; }
               .mb-4 { margin-bottom: 16px; }
+              .mb-6 { margin-bottom: 24px; }
               .mt-1 { margin-top: 4px; }
-              .mt-3 { margin-top: 12px; }
-              .mt-4 { margin-top: 16px; }
-              .my-2 { margin-top: 8px; margin-bottom: 8px; }
-              .my-3 { margin-top: 12px; margin-bottom: 12px; }
-              .pt-1 { padding-top: 4px; }
-              .pt-2 { padding-top: 8px; }
-              .pl-2 { padding-left: 8px; }
-              .pr-1 { padding-right: 4px; }
-              .w-8 { width: 32px; }
-              .w-20 { width: 80px; }
-              .border-t { border-top: 1px dashed #000; }
-              .border-dashed { border-style: dashed; }
-              .border-black { border-color: #000; }
-              .text-gray-600 { color: #666; }
-              .inline-block { display: inline-block; }
-              .gap-\\[1px\\] { gap: 1px; }
-              .justify-center { justify-content: center; }
-              .h-12 { height: 48px; }
-              .mx-auto { margin-left: auto; margin-right: auto; }
-              .text-sm { font-size: 12px; }
-              .text-\\[10px\\] { font-size: 10px; }
-              .text-\\[9px\\] { font-size: 9px; }
-              .text-\\[8px\\] { font-size: 8px; }
-              .leading-tight { line-height: 1.2; }
+              .mt-2 { margin-top: 8px; }
+              .my-1 { margin-top: 4px; margin-bottom: 4px; }
+              .p-3 { padding: 12px; }
+              .p-6 { padding: 24px; }
+              .pt-3 { padding-top: 12px; }
+              .pt-4 { padding-top: 16px; }
+              .pb-2 { padding-bottom: 8px; }
+              .rounded-lg { border-radius: 8px; }
+              .rounded { border-radius: 4px; }
+              .tracking-tight { letter-spacing: -0.025em; }
+              .tracking-wider { letter-spacing: 0.05em; }
+              .tracking-widest { letter-spacing: 0.1em; }
+              .text-base { font-size: 14px; }
+              .text-xs { font-size: 11px; }
+              .text-lg { font-size: 16px; }
+              .text-primary { color: hsl(221, 66%, 45%); }
+              .bg-primary { background-color: hsl(221, 66%, 45%); }
+              .text-primary-foreground { color: #f8fafc; }
+              .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+              .max-w-\\[140px\\] { max-width: 140px; }
+              .max-w-\\[200px\\] { max-width: 200px; }
+              .h-14 { height: 56px; }
+              .h-px { height: 1px; }
+              .h-8 { height: 32px; }
+              .opacity-80 { opacity: 0.8; }
+              .whitespace-nowrap { white-space: nowrap; }
+              .underline { text-decoration: underline; }
+              .underline-offset-4 { underline-offset: 4px; }
+              .decoration-2 { text-decoration-thickness: 2px; }
+              
               @media print {
-                body { 
-                  width: 80mm;
-                  padding: 4px;
-                }
                 @page {
                   size: 80mm auto;
                   margin: 0;
@@ -131,13 +161,13 @@ export function ReceiptModal({
         </html>
       `);
       printWindow.document.close();
-      
+
       // Wait for images to load then print
       printWindow.onload = () => {
         printWindow.print();
         printWindow.close();
       };
-      
+
       // Fallback if onload doesn't fire
       setTimeout(() => {
         printWindow.print();
@@ -152,7 +182,7 @@ export function ReceiptModal({
 
     const printContent = receiptRef.current.innerHTML;
     const printWindow = window.open('', '_blank', 'width=320,height=600');
-    
+
     if (printWindow) {
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -160,65 +190,101 @@ export function ReceiptModal({
           <head>
             <title>Receipt - Zantrix POS</title>
             <style>
+               @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+              
+              :root {
+                --primary: 221 66% 45%;
+                --primary-foreground: 210 40% 98%;
+              }
+
               * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
               }
               body {
-                font-family: 'Courier New', Courier, monospace;
-                font-size: 10px;
-                line-height: 1.3;
-                color: #000;
+                font-family: 'Inter', -apple-system, sans-serif;
+                font-size: 11px;
+                line-height: 1.4;
+                color: #18181b;
                 background: #fff;
-                padding: 16px;
                 width: 80mm;
+                max-width: 80mm;
+              }
+              .receipt-container {
+                width: 100%;
+                padding: 10mm 4mm;
               }
               img {
                 max-width: 100%;
                 height: auto;
               }
-              .receipt-container {
-                width: 100%;
-              }
               .text-center { text-align: center; }
               .text-right { text-align: right; }
-              .font-bold { font-weight: bold; }
+              .text-zinc-900 { color: #18181b; }
+              .text-zinc-800 { color: #27272a; }
+              .text-zinc-500 { color: #71717a; }
+              .text-zinc-400 { color: #a1a1aa; }
+              .text-zinc-300 { color: #d4d4d8; }
+              .bg-zinc-50 { background-color: #fafafa; }
+              .bg-zinc-200 { background-color: #e4e4e7; }
+              .border-zinc-100 { border: 1px solid #f4f4f5; }
+              .border-zinc-50 { border-bottom: 1px solid #fafafa; }
+              .border-zinc-200 { border-color: #e4e4e7; }
+              .border-t { border-top: 1px solid #18181b; }
+              .border-t-2 { border-top: 2px solid #18181b; }
+              .border-dashed { border-style: dashed; }
+              .font-bold { font-weight: 700; }
+              .font-black { font-weight: 900; }
+              .font-medium { font-weight: 500; }
+              .font-semibold { font-weight: 600; }
+              .italic { font-style: italic; }
+              .uppercase { text-transform: uppercase; }
+              .lowercase { text-transform: lowercase; }
               .flex { display: flex; }
+              .flex-col { flex-direction: column; }
               .justify-between { justify-content: space-between; }
-              .flex-1 { flex: 1; }
-              .truncate { 
-                overflow: hidden; 
-                text-overflow: ellipsis; 
-                white-space: nowrap; 
-              }
-              .space-y-1 > * + * { margin-top: 4px; }
+              .items-center { align-items: center; }
+              .gap-0\\.5 { gap: 2px; }
+              .gap-1\\.5 { gap: 6px; }
+              .gap-4 { gap: 16px; }
               .mb-2 { margin-bottom: 8px; }
               .mb-3 { margin-bottom: 12px; }
               .mb-4 { margin-bottom: 16px; }
+              .mb-6 { margin-bottom: 24px; }
               .mt-1 { margin-top: 4px; }
-              .mt-3 { margin-top: 12px; }
-              .mt-4 { margin-top: 16px; }
-              .my-2 { margin-top: 8px; margin-bottom: 8px; }
-              .my-3 { margin-top: 12px; margin-bottom: 12px; }
-              .pt-1 { padding-top: 4px; }
-              .pt-2 { padding-top: 8px; }
-              .pl-2 { padding-left: 8px; }
-              .pr-1 { padding-right: 4px; }
-              .w-8 { width: 32px; }
-              .w-20 { width: 80px; }
-              .border-t { border-top: 1px dashed #000; }
-              .border-dashed { border-style: dashed; }
-              .border-black { border-color: #000; }
-              .text-gray-600 { color: #666; }
-              .inline-block { display: inline-block; }
-              .h-12 { height: 48px; }
-              .mx-auto { margin-left: auto; margin-right: auto; }
-              .text-sm { font-size: 12px; }
-              .text-\\[10px\\] { font-size: 10px; }
-              .text-\\[9px\\] { font-size: 9px; }
-              .text-\\[8px\\] { font-size: 8px; }
-              .leading-tight { line-height: 1.2; }
+              .mt-2 { margin-top: 8px; }
+              .my-1 { margin-top: 4px; margin-bottom: 4px; }
+              .p-3 { padding: 12px; }
+              .p-6 { padding: 24px; }
+              .pt-3 { padding-top: 12px; }
+              .pt-4 { padding-top: 16px; }
+              .pb-2 { padding-bottom: 8px; }
+              .rounded-lg { border-radius: 8px; }
+              .rounded { border-radius: 4px; }
+              .tracking-tight { letter-spacing: -0.025em; }
+              .tracking-wider { letter-spacing: 0.05em; }
+              .tracking-widest { letter-spacing: 0.1em; }
+              .text-base { font-size: 14px; }
+              .text-xs { font-size: 11px; }
+              .text-lg { font-size: 16px; }
+              .text-primary { color: hsl(221, 66%, 45%); }
+              .bg-primary { background-color: hsl(221, 66%, 45%); }
+              .text-primary-foreground { color: #f8fafc; }
+              .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+              .max-w-\\[140px\\] { max-width: 140px; }
+              .max-w-\\[200px\\] { max-width: 200px; }
+              .h-14 { height: 56px; }
+              .h-px { height: 1px; }
+              .h-8 { height: 32px; }
+              .opacity-80 { opacity: 0.8; }
+              .whitespace-nowrap { white-space: nowrap; }
+              .underline { text-decoration: underline; }
+              .underline-offset-4 { underline-offset: 4px; }
+              .decoration-2 { text-decoration-thickness: 2px; }
+              
               @page {
                 size: 80mm auto;
                 margin: 8mm;
@@ -273,6 +339,7 @@ export function ReceiptModal({
               total={total}
               paymentMethod={paymentMethod}
               customerName={customerName}
+              cashierName={cashierName}
             />
           </div>
         </div>

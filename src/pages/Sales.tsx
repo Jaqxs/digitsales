@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { DateRange } from "react-day-picker";
 import { addDays, endOfDay } from "date-fns";
+import { useAuth } from '@/contexts/AuthContext';
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
@@ -75,6 +76,7 @@ const Sales = () => {
 
 
   const isMobile = useIsMobile();
+  const { user: currentUser } = useAuth();
   const { business } = useSettingsStore();
 
   const { sales, customers, fetchSales, fetchCustomers } = useDataStore();
@@ -524,6 +526,7 @@ const Sales = () => {
         onOpenChange={setReceiptOpen}
         sale={receiptSale}
         customerName={selectedSale?.customer}
+        cashierName={currentUser?.name}
       />
 
       {receiptSale && (

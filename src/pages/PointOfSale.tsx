@@ -450,6 +450,7 @@ const PointOfSale = () => {
         open={receiptOpen}
         onOpenChange={setReceiptOpen}
         sale={lastSale}
+        cashierName={currentUser?.name}
       />
     </MainLayout>
   );
