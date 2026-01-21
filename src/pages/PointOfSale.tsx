@@ -73,7 +73,7 @@ const PointOfSale = () => {
         product.sku.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory =
         selectedCategory === 'all' || product.category === selectedCategory;
-      return matchesSearch && matchesCategory && product.quantity > 0;
+      return matchesSearch && matchesCategory;
     });
   }, [products, searchQuery, selectedCategory]);
 

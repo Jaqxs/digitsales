@@ -79,7 +79,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
     packingSize: 0,
     salesRepId: '',
     expiryDate: '',
-    status: 'draft' as ProductStatus,
+    status: 'approved' as ProductStatus,
   });
 
   useEffect(() => {
