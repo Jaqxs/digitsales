@@ -39,3 +39,12 @@ export const adjustStock = async (req: Request, res: Response, next: NextFunctio
         next(error);
     }
 };
+
+export const getLocations = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const result = await InventoryService.getLocations();
+        res.json({ success: true, data: result });
+    } catch (error) {
+        next(error);
+    }
+};

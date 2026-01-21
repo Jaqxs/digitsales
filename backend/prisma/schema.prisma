@@ -34,8 +34,16 @@ model User {
   createdSuppliers       Supplier[]           @relation("SupplierCreatedBy")
   userProfile            UserProfile?
   userSessions           UserSession[]
+  salesRepProducts       Product[]            @relation("ProductSalesRep")
 
   @@map("users")
+}
+
+enum ProductStatus {
+  draft
+  pending
+  approved
+  rejected
 }
 
 model UserProfile {
@@ -107,6 +115,20 @@ model Product {
   saleItems          SaleItem[]
   stockAdjustments   StockAdjustment[]
   stockLedger        StockLedger[]
+  
+  // New ERP Fields
+  defaultLocationId  String?             @db.Uuid
+  isTaxInclusive     Boolean             @default(false)
+  reservedQuantity   Decimal             @default(0) @db.Decimal(12, 3)
+  bonusQuantity      Decimal             @default(0) @db.Decimal(12, 3)
+  packingUnit        String?             @db.VarChar(50)
+  packingSize        Decimal?            @db.Decimal(10, 2)
+  salesRepId         String?             @db.Uuid
+  expiryDate         DateTime?           @db.Timestamp(6)
+  status             ProductStatus       @default(draft)
+
+  defaultLocation    StockLocation?      @relation(fields: [defaultLocationId], references: [id])
+  salesRep           User?               @relation("ProductSalesRep", fields: [salesRepId], references: [id])
 
   @@map("products")
 }
@@ -172,6 +194,7 @@ model StockLocation {
   sales            Sale[]
   stockAdjustments StockAdjustment[]
   stockLedger      StockLedger[]
+  defaultForProducts Product[]
 
   @@map("stock_locations")
 }

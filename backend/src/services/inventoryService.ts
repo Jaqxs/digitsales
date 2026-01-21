@@ -125,4 +125,12 @@ export class InventoryService {
             return adjustment;
         });
     }
+
+    // Get all locations
+    static async getLocations() {
+        return prisma.stockLocation.findMany({
+            where: { isActive: true },
+            orderBy: { name: 'asc' },
+        });
+    }
 }

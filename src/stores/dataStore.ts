@@ -10,7 +10,12 @@ interface DataStore {
     customers: boolean;
     employees: boolean;
     sales: boolean;
+    locations: boolean;
   };
+
+  // Locations
+  locations: any[];
+  fetchLocations: () => Promise<void>;
 
   // Products
   products: Product[];
@@ -64,6 +69,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
     customers: false,
     employees: false,
     sales: false,
+    locations: false,
   },
 
   products: [],
@@ -71,6 +77,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   employees: [],
   sales: [],
   stockRecords: [],
+  locations: [],
 
   // Products
   fetchProducts: async () => {
@@ -337,6 +344,19 @@ export const useDataStore = create<DataStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to add stock record:', error);
       throw error;
+    }
+  },
+
+  // Locations
+  fetchLocations: async () => {
+    set((state) => ({ loading: { ...state.loading, locations: true } }));
+    try {
+      const response = await api.inventory.getLocations();
+      set({ locations: response });
+    } catch (error) {
+      console.error('Failed to fetch locations:', error);
+    } finally {
+      set((state) => ({ loading: { ...state.loading, locations: false } }));
     }
   },
 }));

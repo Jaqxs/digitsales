@@ -373,6 +373,9 @@ export const inventoryAPI = {
   getLowStock: () =>
     apiRequest<{ products: any[] }>('/inventory/low-stock'),
 
+  getLocations: () =>
+    apiRequest<any[]>('/inventory/locations'),
+
   adjustStock: (data: {
     productId: string;
     quantity: number;

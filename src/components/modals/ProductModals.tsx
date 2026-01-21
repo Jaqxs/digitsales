@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Product, ProductCategory } from '@/types/pos';
+import { Product, ProductCategory, ProductStatus } from '@/types/pos';
 import { useDataStore } from '@/stores/dataStore';
 import { formatCurrency } from '@/lib/pos-utils';
 import {
@@ -21,8 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Package, AlertTriangle } from 'lucide-react';
+import { Loader2, Package, AlertTriangle, LayoutGrid, DollarSign, Warehouse, Truck, CheckCircle2 } from 'lucide-react';
 
 const categoryOptions: { value: ProductCategory; label: string }[] = [
   { value: 'construction-equipment', label: 'Construction Equipment' },
@@ -35,6 +37,13 @@ const categoryOptions: { value: ProductCategory; label: string }[] = [
   { value: 'building-materials', label: 'Building Materials' },
 ];
 
+const statusOptions: { value: ProductStatus; label: string }[] = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'pending', label: 'Pending Approval' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+];
+
 interface ProductModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -42,9 +51,10 @@ interface ProductModalProps {
 }
 
 export function ProductModal({ open, onOpenChange, product }: ProductModalProps) {
-  const { addProduct, updateProduct } = useDataStore();
+  const { addProduct, updateProduct, locations, fetchLocations, employees, fetchEmployees } = useDataStore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('general');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -58,10 +68,24 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
     lowStockThreshold: 10,
     supplier: '',
     unit: 'unit',
+    // New ERP Fields
+    defaultLocationId: '',
+    isTaxInclusive: false,
+    taxRate: 18,
+    reservedQuantity: 0,
+    bonusQuantity: 0,
+    packingUnit: '',
+    packingSize: 0,
+    salesRepId: '',
+    expiryDate: '',
+    status: 'draft' as ProductStatus,
   });
 
   useEffect(() => {
     if (open) {
+      fetchLocations();
+      fetchEmployees();
+
       setFormData({
         name: product?.name || '',
         sku: product?.sku || '',
@@ -74,9 +98,20 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
         lowStockThreshold: product?.lowStockThreshold || 10,
         supplier: product?.supplier || '',
         unit: product?.unit || 'unit',
+        defaultLocationId: product?.defaultLocationId || '',
+        isTaxInclusive: product?.isTaxInclusive || false,
+        taxRate: product?.taxRate || 18,
+        reservedQuantity: product?.reservedQuantity || 0,
+        bonusQuantity: product?.bonusQuantity || 0,
+        packingUnit: product?.packingUnit || '',
+        packingSize: product?.packingSize || 0,
+        salesRepId: product?.salesRepId || '',
+        expiryDate: product?.expiryDate ? new Date(product.expiryDate).toISOString().split('T')[0] : '',
+        status: product?.status || 'draft',
       });
+      setActiveTab('general');
     }
-  }, [open, product]);
+  }, [open, product, fetchLocations, fetchEmployees]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,169 +122,354 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
         description: 'Please fill in product name and SKU.',
         variant: 'destructive',
       });
+      setActiveTab('general');
       return;
     }
 
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
 
-    if (product) {
-      await updateProduct(product.id, formData);
-      toast({ title: 'Product updated', description: `${formData.name} has been updated.` });
-    } else {
-      await addProduct(formData);
-      toast({ title: 'Product added', description: `${formData.name} has been added to inventory.` });
+    try {
+      if (product) {
+        await updateProduct(product.id, formData);
+        toast({ title: 'Product updated', description: `${formData.name} has been updated.` });
+      } else {
+        await addProduct(formData);
+        toast({ title: 'Product added', description: `${formData.name} has been added to inventory.` });
+      }
+      onOpenChange(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error saving product',
+        description: error.message || 'Something went wrong.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
-    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="flex items-center gap-2 text-2xl">
+            <Package className="h-6 w-6 text-primary" />
             {product ? 'Edit Product' : 'Add New Product'}
           </DialogTitle>
           <DialogDescription>
-            {product ? 'Update product information' : 'Add a new product to your inventory'}
+            {product ? 'Update product information and ERP levels' : 'Add a new professional item to your inventory'}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g. Stanley Hammer 20oz"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sku">SKU *</Label>
-              <Input
-                id="sku"
-                value={formData.sku}
-                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                placeholder="e.g. HND-000001"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="barcode">Barcode</Label>
-              <Input
-                id="barcode"
-                value={formData.barcode}
-                onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                placeholder="e.g. 8901234567890"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value as ProductCategory })}
-              >
-                <SelectTrigger id="category">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryOptions.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="costPrice">Cost Price (TZS)</Label>
-              <Input
-                id="costPrice"
-                type="number"
-                value={formData.costPrice}
-                onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sellingPrice">Selling Price (TZS)</Label>
-              <Input
-                id="sellingPrice"
-                type="number"
-                value={formData.sellingPrice}
-                onChange={(e) => setFormData({ ...formData, sellingPrice: Number(e.target.value) })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Initial Quantity</Label>
-              <Input
-                id="quantity"
-                type="number"
-                value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lowStockThreshold">Low Stock Alert Threshold</Label>
-              <Input
-                id="lowStockThreshold"
-                type="number"
-                value={formData.lowStockThreshold}
-                onChange={(e) => setFormData({ ...formData, lowStockThreshold: Number(e.target.value) })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="supplier">Supplier</Label>
-              <Input
-                id="supplier"
-                value={formData.supplier}
-                onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                placeholder="e.g. BuildPro Supplies"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="unit">Unit</Label>
-              <Select
-                value={formData.unit}
-                onValueChange={(value) => setFormData({ ...formData, unit: value })}
-              >
-                <SelectTrigger id="unit">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unit">Unit</SelectItem>
-                  <SelectItem value="box">Box</SelectItem>
-                  <SelectItem value="set">Set</SelectItem>
-                  <SelectItem value="roll">Roll</SelectItem>
-                  <SelectItem value="meter">Meter</SelectItem>
-                  <SelectItem value="kg">Kilogram</SelectItem>
-                  <SelectItem value="bag">Bag</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-y-auto p-6 pt-2">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-6">
+                <TabsTrigger value="general" className="flex items-center gap-2">
+                  <LayoutGrid className="h-4 w-4" />
+                  General
+                </TabsTrigger>
+                <TabsTrigger value="financials" className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Financials
+                </TabsTrigger>
+                <TabsTrigger value="inventory" className="flex items-center gap-2">
+                  <Warehouse className="h-4 w-4" />
+                  Inventory
+                </TabsTrigger>
+                <TabsTrigger value="logistics" className="flex items-center gap-2">
+                  <Truck className="h-4 w-4" />
+                  Logistics
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="general" className="space-y-4 pt-0">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Product Name *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g. Stanley Hammer 20oz"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sku">SKU *</Label>
+                    <Input
+                      id="sku"
+                      value={formData.sku}
+                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                      placeholder="e.g. HND-000001"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="barcode">Barcode</Label>
+                    <Input
+                      id="barcode"
+                      value={formData.barcode}
+                      onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                      placeholder="e.g. 8901234567890"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => setFormData({ ...formData, category: value as ProductCategory })}
+                    >
+                      <SelectTrigger id="category">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoryOptions.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="unit">Base Unit</Label>
+                    <Select
+                      value={formData.unit}
+                      onValueChange={(value) => setFormData({ ...formData, unit: value })}
+                    >
+                      <SelectTrigger id="unit">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unit">Unit / Pcs</SelectItem>
+                        <SelectItem value="box">Box</SelectItem>
+                        <SelectItem value="set">Set</SelectItem>
+                        <SelectItem value="roll">Roll</SelectItem>
+                        <SelectItem value="meter">Meter</SelectItem>
+                        <SelectItem value="kg">Kilogram</SelectItem>
+                        <SelectItem value="bag">Bag</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supplier">Primary Supplier</Label>
+                    <Input
+                      id="supplier"
+                      value={formData.supplier}
+                      onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                      placeholder="e.g. BuildPro Supplies"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Product description and features..."
+                    rows={3}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="financials" className="space-y-6 pt-0">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="costPrice">Cost Price (TZS)</Label>
+                    <Input
+                      id="costPrice"
+                      type="number"
+                      value={formData.costPrice}
+                      onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sellingPrice">Selling Price (TZS)</Label>
+                    <Input
+                      id="sellingPrice"
+                      type="number"
+                      value={formData.sellingPrice}
+                      onChange={(e) => setFormData({ ...formData, sellingPrice: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="taxRate">VAT / Tax Percentage (%)</Label>
+                    <Select
+                      value={formData.taxRate.toString()}
+                      onValueChange={(value) => setFormData({ ...formData, taxRate: Number(value) })}
+                    >
+                      <SelectTrigger id="taxRate">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">0% (Exempt)</SelectItem>
+                        <SelectItem value="5">5%</SelectItem>
+                        <SelectItem value="10">10%</SelectItem>
+                        <SelectItem value="15">15%</SelectItem>
+                        <SelectItem value="18">18% (Standard)</SelectItem>
+                        <SelectItem value="20">20%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center justify-between space-x-2 rounded-lg border p-3 shadow-sm mt-6">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="tax-inc">Price Includes Tax</Label>
+                      <p className="text-[0.8rem] text-muted-foreground">
+                        Toggle if the selling price already includes VAT.
+                      </p>
+                    </div>
+                    <Switch
+                      id="tax-inc"
+                      checked={formData.isTaxInclusive}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isTaxInclusive: checked })}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="inventory" className="space-y-4 pt-0">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">Total Physical Quantity</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lowStockThreshold">Min. Stock Alert Threshold</Label>
+                    <Input
+                      id="lowStockThreshold"
+                      type="number"
+                      value={formData.lowStockThreshold}
+                      onChange={(e) => setFormData({ ...formData, lowStockThreshold: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reserved">Reserved Quantity</Label>
+                    <Input
+                      id="reserved"
+                      type="number"
+                      value={formData.reservedQuantity}
+                      onChange={(e) => setFormData({ ...formData, reservedQuantity: Number(e.target.value) })}
+                      placeholder="Promised to customers"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bonus">Free / Bonus Quantity</Label>
+                    <Input
+                      id="bonus"
+                      type="number"
+                      value={formData.bonusQuantity}
+                      onChange={(e) => setFormData({ ...formData, bonusQuantity: Number(e.target.value) })}
+                      placeholder="Sample / Bonus stock"
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="location">Warehouse / Storage Location</Label>
+                    <Select
+                      value={formData.defaultLocationId}
+                      onValueChange={(value) => setFormData({ ...formData, defaultLocationId: value })}
+                    >
+                      <SelectTrigger id="location">
+                        <SelectValue placeholder="Select Warehouse Location" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map((loc) => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {loc.name} {loc.isActive ? '' : '(Inactive)'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="logistics" className="space-y-4 pt-0">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="packingUnit">Packing Type</Label>
+                    <Input
+                      id="packingUnit"
+                      value={formData.packingUnit}
+                      onChange={(e) => setFormData({ ...formData, packingUnit: e.target.value })}
+                      placeholder="e.g. Master Carton / Box"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="packingSize">Packing Level (Qty/Pkg)</Label>
+                    <Input
+                      id="packingSize"
+                      type="number"
+                      value={formData.packingSize}
+                      onChange={(e) => setFormData({ ...formData, packingSize: Number(e.target.value) })}
+                      placeholder="e.g. 12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="salesRep">Assigned Promoter/Sales Rep</Label>
+                    <Select
+                      value={formData.salesRepId}
+                      onValueChange={(value) => setFormData({ ...formData, salesRepId: value })}
+                    >
+                      <SelectTrigger id="salesRep">
+                        <SelectValue placeholder="Select Employee" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {employees.map((emp) => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            {emp.name} ({emp.role})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="expiry">Batch Expiry Date</Label>
+                    <Input
+                      id="expiry"
+                      type="date"
+                      value={formData.expiryDate}
+                      onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="status">Product Approval Status</Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value) => setFormData({ ...formData, status: value as ProductStatus })}
+                    >
+                      <SelectTrigger id="status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <div className="flex items-center gap-2">
+                              {opt.value === 'approved' && <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                              {opt.value === 'pending' && <Loader2 className="h-3 w-3 text-yellow-500" />}
+                              {opt.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Product description..."
-              rows={3}
-            />
-          </div>
-
-          <DialogFooter>
+          <DialogFooter className="p-6 border-t bg-muted/20">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {product ? 'Update Product' : 'Add Product'}
+              {product ? 'Save Changes' : 'Create Item'}
             </Button>
           </DialogFooter>
         </form>

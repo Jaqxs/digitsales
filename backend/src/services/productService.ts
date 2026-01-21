@@ -43,6 +43,8 @@ export class ProductService {
                 where,
                 include: {
                     category: true,
+                    defaultLocation: true,
+                    salesRep: true,
                 },
                 skip,
                 take: limit,
@@ -120,9 +122,21 @@ export class ProductService {
                 isActive: true,
                 categoryId,
                 createdBy,
+                // New ERP Fields
+                defaultLocationId: prismaData.defaultLocationId,
+                isTaxInclusive: prismaData.isTaxInclusive ?? false,
+                reservedQuantity: Number(prismaData.reservedQuantity) || 0,
+                bonusQuantity: Number(prismaData.bonusQuantity) || 0,
+                packingUnit: prismaData.packingUnit,
+                packingSize: prismaData.packingSize !== undefined ? Number(prismaData.packingSize) : undefined,
+                salesRepId: prismaData.salesRepId,
+                expiryDate: prismaData.expiryDate ? new Date(prismaData.expiryDate) : undefined,
+                status: prismaData.status || 'draft',
             },
             include: {
                 category: true,
+                defaultLocation: true,
+                salesRep: true,
             }
         });
     }
@@ -141,11 +155,24 @@ export class ProductService {
 
         if (categoryId) updateData.categoryId = categoryId;
 
+        // Map and clean new ERP fields
+        if (rest.isTaxInclusive !== undefined) updateData.isTaxInclusive = rest.isTaxInclusive;
+        if (rest.reservedQuantity !== undefined) updateData.reservedQuantity = Number(rest.reservedQuantity);
+        if (rest.bonusQuantity !== undefined) updateData.bonusQuantity = Number(rest.bonusQuantity);
+        if (rest.packingUnit !== undefined) updateData.packingUnit = rest.packingUnit;
+        if (rest.packingSize !== undefined) updateData.packingSize = Number(rest.packingSize);
+        if (rest.defaultLocationId !== undefined) updateData.defaultLocationId = rest.defaultLocationId;
+        if (rest.salesRepId !== undefined) updateData.salesRepId = rest.salesRepId;
+        if (rest.expiryDate !== undefined) updateData.expiryDate = rest.expiryDate ? new Date(rest.expiryDate) : null;
+        if (rest.status !== undefined) updateData.status = rest.status;
+
         return prisma.product.update({
             where: { id },
             data: updateData,
             include: {
                 category: true,
+                defaultLocation: true,
+                salesRep: true,
             },
         });
     }

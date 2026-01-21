@@ -45,9 +45,29 @@ export const mapApiProductToProduct = (apiProduct: any): Product => {
         sellingPrice: Number(apiProduct.sellingPrice),
         quantity: Number(apiProduct.currentStock), // Map currentStock to quantity
         lowStockThreshold: Number(apiProduct.minStockLevel),
+        taxRate: Number(apiProduct.taxRate) || 0,
         supplier: apiProduct.supplier?.name || '',
         unit: apiProduct.unit || 'unit',
         imageUrl: apiProduct.imageUrl,
+        // New ERP Fields
+        defaultLocationId: apiProduct.defaultLocationId,
+        isTaxInclusive: apiProduct.isTaxInclusive ?? false,
+        reservedQuantity: Number(apiProduct.reservedQuantity) || 0,
+        bonusQuantity: Number(apiProduct.bonusQuantity) || 0,
+        packingUnit: apiProduct.packingUnit,
+        packingSize: Number(apiProduct.packingSize) || undefined,
+        salesRepId: apiProduct.salesRepId,
+        expiryDate: apiProduct.expiryDate ? new Date(apiProduct.expiryDate) : undefined,
+        status: apiProduct.status || 'draft',
+        // Relations
+        defaultLocation: apiProduct.defaultLocation ? {
+            id: apiProduct.defaultLocation.id,
+            name: apiProduct.defaultLocation.name
+        } : undefined,
+        salesRep: apiProduct.salesRep ? {
+            id: apiProduct.salesRep.id,
+            name: `${apiProduct.salesRep.profile?.firstName || ''} ${apiProduct.salesRep.profile?.lastName || ''}`.trim() || apiProduct.salesRep.email
+        } : undefined,
         createdAt: new Date(apiProduct.createdAt),
         updatedAt: new Date(apiProduct.updatedAt),
     };

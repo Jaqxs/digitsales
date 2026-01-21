@@ -12,9 +12,25 @@ export interface Product {
   supplier?: string;
   unit: string;
   imageUrl?: string;
+  // New ERP Fields
+  defaultLocationId?: string;
+  isTaxInclusive: boolean;
+  taxRate: number;
+  reservedQuantity: number;
+  bonusQuantity: number;
+  packingUnit?: string;
+  packingSize?: number;
+  salesRepId?: string;
+  expiryDate?: Date;
+  status: ProductStatus;
+  // Relations (optional for frontend display)
+  defaultLocation?: { id: string; name: string };
+  salesRep?: { id: string; name: string };
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type ProductStatus = 'draft' | 'pending' | 'approved' | 'rejected';
 
 export type ProductCategory =
   | 'construction-equipment'
