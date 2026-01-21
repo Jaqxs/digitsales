@@ -145,12 +145,13 @@ export class ProductService {
     // Update product
     static async updateProduct(id: string, data: any) {
         const { quantity, lowStockThreshold, category, categoryId, ...rest } = data;
+        const { supplier, ...cleanRest } = rest;
 
         const updateData: any = {
-            ...rest,
-            costPrice: rest.costPrice !== undefined ? Number(rest.costPrice) : undefined,
-            sellingPrice: rest.sellingPrice !== undefined ? Number(rest.sellingPrice) : undefined,
-            wholesalePrice: rest.wholesalePrice !== undefined ? (rest.wholesalePrice === null ? null : Number(rest.wholesalePrice)) : undefined,
+            ...cleanRest,
+            costPrice: cleanRest.costPrice !== undefined ? Number(cleanRest.costPrice) : undefined,
+            sellingPrice: cleanRest.sellingPrice !== undefined ? Number(cleanRest.sellingPrice) : undefined,
+            wholesalePrice: cleanRest.wholesalePrice !== undefined ? (cleanRest.wholesalePrice === null || cleanRest.wholesalePrice === '' ? null : Number(cleanRest.wholesalePrice)) : undefined,
             currentStock: quantity !== undefined ? Number(quantity) : undefined,
             minStockLevel: lowStockThreshold !== undefined ? Number(lowStockThreshold) : undefined,
         };
@@ -158,15 +159,15 @@ export class ProductService {
         if (categoryId) updateData.categoryId = categoryId;
 
         // Map and clean new ERP fields
-        if (rest.isTaxInclusive !== undefined) updateData.isTaxInclusive = rest.isTaxInclusive;
-        if (rest.reservedQuantity !== undefined) updateData.reservedQuantity = Number(rest.reservedQuantity);
-        if (rest.bonusQuantity !== undefined) updateData.bonusQuantity = Number(rest.bonusQuantity);
-        if (rest.packingUnit !== undefined) updateData.packingUnit = rest.packingUnit;
-        if (rest.packingSize !== undefined) updateData.packingSize = Number(rest.packingSize);
-        if (rest.defaultLocationId !== undefined) updateData.defaultLocationId = rest.defaultLocationId;
-        if (rest.salesRepId !== undefined) updateData.salesRepId = rest.salesRepId;
-        if (rest.expiryDate !== undefined) updateData.expiryDate = rest.expiryDate ? new Date(rest.expiryDate) : null;
-        if (rest.status !== undefined) updateData.status = rest.status;
+        if (cleanRest.isTaxInclusive !== undefined) updateData.isTaxInclusive = cleanRest.isTaxInclusive;
+        if (cleanRest.reservedQuantity !== undefined) updateData.reservedQuantity = Number(cleanRest.reservedQuantity);
+        if (cleanRest.bonusQuantity !== undefined) updateData.bonusQuantity = Number(cleanRest.bonusQuantity);
+        if (cleanRest.packingUnit !== undefined) updateData.packingUnit = cleanRest.packingUnit;
+        if (cleanRest.packingSize !== undefined) updateData.packingSize = (cleanRest.packingSize === '' || cleanRest.packingSize === null) ? null : Number(cleanRest.packingSize);
+        if (cleanRest.defaultLocationId !== undefined) updateData.defaultLocationId = cleanRest.defaultLocationId || null;
+        if (cleanRest.salesRepId !== undefined) updateData.salesRepId = cleanRest.salesRepId || null;
+        if (cleanRest.expiryDate !== undefined) updateData.expiryDate = cleanRest.expiryDate ? new Date(cleanRest.expiryDate) : null;
+        if (cleanRest.status !== undefined) updateData.status = cleanRest.status;
 
         return prisma.product.update({
             where: { id },
