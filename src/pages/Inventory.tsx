@@ -203,8 +203,12 @@ const Inventory = () => {
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
         <div>
-          <p className="text-muted-foreground text-xs">Price</p>
+          <p className="text-muted-foreground text-xs">Retail</p>
           <p className="font-medium">{formatCurrency(product.sellingPrice)}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground text-xs">Wholesale</p>
+          <p className="font-medium">{product.wholesalePrice ? formatCurrency(product.wholesalePrice) : '-'}</p>
         </div>
         <div>
           <p className="text-muted-foreground text-xs">Stock</p>
@@ -336,8 +340,8 @@ const Inventory = () => {
                   <TableHead className="font-semibold">Product</TableHead>
                   <TableHead className="font-semibold">SKU</TableHead>
                   <TableHead className="font-semibold">Category</TableHead>
-                  <TableHead className="font-semibold text-right">Cost</TableHead>
-                  <TableHead className="font-semibold text-right">Price</TableHead>
+                  <TableHead className="font-semibold text-right">Retail Price</TableHead>
+                  <TableHead className="font-semibold text-right">Wholesale Price</TableHead>
                   <TableHead className="font-semibold text-center">Qty</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
                   <TableHead className="font-semibold text-right">Actions</TableHead>
@@ -370,6 +374,9 @@ const Inventory = () => {
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(product.sellingPrice)}
+                    </TableCell>
+                    <TableCell className="text-right text-brand-orange font-medium">
+                      {product.wholesalePrice ? formatCurrency(product.wholesalePrice) : '-'}
                     </TableCell>
                     <TableCell className="text-center">
                       <Button

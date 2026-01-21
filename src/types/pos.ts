@@ -7,6 +7,7 @@ export interface Product {
   description?: string;
   costPrice: number;
   sellingPrice: number;
+  wholesalePrice?: number;
   quantity: number;
   lowStockThreshold: number;
   supplier?: string;

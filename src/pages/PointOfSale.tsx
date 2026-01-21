@@ -58,6 +58,7 @@ const PointOfSale = () => {
   const [showCart, setShowCart] = useState(false);
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [lastSale, setLastSale] = useState<Sale | null>(null);
+  const [priceType, setPriceType] = useState<'retail' | 'wholesale'>('retail');
   const { toast } = useToast();
 
   // Fetch products on mount
@@ -126,12 +127,20 @@ const PointOfSale = () => {
     setCart((prev) => prev.filter((item) => item.product.id !== productId));
   };
 
+  // Enhance CartItem to handle dynamic pricing
+  const getCartItemPrice = (item: CartItem) => {
+    // If the item was added with a specific price type, or use global
+    return priceType === 'wholesale' && item.product.wholesalePrice
+      ? item.product.wholesalePrice
+      : item.product.sellingPrice;
+  };
+
   const clearCart = () => {
     setCart([]);
   };
 
   const subtotal = cart.reduce(
-    (sum, item) => sum + item.product.sellingPrice * item.quantity,
+    (sum, item) => sum + getCartItemPrice(item) * item.quantity,
     0
   );
   const vat = calculateVAT(subtotal);
@@ -161,10 +170,10 @@ const PointOfSale = () => {
         items: cart.map(item => ({
           productId: item.product.id,
           quantity: item.quantity,
-          unitPrice: item.product.sellingPrice,
+          unitPrice: getCartItemPrice(item),
           discountAmount: 0,
-          taxAmount: calculateVAT(item.product.sellingPrice * item.quantity),
-          lineTotal: (item.product.sellingPrice * item.quantity) + calculateVAT(item.product.sellingPrice * item.quantity)
+          taxAmount: calculateVAT(getCartItemPrice(item) * item.quantity),
+          lineTotal: (getCartItemPrice(item) * item.quantity) + calculateVAT(getCartItemPrice(item) * item.quantity)
         })),
       } as any;
 
@@ -213,18 +222,38 @@ const PointOfSale = () => {
                   className="pl-10"
                 />
               </div>
-              <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                {categories.map((cat) => (
+              <div className="flex gap-2 items-center">
+                <div className="flex bg-muted p-1 rounded-lg border border-border">
                   <Button
-                    key={cat.id}
-                    variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                    variant={priceType === 'retail' ? 'secondary' : 'ghost'}
                     size="sm"
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className="whitespace-nowrap text-xs sm:text-sm h-8 px-2 sm:px-3"
+                    onClick={() => setPriceType('retail')}
+                    className="h-8 text-xs"
                   >
-                    {cat.name}
+                    Retail
                   </Button>
-                ))}
+                  <Button
+                    variant={priceType === 'wholesale' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setPriceType('wholesale')}
+                    className="h-8 text-xs"
+                  >
+                    Wholesale
+                  </Button>
+                </div>
+                <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 flex-1">
+                  {categories.map((cat) => (
+                    <Button
+                      key={cat.id}
+                      variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className="whitespace-nowrap text-xs sm:text-sm h-8 px-2 sm:px-3"
+                    >
+                      {cat.name}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -249,9 +278,16 @@ const PointOfSale = () => {
                     </h3>
                     <p className="text-[10px] sm:text-xs text-muted-foreground mb-1 sm:mb-2">{product.sku}</p>
                     <div className="mt-auto flex items-center justify-between gap-1">
-                      <span className="font-bold text-foreground text-xs sm:text-sm">
-                        {formatCurrency(product.sellingPrice)}
-                      </span>
+                      <div className="flex flex-col text-[10px] sm:text-xs">
+                        <span className={cn("font-bold text-foreground", priceType === 'retail' && "text-primary")}>
+                          R: {formatCurrency(product.sellingPrice)}
+                        </span>
+                        {product.wholesalePrice && (
+                          <span className={cn("font-bold text-muted-foreground", priceType === 'wholesale' && "text-brand-orange")}>
+                            W: {formatCurrency(product.wholesalePrice)}
+                          </span>
+                        )}
+                      </div>
                       <Badge
                         variant={product.quantity <= product.lowStockThreshold ? 'destructive' : 'secondary'}
                         className="text-[9px] sm:text-xs px-1 sm:px-2"
@@ -346,7 +382,7 @@ const PointOfSale = () => {
                           {item.product.name}
                         </p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">
-                          {formatCurrency(item.product.sellingPrice)} × {item.quantity}
+                          {formatCurrency(getCartItemPrice(item))} × {item.quantity}
                         </p>
                       </div>
                       <div className="flex items-center gap-0.5 sm:gap-1">

@@ -117,6 +117,7 @@ export class ProductService {
                 unit: prismaData.unit || 'unit',
                 costPrice: Number(prismaData.costPrice) || 0,
                 sellingPrice: Number(prismaData.sellingPrice) || 0,
+                wholesalePrice: prismaData.wholesalePrice ? Number(prismaData.wholesalePrice) : null,
                 currentStock: Number(quantity) || 0,
                 minStockLevel: Number(lowStockThreshold) || 10,
                 isActive: true,
@@ -149,6 +150,7 @@ export class ProductService {
             ...rest,
             costPrice: rest.costPrice !== undefined ? Number(rest.costPrice) : undefined,
             sellingPrice: rest.sellingPrice !== undefined ? Number(rest.sellingPrice) : undefined,
+            wholesalePrice: rest.wholesalePrice !== undefined ? (rest.wholesalePrice === null ? null : Number(rest.wholesalePrice)) : undefined,
             currentStock: quantity !== undefined ? Number(quantity) : undefined,
             minStockLevel: lowStockThreshold !== undefined ? Number(lowStockThreshold) : undefined,
         };

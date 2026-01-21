@@ -64,6 +64,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
     description: '',
     costPrice: 0,
     sellingPrice: 0,
+    wholesalePrice: 0,
     quantity: 0,
     lowStockThreshold: 10,
     supplier: '',
@@ -94,6 +95,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
         description: product?.description || '',
         costPrice: product?.costPrice || 0,
         sellingPrice: product?.sellingPrice || 0,
+        wholesalePrice: product?.wholesalePrice || 0,
         quantity: product?.quantity || 0,
         lowStockThreshold: product?.lowStockThreshold || 10,
         supplier: product?.supplier || '',
@@ -129,11 +131,16 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
     setIsSubmitting(true);
 
     try {
+      const payload = {
+        ...formData,
+        expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined,
+      };
+
       if (product) {
-        await updateProduct(product.id, formData);
+        await updateProduct(product.id, payload as any);
         toast({ title: 'Product updated', description: `${formData.name} has been updated.` });
       } else {
-        await addProduct(formData);
+        await addProduct(payload as any);
         toast({ title: 'Product added', description: `${formData.name} has been added to inventory.` });
       }
       onOpenChange(false);
@@ -284,12 +291,21 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="sellingPrice">Selling Price (TZS)</Label>
+                    <Label htmlFor="sellingPrice">Retail Price (TZS)</Label>
                     <Input
                       id="sellingPrice"
                       type="number"
                       value={formData.sellingPrice}
                       onChange={(e) => setFormData({ ...formData, sellingPrice: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="wholesalePrice">Wholesale Price (TZS)</Label>
+                    <Input
+                      id="wholesalePrice"
+                      type="number"
+                      value={formData.wholesalePrice}
+                      onChange={(e) => setFormData({ ...formData, wholesalePrice: Number(e.target.value) })}
                     />
                   </div>
                   <div className="space-y-2">

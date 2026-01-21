@@ -41,9 +41,11 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
   const [quantity, setQuantity] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'mpesa' | 'bank-transfer'>('cash');
   const [customerName, setCustomerName] = useState('');
+  const [priceType, setPriceType] = useState<'retail' | 'wholesale'>('retail');
 
   const product = products.find(p => p.id === selectedProduct);
-  const subtotal = product ? product.sellingPrice * quantity : 0;
+  const unitPrice = product ? (priceType === 'wholesale' && product.wholesalePrice ? product.wholesalePrice : product.sellingPrice) : 0;
+  const subtotal = unitPrice * quantity;
   const vatRate = business.vatRate / 100;
   const vat = subtotal * vatRate;
   const total = subtotal + vat;
@@ -78,10 +80,10 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
       items: [{
         productId: product.id,
         quantity,
-        unitPrice: product.sellingPrice,
+        unitPrice: unitPrice,
         discountAmount: 0,
-        taxAmount: calculateVAT(product.sellingPrice * quantity),
-        lineTotal: (product.sellingPrice * quantity) + calculateVAT(product.sellingPrice * quantity)
+        taxAmount: calculateVAT(unitPrice * quantity),
+        lineTotal: (unitPrice * quantity) + calculateVAT(unitPrice * quantity)
       }] as any,
       subtotal: Number(subtotal),
       discountAmount: 0,
@@ -129,7 +131,13 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
               <SelectContent>
                 {products.filter(p => p.quantity > 0).map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.name} ({p.quantity} available) - {formatCurrency(p.sellingPrice)}
+                    <div className="flex flex-col">
+                      <span>{p.name} ({p.quantity} available)</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Retail: {formatCurrency(p.sellingPrice)}
+                        {p.wholesalePrice ? ` | Wholesale: ${formatCurrency(p.wholesalePrice)}` : ''}
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -137,6 +145,18 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Price Type</Label>
+              <Select value={priceType} onValueChange={(v: any) => setPriceType(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="retail">Retail Price</SelectItem>
+                  <SelectItem value="wholesale">Wholesale Price</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="qty">Quantity</Label>
               <Input

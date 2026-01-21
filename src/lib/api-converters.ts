@@ -43,6 +43,7 @@ export const mapApiProductToProduct = (apiProduct: any): Product => {
         description: apiProduct.description,
         costPrice: Number(apiProduct.costPrice),
         sellingPrice: Number(apiProduct.sellingPrice),
+        wholesalePrice: apiProduct.wholesalePrice ? Number(apiProduct.wholesalePrice) : undefined,
         quantity: Number(apiProduct.currentStock), // Map currentStock to quantity
         lowStockThreshold: Number(apiProduct.minStockLevel),
         taxRate: Number(apiProduct.taxRate) || 0,

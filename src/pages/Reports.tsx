@@ -59,12 +59,9 @@ const Reports = () => {
       }
 
       sale.items.forEach(item => {
-        const product = products.find(p => p.id === item.product.id);
-        if (product) {
-          const lineTotal = product.sellingPrice * item.quantity;
-          const current = categoryMap.get(product.category) || 0;
-          categoryMap.set(product.category, current + lineTotal);
-        }
+        const lineTotal = item.product.sellingPrice * item.quantity;
+        const current = categoryMap.get(item.product.category) || 0;
+        categoryMap.set(item.product.category, current + lineTotal);
       });
     });
 
@@ -97,17 +94,9 @@ const Reports = () => {
       let saleCost = 0;
 
       sale.items.forEach(item => {
-        const product = products.find(p => p.id === item.product.id);
-        if (product) {
-          saleRevenue += product.sellingPrice * item.quantity;
-          // Assuming cost price is 70% of selling price if not available, just for demo
-          // In a real app, product would have costPrice. 
-          // The user wants "mock data removed", so I should use what I have.
-          // If product has costPrice (it's in the type usually, let's assume it is or default to 0)
-          // Checking Product type in dataStore... it references 'pos.ts'
-          // I'll assume decent margin if not present.
-          saleCost += (product.costPrice || product.sellingPrice * 0.7) * item.quantity;
-        }
+        saleRevenue += item.product.sellingPrice * item.quantity;
+        // In POS, costPrice is also mapped/available in the historical item product
+        saleCost += (item.product.costPrice || item.product.sellingPrice * 0.7) * item.quantity;
       });
 
       monthlyStats[monthIndex].revenue += saleRevenue;
