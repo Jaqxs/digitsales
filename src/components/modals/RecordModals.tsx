@@ -269,30 +269,37 @@ export function RecordInventoryModal({ open, onOpenChange }: RecordInventoryModa
     }
 
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
 
-    updateStock(product.id, change, type as any, reason || `Stock ${type}`);
-    addStockRecord({
-      productId: product.id,
-      productName: product.name,
-      type,
-      quantity,
-      previousStock: product.quantity,
-      newStock,
-      reason: reason || `Stock ${type}`,
-      createdBy: 'Current User',
-    });
+    try {
+      await addStockRecord({
+        productId: product.id,
+        productName: product.name,
+        type: type,
+        quantity,
+        previousStock: product.quantity,
+        newStock,
+        reason: reason || `Stock ${type}`,
+        createdBy: 'Current User',
+      });
 
-    toast({
-      title: 'Inventory updated',
-      description: `${product.name}: ${product.quantity} → ${newStock} ${product.unit}`,
-    });
+      toast({
+        title: 'Inventory updated',
+        description: `${product.name}: ${product.quantity} → ${newStock} ${product.unit}`,
+      });
 
-    setIsSubmitting(false);
-    setSelectedProduct('');
-    setQuantity(0);
-    setReason('');
-    onOpenChange(false);
+      setSelectedProduct('');
+      setQuantity(0);
+      setReason('');
+      onOpenChange(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error updating inventory',
+        description: error.message || 'Something went wrong.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

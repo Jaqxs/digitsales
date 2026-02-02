@@ -95,7 +95,12 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   addProduct: async (productData) => {
     try {
-      const response = await api.products.createProduct(productData);
+      // Map frontend fields back to API fields
+      const apiData: any = { ...productData };
+      apiData.currentStock = productData.quantity || 0;
+      apiData.minStockLevel = productData.lowStockThreshold || 0;
+
+      const response = await api.products.createProduct(apiData);
       const newProduct = mapApiProductToProduct(response);
       set((state) => ({ products: [...state.products, newProduct] }));
     } catch (error) {
@@ -106,7 +111,12 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   updateProduct: async (id, updates) => {
     try {
-      const response = await api.products.updateProduct(id, updates);
+      // Map frontend fields back to API fields
+      const apiUpdates: any = { ...updates };
+      if (updates.quantity !== undefined) apiUpdates.currentStock = updates.quantity;
+      if (updates.lowStockThreshold !== undefined) apiUpdates.minStockLevel = updates.lowStockThreshold;
+
+      const response = await api.products.updateProduct(id, apiUpdates);
       const updatedProduct = mapApiProductToProduct(response);
       set((state) => ({
         products: state.products.map((p) =>

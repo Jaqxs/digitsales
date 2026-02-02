@@ -75,16 +75,16 @@ export class ProductService {
 
     // Create product
     static async createProduct(data: any, createdBy: string) {
-        const { category, ...rest } = data;
+        // Resolve category
         let categoryId = data.categoryId;
+        const categoryInput = data.category;
 
-        // Resolve category name to ID if needed
-        if (!categoryId && category) {
+        if (!categoryId && categoryInput) {
             const foundCategory = await prisma.productCategory.findFirst({
                 where: {
                     OR: [
-                        { name: { contains: category, mode: 'insensitive' } },
-                        { id: typeof category === 'string' && category.length === 36 ? category : undefined }
+                        { name: { contains: categoryInput, mode: 'insensitive' } },
+                        { id: typeof categoryInput === 'string' && categoryInput.length === 36 ? categoryInput : undefined }
                     ].filter(Boolean) as any
                 }
             });
@@ -92,47 +92,44 @@ export class ProductService {
                 categoryId = foundCategory.id;
             } else {
                 const newCategory = await prisma.productCategory.create({
-                    data: { name: category }
+                    data: { name: categoryInput }
                 });
                 categoryId = newCategory.id;
             }
         }
 
-        // Final fallback if no category is found/provided
         if (!categoryId) {
             const firstCategory = await prisma.productCategory.findFirst();
             if (firstCategory) categoryId = firstCategory.id;
             else throw new Error('No product categories available. Please create a category first.');
         }
 
-        // Clean data for Prisma (remove frontend-only fields)
-        const { quantity, lowStockThreshold, ...prismaData } = rest;
-
         return prisma.product.create({
             data: {
-                name: prismaData.name,
-                sku: prismaData.sku,
-                barcode: prismaData.barcode,
-                description: prismaData.description,
-                unit: prismaData.unit || 'unit',
-                costPrice: Number(prismaData.costPrice) || 0,
-                sellingPrice: Number(prismaData.sellingPrice) || 0,
-                wholesalePrice: prismaData.wholesalePrice ? Number(prismaData.wholesalePrice) : null,
-                currentStock: Number(quantity) || 0,
-                minStockLevel: Number(lowStockThreshold) || 10,
+                name: data.name,
+                sku: data.sku,
+                barcode: data.barcode || null,
+                description: data.description || null,
+                unit: data.unit || 'unit',
+                costPrice: Number(data.costPrice) || 0,
+                sellingPrice: Number(data.sellingPrice) || 0,
+                wholesalePrice: (data.wholesalePrice === null || data.wholesalePrice === undefined || data.wholesalePrice === '') ? null : Number(data.wholesalePrice),
+                currentStock: Number(data.quantity) || 0,
+                minStockLevel: Number(data.lowStockThreshold) || 0,
                 isActive: true,
-                categoryId,
-                createdBy,
-                // New ERP Fields
-                defaultLocationId: prismaData.defaultLocationId,
-                isTaxInclusive: prismaData.isTaxInclusive ?? false,
-                reservedQuantity: Number(prismaData.reservedQuantity) || 0,
-                bonusQuantity: Number(prismaData.bonusQuantity) || 0,
-                packingUnit: prismaData.packingUnit,
-                packingSize: prismaData.packingSize !== undefined ? Number(prismaData.packingSize) : undefined,
-                salesRepId: prismaData.salesRepId,
-                expiryDate: prismaData.expiryDate ? new Date(prismaData.expiryDate) : undefined,
-                status: prismaData.status || 'draft',
+                categoryId: categoryId,
+                createdBy: createdBy,
+                // ERP Fields
+                defaultLocationId: data.defaultLocationId || null,
+                isTaxInclusive: data.isTaxInclusive ?? false,
+                taxRate: data.taxRate !== undefined ? Number(data.taxRate) : 18.00,
+                reservedQuantity: Number(data.reservedQuantity) || 0,
+                bonusQuantity: Number(data.bonusQuantity) || 0,
+                packingUnit: data.packingUnit || null,
+                packingSize: (data.packingSize === null || data.packingSize === undefined || data.packingSize === '') ? null : Number(data.packingSize),
+                salesRepId: data.salesRepId || null,
+                expiryDate: data.expiryDate ? new Date(data.expiryDate) : null,
+                status: data.status || 'approved',
             },
             include: {
                 category: true,
@@ -144,30 +141,58 @@ export class ProductService {
 
     // Update product
     static async updateProduct(id: string, data: any) {
-        const { quantity, lowStockThreshold, category, categoryId, ...rest } = data;
-        const { supplier, ...cleanRest } = rest;
+        // Resolve category if changing
+        let categoryId = data.categoryId;
+        const categoryInput = data.category;
 
-        const updateData: any = {
-            ...cleanRest,
-            costPrice: cleanRest.costPrice !== undefined ? Number(cleanRest.costPrice) : undefined,
-            sellingPrice: cleanRest.sellingPrice !== undefined ? Number(cleanRest.sellingPrice) : undefined,
-            wholesalePrice: cleanRest.wholesalePrice !== undefined ? (cleanRest.wholesalePrice === null || cleanRest.wholesalePrice === '' ? null : Number(cleanRest.wholesalePrice)) : undefined,
-            currentStock: quantity !== undefined ? Number(quantity) : undefined,
-            minStockLevel: lowStockThreshold !== undefined ? Number(lowStockThreshold) : undefined,
-        };
+        if (!categoryId && categoryInput) {
+            const foundCategory = await prisma.productCategory.findFirst({
+                where: {
+                    OR: [
+                        { name: { contains: categoryInput, mode: 'insensitive' } },
+                        { id: typeof categoryInput === 'string' && categoryInput.length === 36 ? categoryInput : undefined }
+                    ].filter(Boolean) as any
+                }
+            });
+            if (foundCategory) categoryId = foundCategory.id;
+        }
+
+        const updateData: any = {};
+
+        const setNum = (val: any) => (val !== undefined && val !== null && val !== '') ? Number(val) : undefined;
+        const setNullNum = (val: any) => (val === null || val === '') ? null : (val !== undefined ? Number(val) : undefined);
+        const setStr = (val: any) => val !== undefined ? val : undefined;
+        const setNullStr = (val: any) => val !== undefined ? (val || null) : undefined;
+
+        if (data.name !== undefined) updateData.name = setStr(data.name);
+        if (data.sku !== undefined) updateData.sku = setStr(data.sku);
+        if (data.barcode !== undefined) updateData.barcode = setNullStr(data.barcode);
+        if (data.description !== undefined) updateData.description = setNullStr(data.description);
+        if (data.unit !== undefined) updateData.unit = setStr(data.unit);
+
+        if (data.costPrice !== undefined) updateData.costPrice = setNum(data.costPrice);
+        if (data.sellingPrice !== undefined) updateData.sellingPrice = setNum(data.sellingPrice);
+        if (data.wholesalePrice !== undefined) updateData.wholesalePrice = setNullNum(data.wholesalePrice);
+
+        if (data.quantity !== undefined) updateData.currentStock = setNum(data.quantity);
+        if (data.lowStockThreshold !== undefined) updateData.minStockLevel = setNum(data.lowStockThreshold);
 
         if (categoryId) updateData.categoryId = categoryId;
 
-        // Map and clean new ERP fields
-        if (cleanRest.isTaxInclusive !== undefined) updateData.isTaxInclusive = cleanRest.isTaxInclusive;
-        if (cleanRest.reservedQuantity !== undefined) updateData.reservedQuantity = Number(cleanRest.reservedQuantity);
-        if (cleanRest.bonusQuantity !== undefined) updateData.bonusQuantity = Number(cleanRest.bonusQuantity);
-        if (cleanRest.packingUnit !== undefined) updateData.packingUnit = cleanRest.packingUnit;
-        if (cleanRest.packingSize !== undefined) updateData.packingSize = (cleanRest.packingSize === '' || cleanRest.packingSize === null) ? null : Number(cleanRest.packingSize);
-        if (cleanRest.defaultLocationId !== undefined) updateData.defaultLocationId = cleanRest.defaultLocationId || null;
-        if (cleanRest.salesRepId !== undefined) updateData.salesRepId = cleanRest.salesRepId || null;
-        if (cleanRest.expiryDate !== undefined) updateData.expiryDate = cleanRest.expiryDate ? new Date(cleanRest.expiryDate) : null;
-        if (cleanRest.status !== undefined) updateData.status = cleanRest.status;
+        if (data.isTaxInclusive !== undefined) updateData.isTaxInclusive = !!data.isTaxInclusive;
+        if (data.taxRate !== undefined) updateData.taxRate = setNum(data.taxRate);
+        if (data.reservedQuantity !== undefined) updateData.reservedQuantity = setNum(data.reservedQuantity);
+        if (data.bonusQuantity !== undefined) updateData.bonusQuantity = setNum(data.bonusQuantity);
+        if (data.packingUnit !== undefined) updateData.packingUnit = setNullStr(data.packingUnit);
+        if (data.packingSize !== undefined) updateData.packingSize = setNullNum(data.packingSize);
+
+        if (data.defaultLocationId !== undefined) updateData.defaultLocationId = setNullStr(data.defaultLocationId);
+        if (data.salesRepId !== undefined) updateData.salesRepId = setNullStr(data.salesRepId);
+        if (data.status !== undefined) updateData.status = setStr(data.status);
+
+        if (data.expiryDate !== undefined) {
+            updateData.expiryDate = data.expiryDate ? new Date(data.expiryDate) : null;
+        }
 
         return prisma.product.update({
             where: { id },

@@ -340,6 +340,7 @@ const Inventory = () => {
                   <TableHead className="font-semibold">Product</TableHead>
                   <TableHead className="font-semibold">SKU</TableHead>
                   <TableHead className="font-semibold">Category</TableHead>
+                  <TableHead className="font-semibold text-right">Cost Price</TableHead>
                   <TableHead className="font-semibold text-right">Retail Price</TableHead>
                   <TableHead className="font-semibold text-right">Wholesale Price</TableHead>
                   <TableHead className="font-semibold text-center">Qty</TableHead>

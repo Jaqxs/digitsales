@@ -501,21 +501,25 @@ interface StockAdjustmentModalProps {
 }
 
 export function StockAdjustmentModal({ open, onOpenChange, product }: StockAdjustmentModalProps) {
-  const { updateStock, addStockRecord } = useDataStore();
+  const { addStockRecord } = useDataStore();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(0);
-  const [type, setType] = useState<'in' | 'out' | 'adjustment'>('in');
+  const [type, setType] = useState<'in' | 'out' | 'adjustment' | 'set'>('in');
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!product || quantity === 0) return;
+    if (!product || (type !== 'set' && quantity === 0)) return;
 
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
 
-    const change = type === 'out' ? -Math.abs(quantity) : Math.abs(quantity);
+    let change = 0;
+    if (type === 'in') change = Math.abs(quantity);
+    else if (type === 'out') change = -Math.abs(quantity);
+    else if (type === 'adjustment') change = quantity; // Allow literal adjustment
+    else if (type === 'set') change = quantity - product.quantity;
+
     const newStock = product.quantity + change;
 
     if (newStock < 0) {
@@ -528,27 +532,35 @@ export function StockAdjustmentModal({ open, onOpenChange, product }: StockAdjus
       return;
     }
 
-    await updateStock(product.id, change, type, reason || `Stock ${type}`);
-    addStockRecord({
-      productId: product.id,
-      productName: product.name,
-      type,
-      quantity: Math.abs(quantity),
-      previousStock: product.quantity,
-      newStock,
-      reason: reason || `Stock ${type}`,
-      createdBy: 'Current User',
-    });
+    try {
+      await addStockRecord({
+        productId: product.id,
+        productName: product.name,
+        type: type === 'set' ? 'adjustment' : (type as any),
+        quantity: Math.abs(change),
+        previousStock: product.quantity,
+        newStock,
+        reason: reason || (type === 'set' ? `Stock set to ${quantity}` : `Stock ${type}`),
+        createdBy: 'Current User',
+      });
 
-    toast({
-      title: 'Stock updated',
-      description: `${product.name}: ${product.quantity} → ${newStock} ${product.unit}`,
-    });
+      toast({
+        title: 'Stock updated',
+        description: `${product.name}: ${product.quantity} → ${newStock} ${product.unit}`,
+      });
 
-    setIsSubmitting(false);
-    setQuantity(0);
-    setReason('');
-    onOpenChange(false);
+      setQuantity(0);
+      setReason('');
+      onOpenChange(false);
+    } catch (error: any) {
+      toast({
+        title: 'Adjustment failed',
+        description: error.message || 'Could not update stock.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!product) return null;
@@ -573,7 +585,8 @@ export function StockAdjustmentModal({ open, onOpenChange, product }: StockAdjus
               <SelectContent>
                 <SelectItem value="in">Stock In (Add)</SelectItem>
                 <SelectItem value="out">Stock Out (Remove)</SelectItem>
-                <SelectItem value="adjustment">Adjustment</SelectItem>
+                <SelectItem value="adjustment">Relative Adjustment</SelectItem>
+                <SelectItem value="set">Set Level (Override)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -583,7 +596,7 @@ export function StockAdjustmentModal({ open, onOpenChange, product }: StockAdjus
             <Input
               id="qty"
               type="number"
-              min="1"
+              min={type === 'set' ? "0" : "1"}
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
             />
