@@ -1,4 +1,5 @@
-version: '3.8'
+import fs from 'fs';
+const content = `version: '3.8'
 services:
   postgres:
     image: postgres:15
@@ -10,19 +11,19 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - '5432:5432'
+      - "5432:5432"
 
   redis:
     image: redis:7-alpine
     ports:
-      - '6379:6379'
+      - "6379:6379"
 
   minio:
     image: minio/minio
-    command: server /data --console-address ':9001'
+    command: server /data --console-address ":9001"
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -32,3 +33,7 @@ services:
 volumes:
   postgres_data:
   minio_data:
+`;
+
+fs.writeFileSync('docker-compose.yml', content, { encoding: 'utf8' });
+console.log('docker-compose.yml written in UTF-8');
