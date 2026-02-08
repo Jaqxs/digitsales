@@ -13,6 +13,7 @@ interface SettingsState {
         currency: string;
         vatRate: number;
         logo?: string;
+        accountNumber?: string;
     };
     notifications: {
         lowStock: boolean;
@@ -50,6 +51,7 @@ export const useSettingsStore = create<SettingsState>()(
                 address: 'Posta Street, Kariakoo, Dar es Salaam, Tanzania',
                 currency: 'TZS',
                 vatRate: 18,
+                accountNumber: 'NBC LIMITED Acc: 086174123710',
             },
             notifications: {
                 lowStock: true,

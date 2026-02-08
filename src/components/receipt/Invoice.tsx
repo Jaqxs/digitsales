@@ -52,6 +52,7 @@ const Invoice: React.FC<InvoiceProps> = ({
           <p className="text-xs mt-1"><span className="font-semibold">TIN No:</span> {business.tin}</p>
           <p className="text-xs"><span className="font-semibold">VRN:</span> {business.vatNumber}</p>
           <p className="text-xs mt-2"><span className="font-semibold">Invoice #:</span> {sale.id}</p>
+          <p className="text-xs"><span className="font-semibold">Acc No:</span> {business.accountNumber}</p>
           <p className="text-xs"><span className="font-semibold">Date:</span> {format(new Date(sale.createdAt), 'dd/MM/yyyy')}</p>
         </div>
       </div>
@@ -150,6 +151,9 @@ const Invoice: React.FC<InvoiceProps> = ({
       <div className="mb-6 p-4 border border-primary/30 rounded">
         <h3 className="font-bold text-primary mb-3 uppercase text-xs">Account Details</h3>
         <div className="grid grid-cols-3 gap-4 text-xs">
+          <div className="col-span-3 pb-2 mb-2 border-b border-gray-100">
+            <p className="font-bold text-primary italic">Primary: {business.accountNumber}</p>
+          </div>
           <div>
             <p className="font-semibold">Exim Bank (TZS)</p>
             <p>Acc No: 0140013756</p>
