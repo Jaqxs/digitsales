@@ -25,7 +25,6 @@ model User {
   approvedPOs            PurchaseOrder[]      @relation("POApprover")
   purchaseOrders         PurchaseOrder[]
   receivedPOs            PurchaseOrder[]      @relation("POReceiver")
-  confirmedSales         Sale[]               @relation("SaleConfirmer")
   createdSales           Sale[]               @relation("SaleCreatedBy")
   sales                  Sale[]               @relation("SaleEmployee")
   approvedAdjustments    StockAdjustment[]    @relation("AdjustmentApprover")
@@ -264,11 +263,8 @@ model Sale {
   createdBy           String               @db.Uuid
   createdAt           DateTime             @default(now()) @db.Timestamp(6)
   updatedAt           DateTime             @default(now()) @updatedAt @db.Timestamp(6)
-  confirmedAt         DateTime?            @db.Timestamp(6)
-  confirmedBy         String?              @db.Uuid
   paymentTransactions PaymentTransaction[]
   saleItems           SaleItem[]
-  confirmer           User?                @relation("SaleConfirmer", fields: [confirmedBy], references: [id])
   creator             User                 @relation("SaleCreatedBy", fields: [createdBy], references: [id])
   customer            Customer?            @relation(fields: [customerId], references: [id])
   employee            User                 @relation("SaleEmployee", fields: [employeeId], references: [id])
@@ -418,7 +414,6 @@ enum UserRole {
   sales
   inventory
   support
-  stock_keeper
 }
 
 enum CustomerType {
@@ -468,7 +463,6 @@ enum PaymentMethod {
 
 enum SaleStatus {
   pending
-  awaiting_delivery
   completed
   cancelled
   refunded
