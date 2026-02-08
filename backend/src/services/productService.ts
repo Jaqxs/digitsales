@@ -43,8 +43,6 @@ export class ProductService {
                 where,
                 include: {
                     category: true,
-                    defaultLocation: true,
-                    salesRep: true,
                 },
                 skip,
                 take: limit,
@@ -119,22 +117,10 @@ export class ProductService {
                 isActive: true,
                 categoryId: categoryId,
                 createdBy: createdBy,
-                // ERP Fields
-                defaultLocationId: data.defaultLocationId || null,
-                isTaxInclusive: data.isTaxInclusive ?? false,
                 taxRate: data.taxRate !== undefined ? Number(data.taxRate) : 18.00,
-                reservedQuantity: Number(data.reservedQuantity) || 0,
-                bonusQuantity: Number(data.bonusQuantity) || 0,
-                packingUnit: data.packingUnit || null,
-                packingSize: (data.packingSize === null || data.packingSize === undefined || data.packingSize === '') ? null : Number(data.packingSize),
-                salesRepId: data.salesRepId || null,
-                expiryDate: data.expiryDate ? new Date(data.expiryDate) : null,
-                status: data.status || 'approved',
             },
             include: {
                 category: true,
-                defaultLocation: true,
-                salesRep: true,
             }
         });
     }
@@ -179,28 +165,11 @@ export class ProductService {
 
         if (categoryId) updateData.categoryId = categoryId;
 
-        if (data.isTaxInclusive !== undefined) updateData.isTaxInclusive = !!data.isTaxInclusive;
-        if (data.taxRate !== undefined) updateData.taxRate = setNum(data.taxRate);
-        if (data.reservedQuantity !== undefined) updateData.reservedQuantity = setNum(data.reservedQuantity);
-        if (data.bonusQuantity !== undefined) updateData.bonusQuantity = setNum(data.bonusQuantity);
-        if (data.packingUnit !== undefined) updateData.packingUnit = setNullStr(data.packingUnit);
-        if (data.packingSize !== undefined) updateData.packingSize = setNullNum(data.packingSize);
-
-        if (data.defaultLocationId !== undefined) updateData.defaultLocationId = setNullStr(data.defaultLocationId);
-        if (data.salesRepId !== undefined) updateData.salesRepId = setNullStr(data.salesRepId);
-        if (data.status !== undefined) updateData.status = setStr(data.status);
-
-        if (data.expiryDate !== undefined) {
-            updateData.expiryDate = data.expiryDate ? new Date(data.expiryDate) : null;
-        }
-
         return prisma.product.update({
             where: { id },
             data: updateData,
             include: {
                 category: true,
-                defaultLocation: true,
-                salesRep: true,
             },
         });
     }

@@ -34,16 +34,8 @@ model User {
   createdSuppliers       Supplier[]           @relation("SupplierCreatedBy")
   userProfile            UserProfile?
   userSessions           UserSession[]
-  salesRepProducts       Product[]            @relation("ProductSalesRep")
 
   @@map("users")
-}
-
-enum ProductStatus {
-  draft
-  pending
-  approved
-  rejected
 }
 
 model UserProfile {
@@ -115,20 +107,6 @@ model Product {
   saleItems          SaleItem[]
   stockAdjustments   StockAdjustment[]
   stockLedger        StockLedger[]
-  
-  // New ERP Fields
-  defaultLocationId  String?             @db.Uuid
-  isTaxInclusive     Boolean             @default(false)
-  reservedQuantity   Decimal             @default(0) @db.Decimal(12, 3)
-  bonusQuantity      Decimal             @default(0) @db.Decimal(12, 3)
-  packingUnit        String?             @db.VarChar(50)
-  packingSize        Decimal?            @db.Decimal(10, 2)
-  salesRepId         String?             @db.Uuid
-  expiryDate         DateTime?           @db.Timestamp(6)
-  status             ProductStatus       @default(draft)
-
-  defaultLocation    StockLocation?      @relation(fields: [defaultLocationId], references: [id])
-  salesRep           User?               @relation("ProductSalesRep", fields: [salesRepId], references: [id])
 
   @@map("products")
 }
@@ -184,17 +162,16 @@ model ProductSupplier {
 }
 
 model StockLocation {
-  id               String            @id @default(uuid()) @db.Uuid
-  name             String
-  type             LocationType      @default(warehouse)
-  address          String?
-  isActive         Boolean           @default(true)
-  createdAt        DateTime          @default(now()) @db.Timestamp(6)
-  purchaseOrders   PurchaseOrder[]
-  sales            Sale[]
-  stockAdjustments StockAdjustment[]
-  stockLedger      StockLedger[]
-  defaultForProducts Product[]
+  id                 String            @id @default(uuid()) @db.Uuid
+  name               String
+  type               LocationType      @default(warehouse)
+  address            String?
+  isActive           Boolean           @default(true)
+  createdAt          DateTime          @default(now()) @db.Timestamp(6)
+  purchaseOrders     PurchaseOrder[]
+  sales              Sale[]
+  stockAdjustments   StockAdjustment[]
+  stockLedger        StockLedger[]
 
   @@map("stock_locations")
 }
@@ -433,6 +410,7 @@ model EmployeeTargets {
 
   @@map("employee_targets")
 }
+
 
 enum UserRole {
   admin
