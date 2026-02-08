@@ -174,6 +174,11 @@ const Invoice: React.FC<InvoiceProps> = ({
             <p className="font-semibold">Equity Bank (TZS / $)</p>
             <p>Acc No: 3001211680576</p>
           </div>
+          <div>
+            <p className="font-semibold">NBC LIMITED</p>
+            <p>Acc No: 086174123710</p>
+            <p className="text-[10px]">Zantrix Group Limited</p>
+          </div>
         </div>
 
         <p className="text-center text-xs mt-3 italic text-gray-600">Make all checks payable to {business.name}</p>
