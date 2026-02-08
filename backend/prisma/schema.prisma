@@ -258,7 +258,7 @@ model Sale {
   paymentMethod       PaymentMethod?
   amountPaid          Decimal              @default(0) @db.Decimal(15, 2)
   changeAmount        Decimal              @default(0) @db.Decimal(15, 2)
-  status              SaleStatus           @default(awaiting_delivery)
+  status              SaleStatus           @default(pending)
   notes               String?
   createdBy           String               @db.Uuid
   createdAt           DateTime             @default(now()) @db.Timestamp(6)

@@ -92,8 +92,8 @@ export const createUserSchema = z.object({
       .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
       .regex(/\d/, 'Password must contain at least one number')
       .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 'Password must contain at least one special character'),
-    role: z.enum(['admin', 'manager', 'sales', 'inventory', 'support', 'stock_keeper'], {
-      errorMap: () => ({ message: 'Invalid role. Must be one of: admin, manager, sales, inventory, support, stock_keeper' })
+    role: z.enum(['admin', 'manager', 'sales', 'inventory', 'support'], {
+      errorMap: () => ({ message: 'Invalid role. Must be one of: admin, manager, sales, inventory, support' })
     }),
     firstName: z
       .string()
@@ -172,8 +172,8 @@ export const updateUserSchema = z.object({
       .string()
       .email('Invalid email format')
       .optional(),
-    role: z.enum(['admin', 'manager', 'sales', 'inventory', 'support', 'stock_keeper'], {
-      errorMap: () => ({ message: 'Invalid role. Must be one of: admin, manager, sales, inventory, support, stock_keeper' })
+    role: z.enum(['admin', 'manager', 'sales', 'inventory', 'support'], {
+      errorMap: () => ({ message: 'Invalid role. Must be one of: admin, manager, sales, inventory, support' })
     }).optional(),
     isActive: z.boolean().optional(),
     firstName: z

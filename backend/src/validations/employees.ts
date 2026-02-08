@@ -14,8 +14,8 @@ export const createEmployeeSchema = z.object({
       .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
       .regex(/\d/, 'Password must contain at least one number')
       .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 'Password must contain at least one special character'),
-    role: z.enum(['admin', 'manager', 'sales', 'inventory', 'support', 'stock_keeper'], {
-      errorMap: () => ({ message: 'Invalid role. Must be one of: admin, manager, sales, inventory, support, stock_keeper' })
+    role: z.enum(['admin', 'manager', 'sales', 'inventory', 'support'], {
+      errorMap: () => ({ message: 'Invalid role. Must be one of: admin, manager, sales, inventory, support' })
     }),
     firstName: z
       .string()
@@ -45,8 +45,8 @@ export const updateEmployeeSchema = z.object({
       .string()
       .email('Invalid email format')
       .optional(),
-    role: z.enum(['admin', 'manager', 'sales', 'inventory', 'support', 'stock_keeper'], {
-      errorMap: () => ({ message: 'Invalid role. Must be one of: admin, manager, sales, inventory, support, stock_keeper' })
+    role: z.enum(['admin', 'manager', 'sales', 'inventory', 'support'], {
+      errorMap: () => ({ message: 'Invalid role. Must be one of: admin, manager, sales, inventory, support' })
     }).optional(),
     firstName: z
       .string()
@@ -75,7 +75,7 @@ export const getEmployeesSchema = z.object({
     page: z.string().transform(val => parseInt(val)).refine(val => val > 0, 'Page must be greater than 0').optional(),
     limit: z.string().transform(val => parseInt(val)).refine(val => val > 0 && val <= 100, 'Limit must be between 1 and 100').optional(),
     search: z.string().optional(),
-    role: z.enum(['admin', 'manager', 'sales', 'inventory', 'support', 'stock_keeper']).optional(),
+    role: z.enum(['admin', 'manager', 'sales', 'inventory', 'support']).optional(),
     isActive: z.enum(['true', 'false']).optional(),
   }),
 });
