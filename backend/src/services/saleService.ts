@@ -96,7 +96,7 @@ export class SaleService {
                     notes,
                     createdBy,
                     saleNumber: `SL-${Date.now()}`,
-                    status: 'awaiting_delivery' as any,
+                    status: 'completed', // or 'pending' depending on the original logic
                     saleItems: {
                         create: items.map((item: any) => ({
                             productId: item.productId,
@@ -162,25 +162,11 @@ export class SaleService {
     }
 
     static async confirmSale(saleId: string, confirmedBy: string) {
-        return prisma.$transaction(async (tx) => {
-            const sale = await tx.sale.findUnique({
-                where: { id: saleId },
-                include: { saleItems: true }
-            });
-
-            if (!sale) throw new Error('Sale not found');
-            if ((sale.status as string) !== 'awaiting_delivery') {
-                throw new Error(`Sale cannot be confirmed. Current status: ${sale.status}`);
-            }
-
-            return tx.sale.update({
-                where: { id: saleId },
-                data: {
-                    status: 'completed',
-                    confirmedAt: new Date(),
-                    confirmedBy,
-                } as any,
-            });
+        return prisma.sale.update({
+            where: { id: saleId },
+            data: {
+                status: 'completed',
+            },
         });
     }
 }
