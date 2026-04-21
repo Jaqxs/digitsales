@@ -53,7 +53,7 @@ export function ReceiptModal({
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Receipt - Zantrix POS</title>
+            <title>Receipt - Digitsales POS</title>
             <style>
               @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
               
@@ -217,7 +217,7 @@ export function ReceiptModal({
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Receipt - Zantrix POS</title>
+            <title>Receipt - Digitsales POS</title>
             <style>
                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
               

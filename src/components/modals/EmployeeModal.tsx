@@ -203,7 +203,7 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="e.g. john@zantrix.co.tz"
+                placeholder="e.g. john@digitsales.io"
                 required
               />
             </div>

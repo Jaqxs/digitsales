@@ -14,7 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building2, Bell, Shield, Printer, Globe, Save, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import zantrixLogo from '@/assets/zantrix-logo.png';
+import digitsalesLogo from '@/assets/zantrix-logo.png';
 import { api } from '@/services/api';
 
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -76,7 +76,7 @@ const Settings = () => {
 
               <div className="space-y-6">
                 <div className="flex items-center gap-6">
-                  <img src={business.logo || zantrixLogo} alt="Business Logo" className="h-16 w-auto object-contain bg-white rounded p-1 border" />
+                  <img src={business.logo || digitsalesLogo} alt="Business Logo" className="h-16 w-auto object-contain bg-white rounded p-1 border" />
                   <div className="relative">
                     <Input 
                       type="file" 
@@ -148,6 +148,42 @@ const Settings = () => {
                       type="email"
                       value={business.email}
                       onChange={(e) => updateBusiness({ email: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountNumber">Bank Account Number</Label>
+                    <Input
+                      id="accountNumber"
+                      value={business.accountNumber}
+                      onChange={(e) => updateBusiness({ accountNumber: e.target.value })}
+                      placeholder="e.g. 0123456789"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bankName">Bank Name</Label>
+                    <Input
+                      id="bankName"
+                      value={business.bankName}
+                      onChange={(e) => updateBusiness({ bankName: e.target.value })}
+                      placeholder="e.g. National Bank"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="branchName">Branch Name</Label>
+                    <Input
+                      id="branchName"
+                      value={business.branchName}
+                      onChange={(e) => updateBusiness({ branchName: e.target.value })}
+                      placeholder="e.g. Main Branch"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      value={business.website}
+                      onChange={(e) => updateBusiness({ website: e.target.value })}
+                      placeholder="e.g. www.yourcompany.com"
                     />
                   </div>
                   <div className="space-y-2 sm:col-span-2">

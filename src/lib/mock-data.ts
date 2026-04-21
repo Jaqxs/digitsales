@@ -124,12 +124,12 @@ export const MOCK_CUSTOMERS: Customer[] = [
 // ─── EMPLOYEES ────────────────────────────────────────────────────────────────
 
 export const MOCK_EMPLOYEES: Employee[] = [
-  { id: 'emp-001', name: 'Brian Mwangi', email: 'brian.mwangi@zantrixpos.com', role: 'admin' as UserRole, phone: '0700111001', salesTarget: 500000, totalSales: 687000, commission: 3.5, createdAt: new Date('2023-06-01') },
-  { id: 'emp-002', name: 'Grace Achieng', email: 'grace.achieng@zantrixpos.com', role: 'manager' as UserRole, phone: '0700111002', salesTarget: 400000, totalSales: 512000, commission: 3.0, createdAt: new Date('2023-07-15') },
-  { id: 'emp-003', name: 'James Kipchoge', email: 'james.kipchoge@zantrixpos.com', role: 'sales' as UserRole, phone: '0700111003', salesTarget: 250000, totalSales: 298000, commission: 2.5, createdAt: new Date('2023-09-01') },
-  { id: 'emp-004', name: 'Fatuma Omar', email: 'fatuma.omar@zantrixpos.com', role: 'sales' as UserRole, phone: '0700111004', salesTarget: 250000, totalSales: 231000, commission: 2.5, createdAt: new Date('2024-01-10') },
-  { id: 'emp-005', name: 'Kevin Njoroge', email: 'kevin.njoroge@zantrixpos.com', role: 'inventory' as UserRole, phone: '0700111005', salesTarget: 0, totalSales: 0, commission: 0, createdAt: new Date('2023-10-01') },
-  { id: 'emp-006', name: 'Amina Wekesa', email: 'amina.wekesa@zantrixpos.com', role: 'stock_keeper' as UserRole, phone: '0700111006', salesTarget: 0, totalSales: 0, commission: 0, createdAt: new Date('2024-02-01') },
+  { id: 'emp-001', name: 'Brian Mwangi', email: 'brian.mwangi@digitsales.io', role: 'admin' as UserRole, phone: '0700111001', salesTarget: 500000, totalSales: 687000, commission: 3.5, createdAt: new Date('2023-06-01') },
+  { id: 'emp-002', name: 'Grace Achieng', email: 'grace.achieng@digitsales.io', role: 'manager' as UserRole, phone: '0700111002', salesTarget: 400000, totalSales: 512000, commission: 3.0, createdAt: new Date('2023-07-15') },
+  { id: 'emp-003', name: 'James Kipchoge', email: 'james.kipchoge@digitsales.io', role: 'sales' as UserRole, phone: '0700111003', salesTarget: 250000, totalSales: 298000, commission: 2.5, createdAt: new Date('2023-09-01') },
+  { id: 'emp-004', name: 'Fatuma Omar', email: 'fatuma.omar@digitsales.io', role: 'sales' as UserRole, phone: '0700111004', salesTarget: 250000, totalSales: 231000, commission: 2.5, createdAt: new Date('2024-01-10') },
+  { id: 'emp-005', name: 'Kevin Njoroge', email: 'kevin.njoroge@digitsales.io', role: 'inventory' as UserRole, phone: '0700111005', salesTarget: 0, totalSales: 0, commission: 0, createdAt: new Date('2023-10-01') },
+  { id: 'emp-006', name: 'Amina Wekesa', email: 'amina.wekesa@digitsales.io', role: 'stock_keeper' as UserRole, phone: '0700111006', salesTarget: 0, totalSales: 0, commission: 0, createdAt: new Date('2024-02-01') },
 ];
 
 // ─── HELPER: create a sale ────────────────────────────────────────────────────
@@ -200,12 +200,12 @@ export const MOCK_SALES: Sale[] = [
 // ─── STOCK RECORDS ────────────────────────────────────────────────────────────
 
 export const MOCK_STOCK_RECORDS: StockRecord[] = [
-  { id: 'stk-001', productId: 'prod-001', productName: 'Makita Angle Grinder 4"', type: 'in', quantity: 20, previousStock: 14, newStock: 34, reason: 'Purchase order #PO-2024-011', createdAt: new Date(Date.now() - 2 * 86400000), createdBy: 'kevin.njoroge@zantrixpos.com' },
-  { id: 'stk-002', productId: 'prod-005', productName: 'Safety Helmet (Orange)', type: 'out', quantity: 12, previousStock: 20, newStock: 8, reason: 'Sales order bulk dispatch', createdAt: new Date(Date.now() - 3 * 86400000), createdBy: 'amina.wekesa@zantrixpos.com' },
-  { id: 'stk-003', productId: 'prod-012', productName: 'Circular Saw 185mm 1200W', type: 'out', quantity: 3, previousStock: 3, newStock: 0, reason: 'Sale to Kariuki Construction', createdAt: new Date(Date.now() - 5 * 86400000), createdBy: 'james.kipchoge@zantrixpos.com' },
-  { id: 'stk-004', productId: 'prod-006', productName: 'Cement Portland 50kg', type: 'in', quantity: 100, previousStock: 100, newStock: 200, reason: 'Restocking from Savanna Cement', createdAt: new Date(Date.now() - 7 * 86400000), createdBy: 'kevin.njoroge@zantrixpos.com' },
-  { id: 'stk-005', productId: 'prod-007', productName: 'M10 Hex Bolts (50pcs)', type: 'adjustment', quantity: -3, previousStock: 7, newStock: 4, reason: 'Stock count discrepancy correction', createdAt: new Date(Date.now() - 8 * 86400000), createdBy: 'amina.wekesa@zantrixpos.com' },
-  { id: 'stk-006', productId: 'prod-003', productName: 'PVC Pipe 2" x 6m', type: 'in', quantity: 60, previousStock: 60, newStock: 120, reason: 'Purchase order #PO-2024-009', createdAt: new Date(Date.now() - 10 * 86400000), createdBy: 'kevin.njoroge@zantrixpos.com' },
-  { id: 'stk-007', productId: 'prod-010', productName: 'Cable 2.5mm² Twin & Earth', type: 'in', quantity: 5, previousStock: 10, newStock: 15, reason: 'Purchase order #PO-2024-010', createdAt: new Date(Date.now() - 12 * 86400000), createdBy: 'kevin.njoroge@zantrixpos.com' },
-  { id: 'stk-008', productId: 'prod-002', productName: 'Bosch Drill 13mm 500W', type: 'out', quantity: 2, previousStock: 20, newStock: 18, reason: 'Sales dispatch — invoice #INV-204', createdAt: new Date(Date.now() - 14 * 86400000), createdBy: 'james.kipchoge@zantrixpos.com' },
+  { id: 'stk-001', productId: 'prod-001', productName: 'Makita Angle Grinder 4"', type: 'in', quantity: 20, previousStock: 14, newStock: 34, reason: 'Purchase order #PO-2024-011', createdAt: new Date(Date.now() - 2 * 86400000), createdBy: 'kevin.njoroge@digitsales.io' },
+  { id: 'stk-002', productId: 'prod-005', productName: 'Safety Helmet (Orange)', type: 'out', quantity: 12, previousStock: 20, newStock: 8, reason: 'Sales order bulk dispatch', createdAt: new Date(Date.now() - 3 * 86400000), createdBy: 'amina.wekesa@digitsales.io' },
+  { id: 'stk-003', productId: 'prod-012', productName: 'Circular Saw 185mm 1200W', type: 'out', quantity: 3, previousStock: 3, newStock: 0, reason: 'Sale to Kariuki Construction', createdAt: new Date(Date.now() - 5 * 86400000), createdBy: 'james.kipchoge@digitsales.io' },
+  { id: 'stk-004', productId: 'prod-006', productName: 'Cement Portland 50kg', type: 'in', quantity: 100, previousStock: 100, newStock: 200, reason: 'Restocking from Savanna Cement', createdAt: new Date(Date.now() - 7 * 86400000), createdBy: 'kevin.njoroge@digitsales.io' },
+  { id: 'stk-005', productId: 'prod-007', productName: 'M10 Hex Bolts (50pcs)', type: 'adjustment', quantity: -3, previousStock: 7, newStock: 4, reason: 'Stock count discrepancy correction', createdAt: new Date(Date.now() - 8 * 86400000), createdBy: 'amina.wekesa@digitsales.io' },
+  { id: 'stk-006', productId: 'prod-003', productName: 'PVC Pipe 2" x 6m', type: 'in', quantity: 60, previousStock: 60, newStock: 120, reason: 'Purchase order #PO-2024-009', createdAt: new Date(Date.now() - 10 * 86400000), createdBy: 'kevin.njoroge@digitsales.io' },
+  { id: 'stk-007', productId: 'prod-010', productName: 'Cable 2.5mm² Twin & Earth', type: 'in', quantity: 5, previousStock: 10, newStock: 15, reason: 'Purchase order #PO-2024-010', createdAt: new Date(Date.now() - 12 * 86400000), createdBy: 'kevin.njoroge@digitsales.io' },
+  { id: 'stk-008', productId: 'prod-002', productName: 'Bosch Drill 13mm 500W', type: 'out', quantity: 2, previousStock: 20, newStock: 18, reason: 'Sales dispatch — invoice #INV-204', createdAt: new Date(Date.now() - 14 * 86400000), createdBy: 'james.kipchoge@digitsales.io' },
 ];

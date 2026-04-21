@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sale } from '@/types/pos';
 import { format } from 'date-fns';
-import zantrixLogo from '@/assets/zantrix-logo.png';
+import digitsalesLogo from '@/assets/zantrix-logo.png';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 interface DeliveryNoteProps {
@@ -27,7 +27,7 @@ const DeliveryNote: React.FC<DeliveryNoteProps> = ({
             {/* Header */}
             <div className="flex justify-between items-start border-b-2 border-accent pb-4 mb-4">
                 <div className="flex items-start gap-4">
-                    <img src={business.logo || zantrixLogo} alt="Business Logo" className="w-20 h-20 object-contain" />
+                    <img src={business.logo || digitsalesLogo} alt="Business Logo" className="w-20 h-20 object-contain" />
                     <div>
                         <h1 className="text-xl font-bold text-primary">{business.name}</h1>
                         <p className="text-xs text-gray-600">{business.address}</p>
@@ -122,14 +122,9 @@ const DeliveryNote: React.FC<DeliveryNoteProps> = ({
                 <p className="text-xs text-zinc-600">Please verify all items and quantities before releasing the goods. The receiver must sign this document as proof of collection. Any discrepancies must be noted immediately.</p>
             </div>
 
-            {/* Quote/Slogan */}
-            <p className="text-center text-primary font-black italic text-lg opacity-20 mb-8 tracking-[0.3em]">
-                UJENZI WETU, NGUVU ZETU
-            </p>
-
             {/* Footer */}
             <div className="border-t border-zinc-200 pt-6 text-center text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold">
-                <p>{business.name} &bull; Delivery Management System</p>
+                <p>{business.name} &bull; Document of Delivery</p>
                 <div className="flex justify-between mt-4 font-medium tracking-normal text-zinc-300 lowercase italic">
                     <span>Printed: {format(new Date(), 'dd/mm/yyyy hh:mm:ss a')}</span>
                     <span>By: {printedBy}</span>

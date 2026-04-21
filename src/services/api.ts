@@ -1,4 +1,4 @@
-// API service for Zantrix POS backend integration
+// API service for Digitsales POS backend integration
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 console.log('🔌 API Service Initialized');
@@ -21,7 +21,7 @@ async function apiRequest<T>(
   };
 
   // Add auth token if available
-  const token = localStorage.getItem('zantrix_token');
+  const token = localStorage.getItem('digitsales_token');
   if (token) {
     config.headers = {
       ...config.headers,
@@ -36,7 +36,7 @@ async function apiRequest<T>(
 
     // Handle 401 Unauthorized (Token Expired)
     if (response.status === 401 && endpoint !== '/auth/refresh' && endpoint !== '/auth/login') {
-      const refreshTokenValue = localStorage.getItem('zantrix_refreshToken') || localStorage.getItem('zantrix_refresh_token');
+      const refreshTokenValue = localStorage.getItem('digitsales_refreshToken') || localStorage.getItem('digitsales_refresh_token');
       if (refreshTokenValue) {
         try {
           console.log('🔄 Token expired, attempting refresh...');
@@ -44,9 +44,9 @@ async function apiRequest<T>(
 
           // Store new tokens
           if (refreshResponse.tokens) {
-            localStorage.setItem('zantrix_token', refreshResponse.tokens.accessToken);
+            localStorage.setItem('digitsales_token', refreshResponse.tokens.accessToken);
             if (refreshResponse.tokens.refreshToken) {
-              localStorage.setItem('zantrix_refreshToken', refreshResponse.tokens.refreshToken);
+              localStorage.setItem('digitsales_refreshToken', refreshResponse.tokens.refreshToken);
             }
 
             // Retry the original request with the new token
@@ -64,8 +64,8 @@ async function apiRequest<T>(
         } catch (refreshError) {
           console.error('❌ Token refresh failed:', refreshError);
           // If refresh fails, we should logout by removing tokens
-          localStorage.removeItem('zantrix_token');
-          localStorage.removeItem('zantrix_refreshToken');
+          localStorage.removeItem('digitsales_token');
+          localStorage.removeItem('digitsales_refreshToken');
           window.location.href = '/auth';
           throw new Error('Session expired. Please log in again.');
         }

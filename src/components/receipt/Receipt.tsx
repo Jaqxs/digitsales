@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 import { Sale, CartItem } from '@/types/pos';
 import { formatCurrency, formatDateTime } from '@/lib/pos-utils';
-import zantrixLogo from '@/assets/zantrix-logo.png';
+import digitsalesLogo from '@/assets/zantrix-logo.png';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 interface ReceiptProps {
@@ -48,13 +48,13 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
         {/* Header - Brand Identity */}
         <div className="text-center mb-6">
           <img
-            src={business.logo || zantrixLogo}
+            src={business.logo || digitsalesLogo}
             alt="Business Logo"
             className="h-14 mx-auto mb-3 object-contain"
           />
           <h1 className="font-bold text-base tracking-tight text-primary uppercase">{business.name}</h1>
           <div className="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider font-medium">
-            <p>Building Solutions & Hardware</p>
+            <p>{business.name}</p>
             <p>{business.address}</p>
             <p>TEL: {business.phone}</p>
             <p>TIN: {business.tin}</p>
@@ -138,9 +138,8 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
         {/* Footer - Professional Tone */}
         <div className="text-center space-y-4 pt-4 border-t border-dashed border-zinc-200">
           <div className="space-y-1">
-            <p className="font-black text-xs text-primary italic uppercase tracking-widest">Ujenzi Wetu, Nguvu Zetu</p>
             <p className="text-[10px] text-zinc-400 font-medium max-w-[200px] mx-auto uppercase">
-              Thank you for choosing {business.name} for your construction needs.
+              Thank you for choosing {business.name} for your business needs.
             </p>
           </div>
 
@@ -167,7 +166,7 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
           </div>
 
           <p className="text-[10px] text-zinc-300 font-medium pt-3 italic border-t border-zinc-50">
-            POWERED BY ZANTRIX POS
+            POWERED BY DIGITSALES POS
           </p>
         </div>
       </div>

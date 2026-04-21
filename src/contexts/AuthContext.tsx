@@ -2,6 +2,7 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 
 import { User, UserRole } from '@/types/pos';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useDataStore } from '@/stores/dataStore';
 
 interface AuthContextType {
   user: User | null;
@@ -19,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>({
     id: 'preview-admin',
     name: 'Preview Admin',
-    email: 'admin@zantrix.co.tz',
+    email: 'admin@digitsales.io',
     role: 'admin',
     isActive: true,
     createdAt: new Date().toISOString(),
@@ -31,14 +32,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Basic mock local login
-    const savedUser = localStorage.getItem('zantrix-user');
-    if (savedUser) {
-      const parsed = JSON.parse(savedUser);
-      if (parsed.email === email && password === localStorage.getItem('zantrix-password')) {
-        setUser(parsed);
-        return { success: true };
-      }
+    // Basic mock local login with multiple accounts support
+    const savedAccounts = JSON.parse(localStorage.getItem('digitsales-accounts') || '[]');
+    const account = savedAccounts.find((acc: any) => acc.email === email && acc.password === password);
+    
+    if (account) {
+      setUser(account.user);
+      return { success: true };
     }
     return { success: false, error: 'Invalid email or password.' };
   };
@@ -53,22 +53,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     
-    // Save to local storage for persistence
-    localStorage.setItem('zantrix-user', JSON.stringify(newUser));
-    localStorage.setItem('zantrix-password', data.password); // MOCK ONLY
+    // Save to a list of accounts for multi-user simulation
+    const savedAccounts = JSON.parse(localStorage.getItem('digitsales-accounts') || '[]');
+    
+    if (savedAccounts.some((acc: any) => acc.email === data.email)) {
+      return { success: false, error: 'An account with this email already exists.' };
+    }
+
+    savedAccounts.push({
+      email: data.email,
+      password: data.password,
+      user: newUser,
+      company: data.companyName
+    });
+
+    localStorage.setItem('digitsales-accounts', JSON.stringify(savedAccounts));
     setUser(newUser);
 
     if (data.companyName) {
-      useSettingsStore.getState().updateBusiness({ name: data.companyName, tradingName: data.companyName });
+      // For initial setup, we update the settings store
+      useSettingsStore.getState().updateBusiness({ 
+        name: data.companyName, 
+        tradingName: data.companyName,
+        email: data.email
+      });
     }
 
     return { success: true };
   };
 
   const logout = () => {
-    localStorage.removeItem('zantrix-user');
     setUser(null);
   };
+
+  useEffect(() => {
+    // Sync stores with current user for isolation
+    if (user?.id) {
+      useSettingsStore.getState().setCurrentUser(user.id);
+      useDataStore.getState().setCurrentUser(user.id);
+    } else {
+      useSettingsStore.getState().setCurrentUser(null);
+      useDataStore.getState().setCurrentUser(null);
+    }
+  }, [user]);
 
   const hasPermission = (allowedRoles: UserRole[]) => {
     if (!user) return false;

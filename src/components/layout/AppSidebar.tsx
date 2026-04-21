@@ -27,7 +27,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import zantrixLogo from '@/assets/zantrix-logo.png';
+import digitsalesLogo from '@/assets/zantrix-logo.png';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 interface SidebarProps {
@@ -76,7 +76,7 @@ export function MobileHeader() {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <img src={business.logo || zantrixLogo} alt="Business Logo" className="h-9 w-auto object-contain" />
+          <img src={business.logo || digitsalesLogo} alt="Business Logo" className="h-9 w-auto object-contain" />
         </div>
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-primary-foreground font-bold text-sm shadow-glow">
@@ -89,7 +89,7 @@ export function MobileHeader() {
         <SheetContent side="left" className="w-[300px] p-0 bg-sidebar border-sidebar-border">
           <SheetHeader className="p-5 border-b border-sidebar-border">
             <SheetTitle className="flex items-center gap-3">
-              <img src={business.logo || zantrixLogo} alt="Business Logo" className="h-11 w-auto object-contain" />
+              <img src={business.logo || digitsalesLogo} alt="Business Logo" className="h-11 w-auto object-contain" />
             </SheetTitle>
           </SheetHeader>
 
@@ -174,7 +174,7 @@ export function AppSidebar({ className }: SidebarProps) {
       <div className={cn("flex h-20 items-center px-4", isSidebarCollapsed ? "justify-center" : "justify-between")}>
         {!isSidebarCollapsed && (
           <div className="flex items-center gap-3">
-            <img src={business.logo || zantrixLogo} alt="Business Logo" className="h-9 w-auto object-contain bg-white rounded p-1" />
+            <img src={business.logo || digitsalesLogo} alt="Business Logo" className="h-9 w-auto object-contain bg-white rounded p-1" />
           </div>
         )}
         <Button

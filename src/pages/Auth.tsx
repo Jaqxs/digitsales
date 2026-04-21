@@ -69,8 +69,7 @@ const Auth = () => {
 
       if (result.success) {
         toast({
-          title: 'Account created!',
-          description: 'Welcome to Zantrix POS.',
+          description: 'Welcome to your Dashboard.',
         });
         navigate('/');
       } else {
@@ -110,15 +109,18 @@ const Auth = () => {
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center p-12 xl:p-24">
           <div className="max-w-md">
-            <img src={zantrixLogo} alt="Zantrix" className="h-16 w-auto mb-12 drop-shadow-2xl" />
+            <h2 className="text-4xl xl:text-6xl font-display font-bold text-white mb-6 leading-tight flex items-center gap-3">
+              <Package className="h-12 w-12 text-primary" />
+              Digitsales POS
+            </h2>
 
             <h1 className="text-4xl xl:text-5xl font-display font-bold text-white mb-6 leading-tight">
               Powerful POS for
-              <span className="block text-gradient bg-gradient-to-r from-primary to-accent">Construction Retail</span>
+              <span className="block text-gradient bg-gradient-to-r from-primary to-accent">Modern Retail</span>
             </h1>
 
             <p className="text-lg text-white/70 mb-12 leading-relaxed">
-              The most advanced retail management system designed specifically for Tanzania's growing construction and hardware market.
+              The most advanced retail management system designed to scale your business efficiently.
             </p>
 
             <div className="grid grid-cols-2 gap-6">
@@ -145,8 +147,7 @@ const Auth = () => {
         <div className="w-full max-w-[440px]">
           {/* Mobile logo */}
           <div className="lg:hidden mb-12 text-center">
-            <img src={zantrixLogo} alt="Zantrix" className="h-14 w-auto mx-auto mb-4" />
-            <h2 className="text-2xl font-display font-bold text-foreground">Zantrix POS</h2>
+            <h2 className="text-2xl font-display font-bold text-foreground">Digitsales POS</h2>
           </div>
 
           <div className="rounded-3xl border border-border bg-card shadow-2xl overflow-hidden animate-scale-in">
@@ -232,7 +233,7 @@ const Auth = () => {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="john@zantrix.co.tz"
+                    placeholder="admin@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
@@ -335,7 +336,7 @@ const Auth = () => {
           <div className="mt-8 text-center">
             <p className="text-xs text-muted-foreground/60 flex items-center justify-center gap-2">
               <span className="h-px w-8 bg-border" />
-              © 2024 Zantrix Group LTD
+              © 2024 Digitsales POS Systems
               <span className="h-px w-8 bg-border" />
             </p>
             <div className="flex justify-center gap-4 mt-4">

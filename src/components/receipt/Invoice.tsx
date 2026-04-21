@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sale } from '@/types/pos';
 import { format } from 'date-fns';
-import zantrixLogo from '@/assets/zantrix-logo.png';
+import digitsalesLogo from '@/assets/zantrix-logo.png';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 interface InvoiceProps {
@@ -37,7 +37,7 @@ const Invoice: React.FC<InvoiceProps> = ({
       {/* Header */}
       <div className="flex justify-between items-start border-b-2 border-primary pb-4 mb-4">
         <div className="flex items-start gap-4">
-          <img src={business.logo || zantrixLogo} alt="Business Logo" className="w-20 h-20 object-contain" />
+          <img src={business.logo || digitsalesLogo} alt="Business Logo" className="w-20 h-20 object-contain" />
           <div>
             <h1 className="text-xl font-bold text-primary">{business.name}</h1>
             <p className="text-xs text-gray-600">{business.address}</p>
@@ -135,58 +135,25 @@ const Invoice: React.FC<InvoiceProps> = ({
       {/* Terms and Conditions */}
       <div className="mb-6 p-4 bg-gray-50 rounded text-xs">
         <h3 className="font-bold text-primary mb-2 uppercase">Sales Order Terms and Conditions</h3>
-        <p className="text-center text-primary font-semibold mb-2 italic">UJENZI WETU, NGUVU ZETU</p>
         <ol className="list-decimal list-inside space-y-1 text-gray-700">
           <li>Delivery: Seller will not assume any responsibility for any damage resulting from any delays beyond its control.</li>
           <li>Return: No goods may be returned to Sellers without the prior written consent of Seller and are subject to a return charge.</li>
-          <li>The terms of payment is 100% advance through bank transaction only and as per our given Bank details. No refunds shall be made by the seller if the order is confirmed and paid.</li>
+          <li>Payments should be made through the authorized bank account details provided by the company.</li>
           <li>The price shown on the proforma is valid for 3 days and is subject to receipt of payment along with the purchase order within the stipulated period.</li>
           <li>The management reserves the right to review the price without any notice.</li>
-          <li>In the case of any price escalations, only the quantity paid before the effective date of review will be applicable for supply and the balance unpaid quantity shall lapse with no obligation from the supplier.</li>
+          <li>In the case of any price escalations, only the quantity paid before the effective date of review will be applicable for supply.</li>
           <li>Force majeure towards effecting supplies shall apply.</li>
         </ol>
       </div>
 
-      {/* Bank Account Details */}
-      <div className="mb-6 p-4 border border-primary/30 rounded">
-        <h3 className="font-bold text-primary mb-3 uppercase text-xs">Account Details</h3>
-        <div className="grid grid-cols-3 gap-4 text-xs">
-          <div>
-            <p className="font-semibold italic text-primary">{business.accountNumber}</p>
-          </div>
-          <div>
-            <p className="font-semibold">Exim Bank (TZS)</p>
-            <p>Acc No: 0140013756</p>
-          </div>
-          <div>
-            <p className="font-semibold">Exim Bank ($)</p>
-            <p>Acc No: 0140013757</p>
-          </div>
-          <div>
-            <p className="font-semibold">NBC Bank (TZS)</p>
-            <p>Acc No: 011103039284</p>
-          </div>
-          <div>
-            <p className="font-semibold">CRDB Bank (TZS)</p>
-            <p>Acc No: 0150495868600</p>
-          </div>
-          <div>
-            <p className="font-semibold">NMB Bank (TZS)</p>
-            <p>Acc No: 20110049560</p>
-          </div>
-          <div>
-            <p className="font-semibold">Equity Bank (TZS / $)</p>
-            <p>Acc No: 3001211680576</p>
-          </div>
-          <div>
-            <p className="font-semibold">NBC LIMITED</p>
-            <p>Acc No: 086174123710</p>
-            <p className="text-[10px]">Zantrix Group Limited</p>
-          </div>
+      {/* Account Details (Dynamic from settings) */}
+      {business.accountNumber && (
+        <div className="mb-6 p-4 border border-zinc-200 rounded">
+          <h3 className="font-bold text-primary mb-2 uppercase text-xs">Payment Information</h3>
+          <p className="text-xs">Bank Account Number: <span className="font-bold">{business.accountNumber}</span></p>
+          <p className="text-center text-xs mt-3 italic text-gray-600">Make all checks payable to {business.name}</p>
         </div>
-
-        <p className="text-center text-xs mt-3 italic text-gray-600">Make all checks payable to {business.name}</p>
-      </div>
+      )}
 
       {/* Thank You Message */}
       <div className="text-center mb-4">

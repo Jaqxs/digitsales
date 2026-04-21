@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface SettingsState {
+interface SettingsData {
     business: {
         name: string;
         tradingName: string;
@@ -14,6 +14,9 @@ interface SettingsState {
         vatRate: number;
         logo?: string;
         accountNumber?: string;
+        bankName?: string;
+        branchName?: string;
+        website?: string;
     };
     notifications: {
         lowStock: boolean;
@@ -32,55 +35,161 @@ interface SettingsState {
         sessionTimeout: string;
         auditLogging: boolean;
     };
-    updateBusiness: (settings: Partial<SettingsState['business']>) => void;
-    updateNotifications: (settings: Partial<SettingsState['notifications']>) => void;
-    updatePos: (settings: Partial<SettingsState['pos']>) => void;
-    updateSecurity: (settings: Partial<SettingsState['security']>) => void;
 }
 
-export const useSettingsStore = create<SettingsState>()(
+interface MultiUserSettingsState {
+    business: SettingsData['business'];
+    notifications: SettingsData['notifications'];
+    pos: SettingsData['pos'];
+    security: SettingsData['security'];
+    
+    currentUserId: string | null;
+    userSettings: Record<string, SettingsData>;
+    
+    setCurrentUser: (userId: string | null) => void;
+    updateBusiness: (settings: Partial<SettingsData['business']>) => void;
+    updateNotifications: (settings: Partial<SettingsData['notifications']>) => void;
+    updatePos: (settings: Partial<SettingsData['pos']>) => void;
+    updateSecurity: (settings: Partial<SettingsData['security']>) => void;
+}
+
+const DEFAULT_SETTINGS: SettingsData = {
+    business: {
+        name: 'Digitsales POS',
+        tradingName: '',
+        address: '',
+        phone: '',
+        email: '',
+        website: '',
+        tin: '',
+        vatNumber: '',
+        accountNumber: '',
+        bankName: '',
+        branchName: '',
+        logo: '',
+        currency: 'TZS',
+        vatRate: 18
+    },
+    notifications: {
+        lowStock: true,
+        dailySales: true,
+        newOrders: true,
+        smsAlerts: false,
+    },
+    pos: {
+        autoPrint: true,
+        includeVat: true,
+        requireCustomer: false,
+        defaultPayment: 'cash',
+    },
+    security: {
+        twoFactor: false,
+        sessionTimeout: '30',
+        auditLogging: true,
+    },
+};
+
+export const useSettingsStore = create<MultiUserSettingsState>()(
     persist(
-        (set) => ({
-            business: {
-                name: 'Zantrix Group Limited',
-                tradingName: 'Zantrix Hardware & Construction',
-                tin: '123-456-789',
-                vatNumber: 'VAT-TZ-2024-001',
-                phone: '+255 22 123 4567',
-                email: 'info@zantrix.co.tz',
-                address: 'Posta Street, Kariakoo, Dar es Salaam, Tanzania',
-                currency: 'TZS',
-                vatRate: 18,
-                accountNumber: 'NBC LIMITED Acc: 086174123710',
+        (set, get) => ({
+            ...DEFAULT_SETTINGS,
+            currentUserId: null,
+            userSettings: {},
+
+            setCurrentUser: (userId) => {
+                if (!userId) {
+                    set({ currentUserId: null, ...DEFAULT_SETTINGS });
+                    return;
+                }
+                const { userSettings } = get();
+                const settings = userSettings[userId] || DEFAULT_SETTINGS;
+                set({ 
+                    currentUserId: userId,
+                    business: settings.business,
+                    notifications: settings.notifications,
+                    pos: settings.pos,
+                    security: settings.security
+                });
             },
-            notifications: {
-                lowStock: true,
-                dailySales: true,
-                newOrders: true,
-                smsAlerts: false,
+
+            updateBusiness: (updates) => {
+                set((state) => {
+                    const newBusiness = { ...state.business, ...updates };
+                    const newState = { ...state, business: newBusiness };
+                    if (state.currentUserId) {
+                        newState.userSettings = {
+                            ...state.userSettings,
+                            [state.currentUserId]: {
+                                business: newBusiness,
+                                notifications: state.notifications,
+                                pos: state.pos,
+                                security: state.security
+                            }
+                        };
+                    }
+                    return newState;
+                });
             },
-            pos: {
-                autoPrint: true,
-                includeVat: true,
-                requireCustomer: false,
-                defaultPayment: 'cash',
+
+            updateNotifications: (updates) => {
+                set((state) => {
+                    const newNotifications = { ...state.notifications, ...updates };
+                    const newState = { ...state, notifications: newNotifications };
+                    if (state.currentUserId) {
+                        newState.userSettings = {
+                            ...state.userSettings,
+                            [state.currentUserId]: {
+                                business: state.business,
+                                notifications: newNotifications,
+                                pos: state.pos,
+                                security: state.security
+                            }
+                        };
+                    }
+                    return newState;
+                });
             },
-            security: {
-                twoFactor: false,
-                sessionTimeout: '30',
-                auditLogging: true,
+
+            updatePos: (updates) => {
+                set((state) => {
+                    const newPos = { ...state.pos, ...updates };
+                    const newState = { ...state, pos: newPos };
+                    if (state.currentUserId) {
+                        newState.userSettings = {
+                            ...state.userSettings,
+                            [state.currentUserId]: {
+                                business: state.business,
+                                notifications: state.notifications,
+                                pos: newPos,
+                                security: state.security
+                            }
+                        };
+                    }
+                    return newState;
+                });
             },
-            updateBusiness: (updates) =>
-                set((state) => ({ business: { ...state.business, ...updates } })),
-            updateNotifications: (updates) =>
-                set((state) => ({ notifications: { ...state.notifications, ...updates } })),
-            updatePos: (updates) =>
-                set((state) => ({ pos: { ...state.pos, ...updates } })),
-            updateSecurity: (updates) =>
-                set((state) => ({ security: { ...state.security, ...updates } })),
+
+            updateSecurity: (updates) => {
+                set((state) => {
+                    const newSecurity = { ...state.security, ...updates };
+                    const newState = { ...state, security: newSecurity };
+                    if (state.currentUserId) {
+                        newState.userSettings = {
+                            ...state.userSettings,
+                            [state.currentUserId]: {
+                                business: state.business,
+                                notifications: state.notifications,
+                                pos: state.pos,
+                                security: newSecurity
+                            }
+                        };
+                    }
+                    return newState;
+                });
+            },
         }),
         {
-            name: 'zantrix-settings',
+            name: 'digitsales-multi-settings',
         }
     )
 );
