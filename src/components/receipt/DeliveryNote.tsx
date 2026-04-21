@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sale } from '@/types/pos';
 import { format } from 'date-fns';
-import digitsalesLogo from '@/assets/zantrix-logo.png';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 interface DeliveryNoteProps {

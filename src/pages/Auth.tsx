@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, LogIn, Loader2, Shield, Package, BarChart3, Users, Zap } from 'lucide-react';
-import zantrixLogo from '@/assets/zantrix-logo.png';
+import { Eye, EyeOff, LogIn, Loader2, Shield, Package, BarChart3, Users, Zap } from 'lucide-react';
 
 const Auth = () => {
   const [mode, setMode] = useState<'login' | 'register'>('login');

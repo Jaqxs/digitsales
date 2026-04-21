@@ -172,11 +172,20 @@ export function AppSidebar({ className }: SidebarProps) {
     >
       {/* Header */}
       <div className={cn("flex h-20 items-center px-4", isSidebarCollapsed ? "justify-center" : "justify-between")}>
-        {!isSidebarCollapsed && (
-          <div className="flex items-center gap-3">
-            <img src={business.logo || digitsalesLogo} alt="Business Logo" className="h-9 w-auto object-contain bg-white rounded p-1" />
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {business.logo ? (
+            <img src={business.logo} alt="Business Logo" className="h-9 w-auto object-contain bg-white rounded p-1" />
+          ) : (
+            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary font-black text-xl">
+              {business.name.charAt(0)}
+            </div>
+          )}
+          {!isSidebarCollapsed && (
+            <span className="font-black text-lg tracking-tighter text-foreground truncate max-w-[150px]">
+              {business.name}
+            </span>
+          )}
+        </div>
         <Button
           variant="ghost"
           size="icon"

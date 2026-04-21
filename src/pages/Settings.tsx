@@ -14,7 +14,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building2, Bell, Shield, Printer, Globe, Save, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import digitsalesLogo from '@/assets/zantrix-logo.png';
 import { api } from '@/services/api';
 
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -76,7 +75,13 @@ const Settings = () => {
 
               <div className="space-y-6">
                 <div className="flex items-center gap-6">
-                  <img src={business.logo || digitsalesLogo} alt="Business Logo" className="h-16 w-auto object-contain bg-white rounded p-1 border" />
+                  <div className="h-24 w-24 rounded-2xl bg-muted flex items-center justify-center border-2 border-dashed border-border overflow-hidden">
+                    {business.logo ? (
+                      <img src={business.logo} alt="Business logo" className="h-full w-full object-contain" />
+                    ) : (
+                      <div className="text-muted-foreground text-[10px] font-black uppercase text-center p-2">No Logo Uploaded</div>
+                    )}
+                  </div>
                   <div className="relative">
                     <Input 
                       type="file" 

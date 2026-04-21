@@ -1,4 +1,20 @@
+import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { Product, Customer, Employee, Sale, CartItem, PaymentMethod, ProductCategory } from '@/types/pos';
+import { MOCK_PRODUCTS, MOCK_CUSTOMERS, MOCK_EMPLOYEES, MOCK_SALES, MOCK_STOCK_RECORDS } from '@/lib/mock-data';
+
+export interface StockRecord {
+  id: string;
+  productId: string;
+  productName: string;
+  type: 'in' | 'out' | 'adjustment';
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  reason: string;
+  createdAt: Date;
+  createdBy: string;
+}
 
 interface UserData {
   products: Product[];
@@ -27,6 +43,11 @@ interface DataStore extends UserData {
   fetchLocations: () => Promise<void>;
 
   // Actions
+  fetchProducts: () => Promise<void>;
+  fetchCustomers: () => Promise<void>;
+  fetchEmployees: (params?: { isActive?: boolean }) => Promise<void>;
+  fetchSales: () => Promise<void>;
+  fetchStockRecords: () => Promise<void>;
   addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -215,6 +236,11 @@ export const useDataStore = create<DataStore>()(
         return newSale;
       },
 
+      fetchProducts: async () => {},
+      fetchCustomers: async () => {},
+      fetchEmployees: async () => {},
+      fetchSales: async () => {},
+      fetchStockRecords: async () => {},
       fetchLocations: async () => {},
     }),
     {

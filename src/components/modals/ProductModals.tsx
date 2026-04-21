@@ -157,35 +157,28 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <Package className="h-6 w-6 text-primary" />
-            {product ? 'Edit Product' : 'Add New Product'}
+      <DialogContent className="max-w-xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="p-4 pb-1">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <Package className="h-5 w-5 text-primary" />
+            {product ? 'Edit Product' : 'New Product'}
           </DialogTitle>
-          <DialogDescription>
-            {product ? 'Update product information and ERP levels' : 'Add a new professional item to your inventory'}
-          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-y-auto p-6 pt-2">
+          <div className="flex-1 overflow-y-auto p-4 pt-1">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
-                <TabsTrigger value="general" className="flex items-center gap-2">
-                  <LayoutGrid className="h-4 w-4" />
+              <TabsList className="grid w-full grid-cols-4 mb-4 h-9">
+                <TabsTrigger value="general" className="text-[10px] py-1 px-2">
                   General
                 </TabsTrigger>
-                <TabsTrigger value="financials" className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" />
+                <TabsTrigger value="financials" className="text-[10px] py-1 px-2">
                   Financials
                 </TabsTrigger>
-                <TabsTrigger value="inventory" className="flex items-center gap-2">
-                  <Warehouse className="h-4 w-4" />
-                  Inventory
+                <TabsTrigger value="inventory" className="text-[10px] py-1 px-2">
+                  Stock
                 </TabsTrigger>
-                <TabsTrigger value="logistics" className="flex items-center gap-2">
-                  <Truck className="h-4 w-4" />
+                <TabsTrigger value="logistics" className="text-[10px] py-1 px-2">
                   Logistics
                 </TabsTrigger>
               </TabsList>
@@ -479,13 +472,13 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
             </Tabs>
           </div>
 
-          <DialogFooter className="p-6 border-t bg-muted/20">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="p-4 border-t bg-muted/20">
+            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
+            <Button type="submit" size="sm" disabled={isSubmitting} className="min-w-[100px]">
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {product ? 'Save Changes' : 'Create Item'}
+              {product ? 'Save' : 'Create'}
             </Button>
           </DialogFooter>
         </form>

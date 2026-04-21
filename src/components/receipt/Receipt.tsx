@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 import { Sale, CartItem } from '@/types/pos';
 import { formatCurrency, formatDateTime } from '@/lib/pos-utils';
-import digitsalesLogo from '@/assets/zantrix-logo.png';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 interface ReceiptProps {
