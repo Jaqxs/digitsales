@@ -1,114 +1,76 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { api } from '@/services/api';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 import { User, UserRole } from '@/types/pos';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => Promise<{ success: boolean; error?: string }>;
+  register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string; companyName?: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   hasPermission: (allowedRoles: UserRole[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEYS = {
-  TOKEN: 'zantrix_token',
-  USER: 'zantrix_user',
-};
-
-import { mapApiUserToUser } from '@/lib/api-converters';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  console.log("AuthProvider: Rendering");
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>({
+    id: 'preview-admin',
+    name: 'Preview Admin',
+    email: 'admin@zantrix.co.tz',
+    role: 'admin',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.log("AuthProvider: Running checkAuth effect");
-    const checkAuth = async () => {
-      const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-      if (token) {
-        try {
-          const response = await api.auth.getCurrentUser();
-          const contextUser = mapApiUserToUser(response.user);
-          setUser(contextUser);
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(contextUser));
-        } catch (error) {
-          console.error('Session verification failed:', error);
-          handleLogout();
-        }
-      }
-      setIsLoading(false);
-    };
-
-    checkAuth();
+    // Preview mode: always logged in as admin
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true);
-    try {
-      const response = await api.auth.login(email, password);
-      const contextUser = mapApiUserToUser(response.user);
-
-      localStorage.setItem(STORAGE_KEYS.TOKEN, response.tokens.accessToken);
-      if (response.tokens.refreshToken) {
-        localStorage.setItem('zantrix_refreshToken', response.tokens.refreshToken);
+  const login = async (email: string, password: string) => {
+    // Basic mock local login
+    const savedUser = localStorage.getItem('zantrix-user');
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (parsed.email === email && password === localStorage.getItem('zantrix-password')) {
+        setUser(parsed);
+        return { success: true };
       }
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(contextUser));
-
-      setUser(contextUser);
-      return { success: true };
-    } catch (error: any) {
-      console.error('Login failed:', error);
-      return {
-        success: false,
-        error: error.message || 'Invalid credentials'
-      };
-    } finally {
-      setIsLoading(false);
     }
+    return { success: false, error: 'Invalid email or password.' };
   };
 
-  const register = async (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true);
-    try {
-      const response = await api.auth.register(data);
-      const contextUser = mapApiUserToUser(response.user);
+  const register = async (data: any) => {
+    const newUser: User = {
+      id: `admin-${Date.now()}`,
+      name: `${data.firstName} ${data.lastName}`,
+      email: data.email,
+      role: 'admin',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+    
+    // Save to local storage for persistence
+    localStorage.setItem('zantrix-user', JSON.stringify(newUser));
+    localStorage.setItem('zantrix-password', data.password); // MOCK ONLY
+    setUser(newUser);
 
-      localStorage.setItem(STORAGE_KEYS.TOKEN, response.tokens.accessToken);
-      if (response.tokens.refreshToken) {
-        localStorage.setItem('zantrix_refreshToken', response.tokens.refreshToken);
-      }
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(contextUser));
-
-      setUser(contextUser);
-      return { success: true };
-    } catch (error: any) {
-      console.error('Registration failed:', error);
-      return {
-        success: false,
-        error: error.message || 'Registration failed'
-      };
-    } finally {
-      setIsLoading(false);
+    if (data.companyName) {
+      useSettingsStore.getState().updateBusiness({ name: data.companyName, tradingName: data.companyName });
     }
+
+    return { success: true };
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem('zantrix_refreshToken');
-    localStorage.removeItem(STORAGE_KEYS.USER);
+  const logout = () => {
+    localStorage.removeItem('zantrix-user');
     setUser(null);
-    navigate('/auth');
   };
 
-  const hasPermission = (allowedRoles: UserRole[]): boolean => {
+  const hasPermission = (allowedRoles: UserRole[]) => {
     if (!user) return false;
     return allowedRoles.includes(user.role);
   };
@@ -120,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       login,
       register,
-      logout: handleLogout,
+      logout,
       hasPermission,
     }}>
       {children}
@@ -147,5 +109,6 @@ export const rolePermissions: Record<UserRole, string[]> = {
 };
 
 export const canAccessRoute = (role: UserRole, route: string): boolean => {
-  return rolePermissions[role]?.includes(route) ?? false;
+  return rolePermissions[role]?.includes(route) || false;
 };
+

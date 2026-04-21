@@ -15,6 +15,7 @@ const Auth = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,7 +54,7 @@ const Auth = () => {
         });
       }
     } else {
-      if (!email || !password || !firstName || !lastName) {
+      if (!email || !password || !firstName || !lastName || !companyName) {
         toast({
           title: 'Missing fields',
           description: 'Please fill in all required fields.',
@@ -63,7 +64,7 @@ const Auth = () => {
       }
 
       setIsSubmitting(true);
-      const result = await register({ email, password, firstName, lastName, phone });
+      const result = await register({ email, password, firstName, lastName, phone, companyName });
       setIsSubmitting(false);
 
       if (result.success) {
@@ -193,6 +194,16 @@ const Auth = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {mode === 'register' && (
                   <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="space-y-2 col-span-2">
+                       <Label htmlFor="companyName" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Company Name</Label>
+                       <Input
+                         id="companyName"
+                         placeholder="e.g. Acme Corporation"
+                         value={companyName}
+                         onChange={(e) => setCompanyName(e.target.value)}
+                         className="h-12 rounded-xl bg-muted/50 border-border focus:bg-card"
+                       />
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="firstName" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">First Name</Label>
                       <Input

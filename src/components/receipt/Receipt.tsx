@@ -48,9 +48,9 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
         {/* Header - Brand Identity */}
         <div className="text-center mb-6">
           <img
-            src={zantrixLogo}
-            alt="Zantrix"
-            className="h-14 mx-auto mb-3"
+            src={business.logo || zantrixLogo}
+            alt="Business Logo"
+            className="h-14 mx-auto mb-3 object-contain"
           />
           <h1 className="font-bold text-base tracking-tight text-primary uppercase">{business.name}</h1>
           <div className="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider font-medium">

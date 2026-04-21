@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { Product, Customer, Employee, Sale, CartItem, PaymentMethod, ProductCategory } from '@/types/pos';
-import { api } from '@/services/api';
-import { mapApiUserToEmployee, mapApiProductToProduct, mapApiCustomerToCustomer, mapApiSaleToSale } from '@/lib/api-converters';
+import { MOCK_PRODUCTS, MOCK_CUSTOMERS, MOCK_EMPLOYEES, MOCK_SALES, MOCK_STOCK_RECORDS } from '@/lib/mock-data';
 
 interface DataStore {
   // Loading states
@@ -72,301 +71,149 @@ export const useDataStore = create<DataStore>((set, get) => ({
     locations: false,
   },
 
-  products: [],
-  customers: [],
-  employees: [],
-  sales: [],
-  stockRecords: [],
-  locations: [],
+  // Pre-loaded mock data
+  products: MOCK_PRODUCTS,
+  customers: MOCK_CUSTOMERS,
+  employees: MOCK_EMPLOYEES,
+  sales: MOCK_SALES,
+  stockRecords: MOCK_STOCK_RECORDS,
+  locations: [
+    { id: 'loc-001', name: 'Main Warehouse' },
+    { id: 'loc-002', name: 'Front Store' },
+    { id: 'loc-003', name: 'Yard Storage' },
+  ],
 
-  // Products
-  fetchProducts: async () => {
-    set((state) => ({ loading: { ...state.loading, products: true } }));
-    try {
-      const response = await api.products.getAllProducts({ limit: 100, isActive: true });
-      const mappedProducts = response.products.map(mapApiProductToProduct);
-      set({ products: mappedProducts });
-    } catch (error) {
-      console.error('Failed to fetch products:', error);
-    } finally {
-      set((state) => ({ loading: { ...state.loading, products: false } }));
-    }
-  },
+  // ── Fetch (no-ops — data is pre-loaded) ──────────────────────────────────
+  fetchProducts: async () => {},
+  fetchCustomers: async () => {},
+  fetchEmployees: async () => {},
+  fetchSales: async () => {},
+  fetchStockRecords: async () => {},
+  fetchLocations: async () => {},
 
+  // ── Products ─────────────────────────────────────────────────────────────
   addProduct: async (productData) => {
-    try {
-      // Map frontend fields back to API fields
-      const apiData: any = { ...productData };
-      apiData.currentStock = productData.quantity || 0;
-      apiData.minStockLevel = productData.lowStockThreshold || 0;
-
-      const response = await api.products.createProduct(apiData);
-      const newProduct = mapApiProductToProduct(response);
-      set((state) => ({ products: [...state.products, newProduct] }));
-    } catch (error) {
-      console.error('Failed to add product:', error);
-      throw error;
-    }
+    const newProduct: Product = {
+      ...productData,
+      id: `prod-${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as Product;
+    set((state) => ({ products: [...state.products, newProduct] }));
   },
 
   updateProduct: async (id, updates) => {
-    try {
-      // Map frontend fields back to API fields
-      const apiUpdates: any = { ...updates };
-      if (updates.quantity !== undefined) apiUpdates.currentStock = updates.quantity;
-      if (updates.lowStockThreshold !== undefined) apiUpdates.minStockLevel = updates.lowStockThreshold;
-
-      const response = await api.products.updateProduct(id, apiUpdates);
-      const updatedProduct = mapApiProductToProduct(response);
-      set((state) => ({
-        products: state.products.map((p) =>
-          p.id === id ? updatedProduct : p
-        ),
-      }));
-    } catch (error) {
-      console.error('Failed to update product:', error);
-      throw error;
-    }
+    set((state) => ({
+      products: state.products.map((p) =>
+        p.id === id ? { ...p, ...updates, updatedAt: new Date() } : p
+      ),
+    }));
   },
 
   deleteProduct: async (id) => {
-    try {
-      await api.products.deleteProduct(id);
-      set((state) => ({
-        products: state.products.filter((p) => p.id !== id),
-      }));
-    } catch (error) {
-      console.error('Failed to delete product:', error);
-      throw error;
-    }
+    set((state) => ({ products: state.products.filter((p) => p.id !== id) }));
   },
 
   updateStock: async (productId, quantityChange, type, reason) => {
-    try {
-      const response = await api.products.updateStock({
-        productId,
-        quantityChange,
-        type,
-        reason,
-      });
-      const updatedProduct = mapApiProductToProduct(response);
-      set((state) => ({
-        products: state.products.map((p) =>
-          p.id === productId ? updatedProduct : p
-        ),
-      }));
-    } catch (error) {
-      console.error('Failed to update stock:', error);
-      throw error;
-    }
+    const product = get().products.find(p => p.id === productId);
+    if (!product) return;
+
+    const previous = product.quantity;
+    const newQty = Math.max(0, previous + quantityChange);
+
+    set((state) => ({
+      products: state.products.map((p) =>
+        p.id === productId ? { ...p, quantity: newQty, updatedAt: new Date() } : p
+      ),
+      stockRecords: [
+        {
+          id: `stk-${Date.now()}`,
+          productId,
+          productName: product.name,
+          type,
+          quantity: Math.abs(quantityChange),
+          previousStock: previous,
+          newStock: newQty,
+          reason,
+          createdAt: new Date(),
+          createdBy: 'admin@zantrixpos.com',
+        },
+        ...state.stockRecords,
+      ],
+    }));
   },
 
-  // Customers
-  fetchCustomers: async () => {
-    set((state) => ({ loading: { ...state.loading, customers: true } }));
-    try {
-      const response = await api.customers.getAllCustomers({ limit: 100, isActive: true });
-      const mappedCustomers = response.customers.map(mapApiCustomerToCustomer);
-      set({ customers: mappedCustomers });
-    } catch (error) {
-      console.error('Failed to fetch customers:', error);
-    } finally {
-      set((state) => ({ loading: { ...state.loading, customers: false } }));
-    }
-  },
-
+  // ── Customers ────────────────────────────────────────────────────────────
   addCustomer: async (customerData) => {
-    try {
-      const response = await api.customers.createCustomer(customerData);
-      const newCustomer = mapApiCustomerToCustomer(response);
-      set((state) => ({ customers: [...state.customers, newCustomer] }));
-    } catch (error) {
-      console.error('Failed to add customer:', error);
-      throw error;
-    }
+    const newCustomer: Customer = {
+      ...customerData,
+      id: `cust-${Date.now()}`,
+      loyaltyPoints: 0,
+      totalPurchases: 0,
+      createdAt: new Date(),
+    };
+    set((state) => ({ customers: [...state.customers, newCustomer] }));
   },
 
   updateCustomer: async (id, updates) => {
-    try {
-      const response = await api.customers.updateCustomer(id, updates);
-      const updatedCustomer = mapApiCustomerToCustomer(response);
-      set((state) => ({
-        customers: state.customers.map((c) =>
-          c.id === id ? updatedCustomer : c
-        ),
-      }));
-    } catch (error) {
-      console.error('Failed to update customer:', error);
-      throw error;
-    }
+    set((state) => ({
+      customers: state.customers.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+    }));
   },
 
   deleteCustomer: async (id) => {
-    try {
-      await api.customers.deleteCustomer(id);
-      set((state) => ({
-        customers: state.customers.filter((c) => c.id !== id),
-      }));
-    } catch (error) {
-      console.error('Failed to delete customer:', error);
-      throw error;
-    }
+    set((state) => ({ customers: state.customers.filter((c) => c.id !== id) }));
   },
 
-  // Employees
-  fetchEmployees: async (params?: { isActive?: boolean }) => {
-    set((state) => ({ loading: { ...state.loading, employees: true } }));
-    try {
-      const isActive = params?.isActive !== undefined ? params.isActive : true;
-      // If isActive is active (true/false), pass it. If it's explicitly undefined (meaning 'all'), we might need to handle logic differently if the API requires explicit param.
-      // But looking at previous code: api.users.getAllUsers({ limit: 100, isActive: true })
-      // The API definition likely takes isActive?: boolean.
-      // Let's assume we want to support 'all' by passing undefined if params.isActive is undefined, BUT we default to true if params is missing.
-
-      const response = await api.users.getAllUsers({
-        limit: 100,
-        isActive: params?.isActive
-      });
-      const employees = response.users.map(mapApiUserToEmployee);
-      set({ employees });
-    } catch (error) {
-      console.error('Failed to fetch employees:', error);
-    } finally {
-      set((state) => ({ loading: { ...state.loading, employees: false } }));
-    }
-  },
-
+  // ── Employees ────────────────────────────────────────────────────────────
   addEmployee: async (employeeData) => {
-    try {
-      // Logic for adding employee via auth/users
-      const response = await api.users.createUser({
-        email: employeeData.email,
-        password: employeeData.password || 'temporaryPassword123!',
-        role: employeeData.role,
-        firstName: (employeeData as any).firstName || employeeData.name.split(' ')[0],
-        lastName: (employeeData as any).lastName || employeeData.name.split(' ')[1] || '',
-        phone: employeeData.phone,
-        employeeId: employeeData.employeeId,
-      });
-
-      const newEmployee = mapApiUserToEmployee(response.user);
-      set((state) => ({ employees: [...state.employees, newEmployee] }));
-    } catch (error) {
-      console.error('Failed to add employee:', error);
-      throw error;
-    }
+    const newEmployee: Employee = {
+      id: `emp-${Date.now()}`,
+      name: `${(employeeData as any).firstName || ''} ${(employeeData as any).lastName || ''}`.trim() || employeeData.name,
+      email: employeeData.email,
+      role: employeeData.role,
+      phone: employeeData.phone,
+      salesTarget: employeeData.salesTarget,
+      totalSales: 0,
+      commission: employeeData.commission,
+      createdAt: new Date(),
+    };
+    set((state) => ({ employees: [...state.employees, newEmployee] }));
   },
 
   updateEmployee: async (id, updates) => {
-    try {
-      const response = await api.users.updateUser(id, updates as any);
-      const updatedEmployee = mapApiUserToEmployee(response.user);
-      set((state) => ({
-        employees: state.employees.map((e) =>
-          e.id === id ? updatedEmployee : e
-        ),
-      }));
-    } catch (error) {
-      console.error('Failed to update employee:', error);
-      throw error;
-    }
+    set((state) => ({
+      employees: state.employees.map((e) => (e.id === id ? { ...e, ...updates } : e)),
+    }));
   },
 
   deleteEmployee: async (id) => {
-    try {
-      await api.users.deleteUser(id);
-      set((state) => ({
-        employees: state.employees.filter((e) => e.id !== id),
-      }));
-    } catch (error) {
-      console.error('Failed to delete employee:', error);
-      throw error;
-    }
+    set((state) => ({ employees: state.employees.filter((e) => e.id !== id) }));
   },
 
-  // Sales
-  fetchSales: async () => {
-    set((state) => ({ loading: { ...state.loading, sales: true } }));
-    try {
-      const response = await api.sales.getAllSales({ limit: 100 });
-      const mappedSales = response.sales.map(mapApiSaleToSale);
-      set({ sales: mappedSales });
-    } catch (error) {
-      console.error('Failed to fetch sales:', error);
-    } finally {
-      set((state) => ({ loading: { ...state.loading, sales: false } }));
-    }
-  },
-
+  // ── Sales ────────────────────────────────────────────────────────────────
   addSale: async (saleData) => {
-    try {
-      const response = await api.sales.createSale(saleData);
-      const createdSale = mapApiSaleToSale(response);
-
-      set((state) => ({ sales: [createdSale, ...state.sales] }));
-
-      // Refresh products to get updated stock
-      await get().fetchProducts();
-
-      return createdSale;
-    } catch (error) {
-      console.error('Failed to add sale:', error);
-      throw error;
-    }
+    const newSale: Sale = {
+      ...saleData,
+      id: `sale-${Date.now()}`,
+      createdAt: new Date(),
+    };
+    // Deduct stock for each sold item
+    saleData.items.forEach(item => {
+      get().updateStock(item.product.id, -item.quantity, 'out', `POS Sale ${newSale.id}`);
+    });
+    set((state) => ({ sales: [newSale, ...state.sales] }));
+    return newSale;
   },
 
-  // Stock records
-  fetchStockRecords: async () => {
-    try {
-      const response = await api.inventory.getLedger({ limit: 50 });
-      // Map backend entries to frontend StockRecord type
-      const records: StockRecord[] = response.entries.map((e: any) => ({
-        id: e.id,
-        productId: e.productId,
-        productName: e.product.name,
-        type: e.transactionType,
-        quantity: Number(e.quantity),
-        previousStock: Number(e.previousStock),
-        newStock: Number(e.newStock),
-        reason: e.notes || '',
-        createdAt: new Date(e.createdAt),
-        createdBy: e.creator.email,
-      }));
-      set({ stockRecords: records });
-    } catch (error) {
-      console.error('Failed to fetch stock records:', error);
-    }
-  },
-
+  // ── Stock records ────────────────────────────────────────────────────────
   addStockRecord: async (recordData) => {
-    try {
-      await api.inventory.adjustStock({
-        productId: recordData.productId,
-        quantity: recordData.quantity,
-        type: recordData.type as any,
-        reason: recordData.reason,
-      });
-      // Refresh products and records
-      await Promise.all([
-        get().fetchProducts(),
-        get().fetchStockRecords(),
-      ]);
-    } catch (error) {
-      console.error('Failed to add stock record:', error);
-      throw error;
-    }
-  },
-
-  // Locations
-  fetchLocations: async () => {
-    set((state) => ({ loading: { ...state.loading, locations: true } }));
-    try {
-      const response = await api.inventory.getLocations();
-      set({ locations: response });
-    } catch (error) {
-      console.error('Failed to fetch locations:', error);
-    } finally {
-      set((state) => ({ loading: { ...state.loading, locations: false } }));
-    }
+    await get().updateStock(
+      recordData.productId,
+      recordData.type === 'out' ? -recordData.quantity : recordData.quantity,
+      recordData.type,
+      recordData.reason,
+    );
   },
 }));
+

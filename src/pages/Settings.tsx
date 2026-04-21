@@ -76,8 +76,26 @@ const Settings = () => {
 
               <div className="space-y-6">
                 <div className="flex items-center gap-6">
-                  <img src={zantrixLogo} alt="Zantrix Logo" className="h-16 w-auto" />
-                  <Button variant="outline">Change Logo</Button>
+                  <img src={business.logo || zantrixLogo} alt="Business Logo" className="h-16 w-auto object-contain bg-white rounded p-1 border" />
+                  <div className="relative">
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            updateBusiness({ logo: reader.result as string });
+                            toast({ title: 'Logo updated' });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <Button variant="outline">Change Logo</Button>
+                  </div>
                 </div>
 
                 <Separator />
