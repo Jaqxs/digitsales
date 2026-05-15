@@ -133,3 +133,24 @@ export interface DashboardStats {
   salesByCategory: { category: string; value: number }[];
   monthlySales: { month: string; sales: number; orders: number }[];
 }
+
+export interface Expense {
+  id: string;
+  title: string;
+  amount: number;
+  category: ExpenseCategory;
+  date: Date;
+  description?: string;
+  recordedBy: string;
+  attachment?: string;
+}
+
+export type ExpenseCategory = 
+  | 'rent' 
+  | 'utilities' 
+  | 'salaries' 
+  | 'supplies' 
+  | 'maintenance' 
+  | 'marketing' 
+  | 'taxes' 
+  | 'others';

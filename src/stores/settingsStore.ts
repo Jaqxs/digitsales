@@ -89,107 +89,100 @@ const DEFAULT_SETTINGS: SettingsData = {
     },
 };
 
-export const useSettingsStore = create<MultiUserSettingsState>()(
-    persist(
-        (set, get) => ({
-            ...DEFAULT_SETTINGS,
-            currentUserId: null,
-            userSettings: {},
+export const useSettingsStore = create<MultiUserSettingsState>((set, get) => ({
+    ...DEFAULT_SETTINGS,
+    currentUserId: null,
+    userSettings: {},
 
-            setCurrentUser: (userId) => {
-                if (!userId) {
-                    set({ currentUserId: null, ...DEFAULT_SETTINGS });
-                    return;
-                }
-                const { userSettings } = get();
-                const settings = userSettings[userId] || DEFAULT_SETTINGS;
-                set({ 
-                    currentUserId: userId,
-                    business: settings.business,
-                    notifications: settings.notifications,
-                    pos: settings.pos,
-                    security: settings.security
-                });
-            },
-
-            updateBusiness: (updates) => {
-                set((state) => {
-                    const newBusiness = { ...state.business, ...updates };
-                    const newState = { ...state, business: newBusiness };
-                    if (state.currentUserId) {
-                        newState.userSettings = {
-                            ...state.userSettings,
-                            [state.currentUserId]: {
-                                business: newBusiness,
-                                notifications: state.notifications,
-                                pos: state.pos,
-                                security: state.security
-                            }
-                        };
-                    }
-                    return newState;
-                });
-            },
-
-            updateNotifications: (updates) => {
-                set((state) => {
-                    const newNotifications = { ...state.notifications, ...updates };
-                    const newState = { ...state, notifications: newNotifications };
-                    if (state.currentUserId) {
-                        newState.userSettings = {
-                            ...state.userSettings,
-                            [state.currentUserId]: {
-                                business: state.business,
-                                notifications: newNotifications,
-                                pos: state.pos,
-                                security: state.security
-                            }
-                        };
-                    }
-                    return newState;
-                });
-            },
-
-            updatePos: (updates) => {
-                set((state) => {
-                    const newPos = { ...state.pos, ...updates };
-                    const newState = { ...state, pos: newPos };
-                    if (state.currentUserId) {
-                        newState.userSettings = {
-                            ...state.userSettings,
-                            [state.currentUserId]: {
-                                business: state.business,
-                                notifications: state.notifications,
-                                pos: newPos,
-                                security: state.security
-                            }
-                        };
-                    }
-                    return newState;
-                });
-            },
-
-            updateSecurity: (updates) => {
-                set((state) => {
-                    const newSecurity = { ...state.security, ...updates };
-                    const newState = { ...state, security: newSecurity };
-                    if (state.currentUserId) {
-                        newState.userSettings = {
-                            ...state.userSettings,
-                            [state.currentUserId]: {
-                                business: state.business,
-                                notifications: state.notifications,
-                                pos: state.pos,
-                                security: newSecurity
-                            }
-                        };
-                    }
-                    return newState;
-                });
-            },
-        }),
-        {
-            name: 'digitsales-multi-settings',
+    setCurrentUser: (userId) => {
+        if (!userId) {
+            set({ currentUserId: null, ...DEFAULT_SETTINGS });
+            return;
         }
-    )
-);
+        const { userSettings } = get();
+        const settings = userSettings[userId] || DEFAULT_SETTINGS;
+        set({ 
+            currentUserId: userId,
+            business: settings.business,
+            notifications: settings.notifications,
+            pos: settings.pos,
+            security: settings.security
+        });
+    },
+
+    updateBusiness: (updates) => {
+        set((state) => {
+            const newBusiness = { ...state.business, ...updates };
+            const newState = { ...state, business: newBusiness };
+            if (state.currentUserId) {
+                newState.userSettings = {
+                    ...state.userSettings,
+                    [state.currentUserId]: {
+                        business: newBusiness,
+                        notifications: state.notifications,
+                        pos: state.pos,
+                        security: state.security
+                    }
+                };
+            }
+            return newState;
+        });
+    },
+
+    updateNotifications: (updates) => {
+        set((state) => {
+            const newNotifications = { ...state.notifications, ...updates };
+            const newState = { ...state, notifications: newNotifications };
+            if (state.currentUserId) {
+                newState.userSettings = {
+                    ...state.userSettings,
+                    [state.currentUserId]: {
+                        business: state.business,
+                        notifications: newNotifications,
+                        pos: state.pos,
+                        security: state.security
+                    }
+                };
+            }
+            return newState;
+        });
+    },
+
+    updatePos: (updates) => {
+        set((state) => {
+            const newPos = { ...state.pos, ...updates };
+            const newState = { ...state, pos: newPos };
+            if (state.currentUserId) {
+                newState.userSettings = {
+                    ...state.userSettings,
+                    [state.currentUserId]: {
+                        business: state.business,
+                        notifications: state.notifications,
+                        pos: newPos,
+                        security: state.security
+                    }
+                };
+            }
+            return newState;
+        });
+    },
+
+    updateSecurity: (updates) => {
+        set((state) => {
+            const newSecurity = { ...state.security, ...updates };
+            const newState = { ...state, security: newSecurity };
+            if (state.currentUserId) {
+                newState.userSettings = {
+                    ...state.userSettings,
+                    [state.currentUserId]: {
+                        business: state.business,
+                        notifications: state.notifications,
+                        pos: state.pos,
+                        security: newSecurity
+                    }
+                };
+            }
+            return newState;
+        });
+    },
+}));

@@ -2,7 +2,6 @@ import React from 'react';
 import { Sale } from '@/types/pos';
 import { format } from 'date-fns';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { useSettingsStore } from '@/stores/settingsStore';
 
 interface DeliveryNoteProps {
     sale: Sale;
@@ -27,7 +26,9 @@ const DeliveryNote: React.FC<DeliveryNoteProps> = ({
             {/* Header */}
             <div className="flex justify-between items-start border-b-2 border-accent pb-4 mb-4">
                 <div className="flex items-start gap-4">
-                    <img src={business.logo || digitsalesLogo} alt="Business Logo" className="w-20 h-20 object-contain" />
+                    {business.logo && (
+                        <img src={business.logo} alt="Business Logo" className="w-20 h-20 object-contain" />
+                    )}
                     <div>
                         <h1 className="text-xl font-bold text-primary">{business.name}</h1>
                         <p className="text-xs text-gray-600">{business.address}</p>

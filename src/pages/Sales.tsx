@@ -3,7 +3,7 @@ import { DateRange } from "react-day-picker";
 import { addDays, endOfDay } from "date-fns";
 import { useAuth } from '@/contexts/AuthContext';
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
+import { exportToExcel, exportToPDF } from "@/utils/exportUtils";
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
 import { useDataStore } from '@/stores/dataStore';
 import { formatCurrency, formatDateTime } from '@/lib/pos-utils';
@@ -232,7 +232,7 @@ const Sales = () => {
       'Payment': s.payment
     }));
 
-    exportToCSV(dataToExport, 'Sales_Report');
+    exportToExcel(dataToExport, 'Sales_Report');
   };
 
   // Mobile Sale Card

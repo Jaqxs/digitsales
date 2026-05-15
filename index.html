@@ -17,6 +17,14 @@
   <title>Digitsales POS - Point of Sale System</title>
   <meta name="description"
     content="Complete Point of Sale solution for retail and hardware businesses" />
+  <script>
+    window.onerror = function(msg, url, line, col, error) {
+      var fullMsg = "ERROR: " + msg + "\nAt: " + url + ":" + line;
+      console.error(fullMsg);
+      alert(fullMsg);
+    };
+    console.log("Debug: Global alert handler initialized");
+  </script>
 </head>
 
 <body>

@@ -18,12 +18,14 @@ import {
   Download,
   Plus,
   FileText,
+  TrendingDown,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RecordSaleModal, RecordInventoryModal } from '@/components/modals';
 
 const Dashboard = () => {
-  const { products, sales } = useDataStore();
+  const { products, sales, expenses } = useDataStore();
   const [recordSaleOpen, setRecordSaleOpen] = useState(false);
   const [recordInventoryOpen, setRecordInventoryOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -43,6 +45,27 @@ const Dashboard = () => {
 
   const totalRevenue = useMemo(() => filteredSales.reduce((sum, sale) => sum + sale.total, 0), [filteredSales]);
   const totalOrders = filteredSales.length;
+
+  const totalExpenses = useMemo(() => {
+    return expenses.reduce((sum, exp) => {
+      const expDate = new Date(exp.date);
+      const matchesDate = dateRange?.from ?
+        (expDate >= dateRange.from && expDate <= endOfDay(dateRange.to || dateRange.from)) : true;
+      return matchesDate ? sum + exp.amount : sum;
+    }, 0);
+  }, [expenses, dateRange]);
+
+  const cogs = useMemo(() => {
+    return filteredSales.reduce((sum, sale) => {
+      const saleCogs = sale.items.reduce((itemSum, item) => {
+        const product = products.find(p => p.id === item.product.id);
+        return itemSum + (product ? product.costPrice * item.quantity : 0);
+      }, 0);
+      return sum + saleCogs;
+    }, 0);
+  }, [filteredSales, products]);
+
+  const totalProfit = totalRevenue - cogs - totalExpenses;
 
   const categoryData = useMemo(() => {
     const categoryMap = new Map<string, number>();
@@ -136,27 +159,41 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        {/* Stats Grid - 2 cols on mobile, 4 on desktop */}
-        <div className="grid gap-3 sm:gap-6 mt-4 sm:mt-6 grid-cols-2 lg:grid-cols-4">
+        {/* Stats Grid - 2 cols on mobile, 3 on desktop, 6 total */}
+        <div className="grid gap-3 sm:gap-6 mt-4 sm:mt-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <StatsCard
-            title="Total Sales"
+            title="Total Revenue"
             value={formatCurrency(totalRevenue)}
             change={0}
-            icon={<DollarSign className="h-5 w-5 sm:h-6 sm:w-6" />}
+            icon={<DollarSign className="h-5 w-5" />}
             iconColor="success"
+          />
+          <StatsCard
+            title="Total Expenses"
+            value={formatCurrency(totalExpenses)}
+            change={0}
+            icon={<TrendingDown className="h-5 w-5" />}
+            iconColor="destructive"
+          />
+          <StatsCard
+            title="Net Profit"
+            value={formatCurrency(totalProfit)}
+            change={0}
+            icon={<Zap className="h-5 w-5" />}
+            iconColor={totalProfit >= 0 ? "success" : "destructive"}
           />
           <StatsCard
             title="Total Orders"
             value={formatNumber(totalOrders)}
             change={0}
-            icon={<ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />}
+            icon={<ShoppingCart className="h-5 w-5" />}
             iconColor="brand"
           />
           <StatsCard
-            title="Products"
+            title="Total Products"
             value={formatNumber(products.length)}
             change={0}
-            icon={<Package className="h-5 w-5 sm:h-6 sm:w-6" />}
+            icon={<Package className="h-5 w-5" />}
             iconColor="primary"
           />
           <StatsCard
@@ -164,7 +201,7 @@ const Dashboard = () => {
             value={lowStockCount}
             change={0}
             changeLabel="items"
-            icon={<AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />}
+            icon={<AlertTriangle className="h-5 w-5" />}
             iconColor="warning"
           />
         </div>

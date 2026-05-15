@@ -31,7 +31,7 @@ import {
 import { DateRange } from "react-day-picker";
 import { addDays, endOfDay } from "date-fns";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { exportToCSV } from "@/utils/exportUtils";
+import { exportToExcel } from "@/utils/exportUtils";
 
 const SystemLogs = () => {
     const { stockRecords } = useDataStore();
@@ -96,7 +96,7 @@ const SystemLogs = () => {
             'Reason': r.reason,
             'User': r.createdBy
         }));
-        exportToCSV(dataToExport, 'System_Logs');
+        exportToExcel(dataToExport, 'System_Logs');
     };
 
     return (

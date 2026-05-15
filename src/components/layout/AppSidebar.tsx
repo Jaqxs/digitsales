@@ -18,6 +18,7 @@ import {
   X,
   Zap,
   Activity,
+  Receipt,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -27,7 +28,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import digitsalesLogo from '@/assets/zantrix-logo.png';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 interface SidebarProps {
@@ -39,12 +39,14 @@ const navigation = [
   { name: 'Point of Sale', href: '/pos', icon: ShoppingCart, route: 'pos' },
   { name: 'Inventory', href: '/inventory', icon: Package, route: 'inventory' },
   { name: 'Sales', href: '/sales', icon: FileText, route: 'sales' },
+  { name: 'Expenses', href: '/expenses', icon: Receipt, route: 'expenses' },
   { name: 'Customers', href: '/customers', icon: Users, route: 'customers' },
   { name: 'Employees', href: '/employees', icon: UserCircle, route: 'employees' },
   { name: 'Reports', href: '/reports', icon: BarChart3, route: 'reports' },
   { name: 'Stock Movement', href: '/stock-movement', icon: Activity, route: 'stock-movement' },
   { name: 'System Logs', href: '/system-logs', icon: Activity, route: 'system-logs' },
   { name: 'Settings', href: '/settings', icon: Settings, route: 'settings' },
+  { name: 'Subscription', href: '/subscription', icon: Zap, route: 'subscription' },
 ];
 
 // Mobile Header Component
@@ -76,7 +78,13 @@ export function MobileHeader() {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <img src={business.logo || digitsalesLogo} alt="Business Logo" className="h-9 w-auto object-contain" />
+          {business.logo ? (
+            <img src={business.logo} alt="Business Logo" className="h-9 w-auto object-contain" />
+          ) : (
+            <div className="h-9 w-9 flex items-center justify-center rounded-lg bg-primary/10 text-primary font-black text-lg">
+              {business.name.charAt(0)}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-primary-foreground font-bold text-sm shadow-glow">
@@ -89,7 +97,13 @@ export function MobileHeader() {
         <SheetContent side="left" className="w-[300px] p-0 bg-sidebar border-sidebar-border">
           <SheetHeader className="p-5 border-b border-sidebar-border">
             <SheetTitle className="flex items-center gap-3">
-              <img src={business.logo || digitsalesLogo} alt="Business Logo" className="h-11 w-auto object-contain" />
+              {business.logo ? (
+                <img src={business.logo} alt="Business Logo" className="h-11 w-auto object-contain" />
+              ) : (
+                <div className="h-11 w-11 flex items-center justify-center rounded-xl bg-primary/10 text-primary font-black text-xl">
+                  {business.name.charAt(0)}
+                </div>
+              )}
             </SheetTitle>
           </SheetHeader>
 

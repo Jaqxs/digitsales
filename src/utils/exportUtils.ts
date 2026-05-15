@@ -3,11 +3,11 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { formatCurrency, formatDate } from '@/lib/pos-utils';
 
-export const exportToCSV = (data: any[], filename: string) => {
+export const exportToExcel = (data: any[], filename: string) => {
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-    XLSX.writeFile(workbook, `${filename}.csv`);
+    XLSX.writeFile(workbook, `${filename}.xlsx`);
 };
 
 export const exportToPDF = (

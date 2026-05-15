@@ -398,3 +398,170 @@ export function RecordInventoryModal({ open, onOpenChange }: RecordInventoryModa
     </Dialog>
   );
 }
+
+interface RecordExpenseModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+import { Receipt, Calendar, Info, DollarSign } from 'lucide-react';
+
+export function RecordExpenseModal({ open, onOpenChange }: RecordExpenseModalProps) {
+  const { addExpense } = useDataStore();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [title, setTitle] = useState('');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState<any>('others');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [description, setDescription] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!title || !amount || Number(amount) <= 0) {
+      toast({
+        title: 'Invalid expense',
+        description: 'Please provide a title and a valid amount.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await addExpense({
+        title,
+        amount: Number(amount),
+        category,
+        date: new Date(date),
+        description,
+      });
+
+      toast({
+        title: 'Expense recorded',
+        description: `${title}: ${formatCurrency(Number(amount))}`,
+      });
+
+      setTitle('');
+      setAmount('');
+      setCategory('others');
+      setDescription('');
+      onOpenChange(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error recording expense',
+        description: error.message || 'Something went wrong.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Receipt className="h-5 w-5 text-primary" />
+            </div>
+            Record Expense
+          </DialogTitle>
+          <DialogDescription>
+            Record business costs and operational expenses
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-5 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Title / Purpose *</Label>
+            <div className="relative">
+              <Info className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Shop Rent - May"
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="amount" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount *</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="amount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Date</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rent">Rent & Lease</SelectItem>
+                <SelectItem value="utilities">Utilities (Water/Elec)</SelectItem>
+                <SelectItem value="salaries">Salaries & Wages</SelectItem>
+                <SelectItem value="supplies">Office Supplies</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="marketing">Marketing</SelectItem>
+                <SelectItem value="taxes">Taxes & Fees</SelectItem>
+                <SelectItem value="others">Others</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="desc" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description (Optional)</Label>
+            <Input
+              id="desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add more details..."
+            />
+          </div>
+
+          <DialogFooter className="pt-4 border-t border-border">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="font-bold">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="font-bold bg-primary hover:bg-primary/90">
+              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Record Expense
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -2,7 +2,6 @@ import { forwardRef } from 'react';
 import { Sale, CartItem } from '@/types/pos';
 import { formatCurrency, formatDateTime } from '@/lib/pos-utils';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { useSettingsStore } from '@/stores/settingsStore';
 
 interface ReceiptProps {
   sale: Sale | null;
@@ -47,11 +46,13 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
       >
         {/* Header - Brand Identity */}
         <div className="text-center mb-6">
-          <img
-            src={business.logo || digitsalesLogo}
-            alt="Business Logo"
-            className="h-14 mx-auto mb-3 object-contain"
-          />
+          {business.logo && (
+            <img
+              src={business.logo}
+              alt="Business Logo"
+              className="h-14 mx-auto mb-3 object-contain"
+            />
+          )}
           <h1 className="font-bold text-base tracking-tight text-primary uppercase">{business.name}</h1>
           <div className="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider font-medium">
             <p>{business.name}</p>

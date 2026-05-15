@@ -19,6 +19,8 @@ import Settings from "./pages/Settings";
 import SystemLogs from "./pages/SystemLogs";
 import Auth from "./pages/Auth";
 import StockMovement from "./pages/StockMovement";
+import Expenses from "./pages/Expenses";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,7 +63,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 const App = () => {
-  console.log("App: Rendering");
+  console.log("App: Full Render");
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -83,6 +85,8 @@ const App = () => {
                   <Route path="/reports" element={<ProtectedRoute routeName="reports"><Reports /></ProtectedRoute>} />
                   <Route path="/settings" element={<ProtectedRoute routeName="settings"><Settings /></ProtectedRoute>} />
                   <Route path="/stock-movement" element={<ProtectedRoute routeName="stock-movement"><StockMovement /></ProtectedRoute>} />
+                  <Route path="/expenses" element={<ProtectedRoute routeName="expenses"><Expenses /></ProtectedRoute>} />
+                  <Route path="/subscription" element={<ProtectedRoute routeName="subscription"><Subscription /></ProtectedRoute>} />
                   <Route path="/system-logs" element={<ProtectedRoute allowedRoles={['admin']}><SystemLogs /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

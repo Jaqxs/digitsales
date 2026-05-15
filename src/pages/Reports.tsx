@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { DateRange } from "react-day-picker";
 import { addDays, endOfDay } from "date-fns";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
+import { exportToExcel, exportToPDF } from "@/utils/exportUtils";
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
 import { useDataStore } from '@/stores/dataStore';
-import { formatCurrency } from '@/lib/pos-utils';
+import { formatCurrency, formatDate } from '@/lib/pos-utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -34,7 +34,7 @@ const COLORS = [
 ];
 
 const Reports = () => {
-  const { sales, products, fetchSales, fetchProducts } = useDataStore();
+  const { sales, products, expenses, fetchSales, fetchProducts } = useDataStore();
   const [stats, setStats] = useState({
     salesByCategory: [] as { category: string; value: number }[]
   });
@@ -78,7 +78,7 @@ const Reports = () => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     // Initialize data structure
-    const monthlyStats = months.map(month => ({ month, revenue: 0, cost: 0, profit: 0 }));
+    const monthlyStats = months.map(month => ({ month, revenue: 0, cost: 0, expenses: 0, profit: 0 }));
 
     sales.forEach(sale => {
       const date = new Date(sale.createdAt);
@@ -101,7 +101,21 @@ const Reports = () => {
 
       monthlyStats[monthIndex].revenue += saleRevenue;
       monthlyStats[monthIndex].cost += saleCost;
-      monthlyStats[monthIndex].profit += (saleRevenue - saleCost);
+    });
+
+    // Add expenses to monthly stats
+    expenses.forEach(exp => {
+      const date = new Date(exp.date);
+      if (dateRange?.from) {
+        if (date < dateRange.from || date > endOfDay(dateRange.to || dateRange.from)) return;
+      }
+      const monthIndex = date.getMonth();
+      monthlyStats[monthIndex].expenses += exp.amount;
+    });
+
+    // Calculate final profit per month
+    monthlyStats.forEach(m => {
+      m.profit = m.revenue - m.cost - m.expenses;
     });
 
     // Filter out months with zero data unless they are in the 'current year' view context
@@ -116,12 +130,74 @@ const Reports = () => {
     { name: 'Tax Report', description: 'VAT calculations for TRA', icon: FileText, color: 'warning' },
   ];
 
+  const handleGenerateReport = (reportName: string) => {
+    const fromStr = dateRange?.from ? formatDate(dateRange.from) : 'All';
+    const toStr = dateRange?.to ? formatDate(dateRange.to) : 'Present';
+
+    if (reportName === 'Sales Report') {
+      const filtered = sales.filter(s => {
+        const d = new Date(s.createdAt);
+        return dateRange?.from ? (d >= dateRange.from && d <= endOfDay(dateRange.to || dateRange.from)) : true;
+      });
+      const data = filtered.map(s => ({
+        Date: formatDate(new Date(s.createdAt)),
+        'Order ID': s.id,
+        Customer: s.customerName || 'Walk-in',
+        Payment: s.paymentMethod,
+        Total: formatCurrency(s.total)
+      }));
+      exportToExcel(data, `Sales_Report_${fromStr}_to_${toStr}`);
+    } else if (reportName === 'Inventory Report') {
+      const data = products.map(p => ({
+        SKU: p.sku,
+        Name: p.name,
+        Category: p.category,
+        Stock: p.quantity,
+        'Cost Price': formatCurrency(p.costPrice),
+        'Selling Price': formatCurrency(p.sellingPrice),
+        'Stock Value': formatCurrency(p.costPrice * p.quantity)
+      }));
+      exportToExcel(data, 'Inventory_Valuation_Report');
+    } else if (reportName === 'Profit & Loss') {
+      const summaryData = profitData.filter(d => d.revenue > 0 || d.expenses > 0).map(d => [
+        d.month,
+        formatCurrency(d.revenue),
+        formatCurrency(d.cost),
+        formatCurrency(d.expenses),
+        formatCurrency(d.profit)
+      ]);
+      exportToPDF(
+        `Profit & Loss Statement (${fromStr} - ${toStr})`,
+        ['Month', 'Revenue', 'COGS', 'Expenses', 'Net Profit'],
+        summaryData,
+        'P_and_L_Statement'
+      );
+    } else if (reportName === 'Tax Report') {
+      const filtered = sales.filter(s => {
+        const d = new Date(s.createdAt);
+        return dateRange?.from ? (d >= dateRange.from && d <= endOfDay(dateRange.to || dateRange.from)) : true;
+      });
+      const data = filtered.map(s => {
+        const subtotal = s.total / 1.18;
+        const vat = s.total - subtotal;
+        return {
+          Date: formatDate(new Date(s.createdAt)),
+          'Order ID': s.id,
+          Subtotal: formatCurrency(subtotal),
+          'VAT (18%)': formatCurrency(vat),
+          Total: formatCurrency(s.total)
+        };
+      });
+      exportToExcel(data, `Tax_Report_${fromStr}_to_${toStr}`);
+    }
+  };
+
   return (
     <MainLayout>
       <PageContent>
         <PageHeader title="Reports" description="Generate and view business analytics">
           <DateRangePicker date={dateRange} setDate={setDateRange} />
-          <Button className="gap-2" size="sm" onClick={() => exportToCSV(sales, 'All_Sales_Export')}>
+          <Button className="gap-2" size="sm" onClick={() => exportToExcel(sales, 'All_Sales_Export')}>
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Export All</span>
             <span className="sm:hidden">Export</span>
@@ -133,12 +209,13 @@ const Reports = () => {
           {reportTypes.map((report) => (
             <button
               key={report.name}
-              className="rounded-xl border border-border bg-card p-4 text-left hover:shadow-card-hover hover:border-primary/30 transition-all"
+              onClick={() => handleGenerateReport(report.name)}
+              className="rounded-xl border border-border bg-card p-4 text-left hover:shadow-card-hover hover:border-primary/30 transition-all group"
             >
-              <div className={`h-10 w-10 rounded-lg bg-${report.color}/10 flex items-center justify-center mb-3`}>
+              <div className={`h-10 w-10 rounded-lg bg-${report.color}-light/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                 <report.icon className={`h-5 w-5 text-${report.color}`} />
               </div>
-              <h3 className="font-semibold text-foreground">{report.name}</h3>
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{report.name}</h3>
               <p className="text-sm text-muted-foreground mt-1">{report.description}</p>
             </button>
           ))}
@@ -152,8 +229,8 @@ const Reports = () => {
               <p className="text-xs sm:text-sm text-muted-foreground">Revenue vs Cost vs Profit</p>
             </div>
             <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto" onClick={() => {
-              const mapData = profitData.map(d => [d.month, formatCurrency(d.revenue), formatCurrency(d.cost), formatCurrency(d.profit)]);
-              exportToPDF('Profit and Loss', ['Month', 'Revenue', 'Cost', 'Profit'], mapData, 'Profit_Loss_Report');
+              const mapData = profitData.map(d => [d.month, formatCurrency(d.revenue), formatCurrency(d.cost), formatCurrency(d.expenses), formatCurrency(d.profit)]);
+              exportToPDF('Profit and Loss', ['Month', 'Revenue', 'COGS', 'Expenses', 'Net Profit'], mapData, 'Profit_Loss_Report');
             }}>
               <Download className="h-4 w-4" />
               Export PDF
@@ -184,8 +261,9 @@ const Reports = () => {
                   formatter={(value: number, name: string) => [formatCurrency(value), name]}
                 />
                 <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Revenue" />
-                <Bar dataKey="cost" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} name="Cost" />
-                <Bar dataKey="profit" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} name="Profit" />
+                <Bar dataKey="cost" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} name="COGS" />
+                <Bar dataKey="expenses" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="Expenses" />
+                <Bar dataKey="profit" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} name="Net Profit" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -248,10 +326,10 @@ const Reports = () => {
                   {formatCurrency(profitData.reduce((sum, m) => sum + m.revenue, 0))}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-                <span className="text-sm font-medium text-foreground">Total Costs</span>
-                <span className="text-lg font-bold text-muted-foreground">
-                  {formatCurrency(profitData.reduce((sum, m) => sum + m.cost, 0))}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/10">
+                <span className="text-sm font-medium text-foreground">Operational Expenses</span>
+                <span className="text-lg font-bold text-destructive">
+                  {formatCurrency(profitData.reduce((sum, m) => sum + m.expenses, 0))}
                 </span>
               </div>
               <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10">
