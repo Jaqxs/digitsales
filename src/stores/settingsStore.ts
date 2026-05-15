@@ -89,7 +89,9 @@ const DEFAULT_SETTINGS: SettingsData = {
     },
 };
 
-export const useSettingsStore = create<MultiUserSettingsState>((set, get) => ({
+export const useSettingsStore = create<MultiUserSettingsState>()(
+  persist(
+    (set, get) => ({
     ...DEFAULT_SETTINGS,
     currentUserId: null,
     userSettings: {},
@@ -185,4 +187,9 @@ export const useSettingsStore = create<MultiUserSettingsState>((set, get) => ({
             return newState;
         });
     },
-}));
+  }),
+  {
+    name: 'digitsales-settings',
+  }
+)
+);

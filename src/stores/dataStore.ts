@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product, Customer, Employee, Sale, CartItem, PaymentMethod, ProductCategory, Expense, ExpenseCategory } from '@/types/pos';
-import { MOCK_PRODUCTS, MOCK_CUSTOMERS, MOCK_EMPLOYEES, MOCK_SALES, MOCK_STOCK_RECORDS } from '@/lib/mock-data';
+
 
 export interface StockRecord {
   id: string;
@@ -69,15 +69,17 @@ interface DataStore extends UserData {
 }
 
 const DEFAULT_USER_DATA: UserData = {
-  products: MOCK_PRODUCTS,
-  customers: MOCK_CUSTOMERS,
-  employees: MOCK_EMPLOYEES,
-  sales: MOCK_SALES,
-  stockRecords: MOCK_STOCK_RECORDS,
+  products: [],
+  customers: [],
+  employees: [],
+  sales: [],
+  stockRecords: [],
   expenses: [],
 };
 
-export const useDataStore = create<DataStore>((set, get) => ({
+export const useDataStore = create<DataStore>()(
+  persist(
+    (set, get) => ({
   loading: {
     products: false,
     customers: false,
@@ -269,5 +271,10 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchStockRecords: async () => {},
   fetchLocations: async () => {},
   fetchExpenses: async () => {},
-}));
+    }),
+    {
+      name: 'digitsales-data',
+    }
+  )
+);
 

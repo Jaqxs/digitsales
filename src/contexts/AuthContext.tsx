@@ -17,19 +17,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>({
-    id: 'preview-admin',
-    name: 'Preview Admin',
-    email: 'admin@digitsales.io',
-    role: 'admin',
-    isActive: true,
-    createdAt: new Date().toISOString(),
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('digitsales-current-user');
+    return saved ? JSON.parse(saved) : null;
   });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Preview mode: always logged in as admin
-  }, []);
+    // Sync current user to localStorage when it changes
+    if (user) {
+      localStorage.setItem('digitsales-current-user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('digitsales-current-user');
+    }
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     // Basic mock local login with multiple accounts support
