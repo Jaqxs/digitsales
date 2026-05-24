@@ -33,15 +33,9 @@ export interface Product {
 
 export type ProductStatus = 'draft' | 'pending' | 'approved' | 'rejected';
 
-export type ProductCategory =
-  | 'construction-equipment'
-  | 'power-tools'
-  | 'hand-tools'
-  | 'plumbing'
-  | 'electrical'
-  | 'safety-equipment'
-  | 'fasteners'
-  | 'building-materials';
+// Dynamic — users can define their own categories
+export type ProductCategory = string;
+
 
 export interface CartItem {
   product: Product;

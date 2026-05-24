@@ -35,6 +35,7 @@ interface SettingsData {
         sessionTimeout: string;
         auditLogging: boolean;
     };
+    categories: string[];
 }
 
 interface MultiUserSettingsState {
@@ -42,6 +43,7 @@ interface MultiUserSettingsState {
     notifications: SettingsData['notifications'];
     pos: SettingsData['pos'];
     security: SettingsData['security'];
+    categories: string[];
     
     currentUserId: string | null;
     userSettings: Record<string, SettingsData>;
@@ -51,6 +53,8 @@ interface MultiUserSettingsState {
     updateNotifications: (settings: Partial<SettingsData['notifications']>) => void;
     updatePos: (settings: Partial<SettingsData['pos']>) => void;
     updateSecurity: (settings: Partial<SettingsData['security']>) => void;
+    addCategory: (category: string) => void;
+    removeCategory: (category: string) => void;
 }
 
 const DEFAULT_SETTINGS: SettingsData = {
@@ -87,6 +91,7 @@ const DEFAULT_SETTINGS: SettingsData = {
         sessionTimeout: '30',
         auditLogging: true,
     },
+    categories: ['General', 'Electronics', 'Clothing', 'Food & Beverages', 'Health & Beauty', 'Home & Garden', 'Sports & Outdoors', 'Toys & Games'],
 };
 
 export const useSettingsStore = create<MultiUserSettingsState>()(
@@ -108,7 +113,8 @@ export const useSettingsStore = create<MultiUserSettingsState>()(
             business: settings.business,
             notifications: settings.notifications,
             pos: settings.pos,
-            security: settings.security
+            security: settings.security,
+            categories: settings.categories || DEFAULT_SETTINGS.categories,
         });
     },
 
@@ -180,7 +186,50 @@ export const useSettingsStore = create<MultiUserSettingsState>()(
                         business: state.business,
                         notifications: state.notifications,
                         pos: state.pos,
-                        security: newSecurity
+                        security: newSecurity,
+                        categories: state.categories,
+                    }
+                };
+            }
+            return newState;
+        });
+    },
+
+    addCategory: (category: string) => {
+        set((state) => {
+            const trimmed = category.trim();
+            if (!trimmed || state.categories.includes(trimmed)) return state;
+            const newCategories = [...state.categories, trimmed];
+            const newState = { ...state, categories: newCategories };
+            if (state.currentUserId) {
+                newState.userSettings = {
+                    ...state.userSettings,
+                    [state.currentUserId]: {
+                        business: state.business,
+                        notifications: state.notifications,
+                        pos: state.pos,
+                        security: state.security,
+                        categories: newCategories,
+                    }
+                };
+            }
+            return newState;
+        });
+    },
+
+    removeCategory: (category: string) => {
+        set((state) => {
+            const newCategories = state.categories.filter(c => c !== category);
+            const newState = { ...state, categories: newCategories };
+            if (state.currentUserId) {
+                newState.userSettings = {
+                    ...state.userSettings,
+                    [state.currentUserId]: {
+                        business: state.business,
+                        notifications: state.notifications,
+                        pos: state.pos,
+                        security: state.security,
+                        categories: newCategories,
                     }
                 };
             }

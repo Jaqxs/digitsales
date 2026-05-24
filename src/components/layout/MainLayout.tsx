@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 import { AppSidebar, MobileHeader } from './AppSidebar';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -10,7 +9,6 @@ interface MainLayoutProps {
 import { useLayout } from '@/contexts/LayoutContext';
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const isMobile = useIsMobile();
   const { isSidebarCollapsed } = useLayout();
 
   return (
@@ -18,11 +16,9 @@ export function MainLayout({ children }: MainLayoutProps) {
       <MobileHeader />
       <AppSidebar />
       <main className={cn(
-        'transition-all duration-300 ease-in-out',
-        isMobile ? 'pt-20 px-4' : cn(
-          'min-h-screen py-6 pr-6',
-          isSidebarCollapsed ? 'pl-[112px]' : 'pl-[320px]'
-        )
+        'transition-all duration-300 ease-in-out min-h-screen py-6 pr-4 lg:pr-6',
+        'pt-20 px-4 lg:pt-6 lg:px-0',
+        isSidebarCollapsed ? 'lg:pl-[112px]' : 'lg:pl-[320px]'
       )}>
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           {children}
@@ -31,6 +27,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     </div>
   );
 }
+
 
 interface PageHeaderProps {
   title: string;

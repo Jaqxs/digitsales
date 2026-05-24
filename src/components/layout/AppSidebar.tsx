@@ -2,7 +2,6 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
 import { cn } from '@/lib/utils';
 import { useAuth, canAccessRoute } from '@/contexts/AuthContext';
-import { useIsMobile } from '@/hooks/use-mobile';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -159,7 +158,6 @@ export function AppSidebar({ className }: SidebarProps) {
   const { user, logout } = useAuth();
   const { business } = useSettingsStore();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const location = useLocation();
 
   const handleLogout = () => {
@@ -171,15 +169,11 @@ export function AppSidebar({ className }: SidebarProps) {
     (item) => canAccessRoute(user?.role || 'admin', item.route)
   );
 
-  // Don't render desktop sidebar on mobile
-  if (isMobile) {
-    return null;
-  }
-
+  // Use CSS classes only — avoids undefined flash on first render
   return (
     <aside
       className={cn(
-        'fixed left-4 top-4 bottom-4 z-40 flex flex-col rounded-2xl border border-white/20 bg-white/80 backdrop-blur-xl shadow-2xl transition-all duration-300',
+        'hidden lg:flex fixed left-4 top-4 bottom-4 z-40 flex-col rounded-2xl border border-white/20 bg-white/80 backdrop-blur-xl shadow-2xl transition-all duration-300',
         isSidebarCollapsed ? 'w-[80px]' : 'w-72',
         className
       )}

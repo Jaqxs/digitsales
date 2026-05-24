@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Product, ProductCategory, ProductStatus } from '@/types/pos';
 import { useDataStore } from '@/stores/dataStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { formatCurrency } from '@/lib/pos-utils';
 import {
   Dialog,
@@ -24,18 +25,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Package, AlertTriangle, LayoutGrid, DollarSign, Warehouse, Truck, CheckCircle2 } from 'lucide-react';
-
-const categoryOptions: { value: ProductCategory; label: string }[] = [
-  { value: 'construction-equipment', label: 'Construction Equipment' },
-  { value: 'power-tools', label: 'Power Tools' },
-  { value: 'hand-tools', label: 'Hand Tools' },
-  { value: 'plumbing', label: 'Plumbing' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'safety-equipment', label: 'Safety Equipment' },
-  { value: 'fasteners', label: 'Fasteners' },
-  { value: 'building-materials', label: 'Building Materials' },
-];
+import { Loader2, Package, AlertTriangle, DollarSign, Warehouse, Truck, CheckCircle2, Plus, X } from 'lucide-react';
 
 const statusOptions: { value: ProductStatus; label: string }[] = [
   { value: 'draft', label: 'Draft' },
@@ -52,9 +42,11 @@ interface ProductModalProps {
 
 export function ProductModal({ open, onOpenChange, product }: ProductModalProps) {
   const { addProduct, updateProduct, locations, fetchLocations, employees, fetchEmployees } = useDataStore();
+  const { categories, addCategory } = useSettingsStore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [newCategoryInput, setNewCategoryInput] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -91,7 +83,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
         name: product?.name || '',
         sku: product?.sku || '',
         barcode: product?.barcode || '',
-        category: product?.category || 'hand-tools' as ProductCategory,
+        category: product?.category || (categories[0] || ''),
         description: product?.description || '',
         costPrice: product?.costPrice || 0,
         sellingPrice: product?.sellingPrice || 0,
@@ -112,8 +104,9 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
         status: product?.status || 'draft',
       });
       setActiveTab('general');
+      setNewCategoryInput('');
     }
-  }, [open, product, fetchLocations, fetchEmployees]);
+  }, [open, product, fetchLocations, fetchEmployees, categories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,17 +209,54 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                     <Label htmlFor="category">Category</Label>
                     <Select
                       value={formData.category}
-                      onValueChange={(value) => setFormData({ ...formData, category: value as ProductCategory })}
+                      onValueChange={(value) => setFormData({ ...formData, category: value })}
                     >
                       <SelectTrigger id="category">
-                        <SelectValue />
+                        <SelectValue placeholder="Select or add a category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categoryOptions.map((cat) => (
-                          <SelectItem key={cat.value} value={cat.value}>
-                            {cat.label}
+                        {categories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
                           </SelectItem>
                         ))}
+                        <div className="border-t mt-1 pt-1 px-2 pb-1">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Add New Category</p>
+                          <div className="flex gap-1">
+                            <Input
+                              value={newCategoryInput}
+                              onChange={(e) => setNewCategoryInput(e.target.value)}
+                              placeholder="Type category name..."
+                              className="h-7 text-xs"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (newCategoryInput.trim()) {
+                                    addCategory(newCategoryInput.trim());
+                                    setFormData({ ...formData, category: newCategoryInput.trim() });
+                                    setNewCategoryInput('');
+                                  }
+                                }
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="outline"
+                              className="h-7 w-7 shrink-0"
+                              onClick={() => {
+                                if (newCategoryInput.trim()) {
+                                  addCategory(newCategoryInput.trim());
+                                  setFormData({ ...formData, category: newCategoryInput.trim() });
+                                  setNewCategoryInput('');
+                                }
+                              }}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
                       </SelectContent>
                     </Select>
                   </div>
