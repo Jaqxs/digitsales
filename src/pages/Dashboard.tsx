@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { MainLayout, PageHeader, PageContent } from '@/components/layout';
 import { StatsCard } from '@/components/dashboard/StatsCard';
-import { SalesChart, CategoryChart, TopProducts } from '@/components/dashboard/Charts';
+import { TopProducts } from '@/components/dashboard/Charts';
 import { LowStockAlert, RecentActivity } from '@/components/dashboard/Alerts';
 import { useDataStore } from '@/stores/dataStore';
 import { formatCurrency, formatNumber, formatDateTime } from '@/lib/pos-utils';
@@ -206,11 +206,6 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* Charts Row */}
-        <div className="grid gap-4 sm:gap-6 mt-4 sm:mt-6 lg:grid-cols-2">
-          <SalesChart data={salesData} />
-          <CategoryChart data={categoryData} />
-        </div>
 
         {/* Bottom Row */}
         <div className="grid gap-4 sm:gap-6 mt-4 sm:mt-6 lg:grid-cols-3">
