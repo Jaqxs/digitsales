@@ -19,7 +19,36 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('digitsales-current-user');
-    return saved ? JSON.parse(saved) : null;
+    if (saved) return JSON.parse(saved);
+    
+    // Default to a mock admin user for immediate preview/access
+    const defaultUser = {
+      id: 'admin-1',
+      name: 'Admin User',
+      email: 'admin@digitsales.com',
+      role: 'admin' as UserRole,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+    
+    // Also save it to accounts list so they can log back in if they log out
+    try {
+      const savedAccounts = JSON.parse(localStorage.getItem('digitsales-accounts') || '[]');
+      if (!savedAccounts.some((acc: any) => acc.email === defaultUser.email)) {
+        savedAccounts.push({
+          email: defaultUser.email,
+          password: 'admin',
+          user: defaultUser,
+          company: 'Digitsales POS'
+        });
+        localStorage.setItem('digitsales-accounts', JSON.stringify(savedAccounts));
+      }
+    } catch (e) {
+      console.error('Failed to initialize mock accounts:', e);
+    }
+    
+    localStorage.setItem('digitsales-current-user', JSON.stringify(defaultUser));
+    return defaultUser;
   });
   const [isLoading, setIsLoading] = useState(false);
 

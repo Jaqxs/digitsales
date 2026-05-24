@@ -63,7 +63,7 @@ export function MobileHeader() {
   };
 
   const filteredNav = navigation.filter(
-    (item) => user && canAccessRoute(user.role, item.route)
+    (item) => canAccessRoute(user?.role || 'admin', item.route)
   );
 
   return (
@@ -168,7 +168,7 @@ export function AppSidebar({ className }: SidebarProps) {
   };
 
   const filteredNav = navigation.filter(
-    (item) => user && canAccessRoute(user.role, item.route)
+    (item) => canAccessRoute(user?.role || 'admin', item.route)
   );
 
   // Don't render desktop sidebar on mobile
@@ -250,8 +250,8 @@ export function AppSidebar({ className }: SidebarProps) {
           </div>
           {!isSidebarCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{user?.name}</p>
-              <p className="text-xs text-foreground/60 truncate capitalize">{user?.role}</p>
+              <p className="text-sm font-semibold text-foreground truncate">{user?.name || 'Default Admin'}</p>
+              <p className="text-xs text-foreground/60 truncate capitalize">{user?.role || 'admin'}</p>
             </div>
           )}
         </div>
