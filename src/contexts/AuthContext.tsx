@@ -1,8 +1,8 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { User, UserRole } from '@/types/pos';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useDataStore } from '@/stores/dataStore';
+import { authAPI } from '@/services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -16,121 +16,173 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('digitsales-current-user');
-    if (saved) return JSON.parse(saved);
-    
-    // Default to a mock admin user for immediate preview/access
-    const defaultUser = {
-      id: 'admin-1',
-      name: 'Admin User',
-      email: 'admin@digitsales.com',
-      role: 'admin' as UserRole,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    };
-    
-    // Also save it to accounts list so they can log back in if they log out
-    try {
-      const savedAccounts = JSON.parse(localStorage.getItem('digitsales-accounts') || '[]');
-      if (!savedAccounts.some((acc: any) => acc.email === defaultUser.email)) {
-        savedAccounts.push({
-          email: defaultUser.email,
-          password: 'admin',
-          user: defaultUser,
-          company: 'Digitsales POS'
-        });
-        localStorage.setItem('digitsales-accounts', JSON.stringify(savedAccounts));
-      }
-    } catch (e) {
-      console.error('Failed to initialize mock accounts:', e);
-    }
-    
-    localStorage.setItem('digitsales-current-user', JSON.stringify(defaultUser));
-    return defaultUser;
-  });
-  const [isLoading, setIsLoading] = useState(false);
+// Map backend user to frontend User shape
+function mapBackendUser(backendUser: any): User {
+  return {
+    id: backendUser.id,
+    name: `${backendUser.firstName || ''} ${backendUser.lastName || ''}`.trim() || backendUser.email,
+    email: backendUser.email,
+    role: (backendUser.role?.toLowerCase() || 'admin') as UserRole,
+    isActive: backendUser.isActive ?? true,
+    createdAt: backendUser.createdAt || new Date().toISOString(),
+  };
+}
 
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // Start loading while we verify the session
+
+  // On mount, check if we have a stored token and verify with backend
   useEffect(() => {
-    // Sync current user to localStorage when it changes
+    const initAuth = async () => {
+      const token = localStorage.getItem('digitsales_token');
+      if (!token) {
+        // No token — check legacy localStorage user for backwards compat
+        const saved = localStorage.getItem('digitsales-current-user');
+        if (saved) {
+          try {
+            setUser(JSON.parse(saved));
+          } catch {
+            /* ignore */
+          }
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const data = await authAPI.getCurrentUser();
+        const mappedUser = mapBackendUser(data.user || data);
+        setUser(mappedUser);
+      } catch {
+        // Token is invalid / expired — clear it
+        localStorage.removeItem('digitsales_token');
+        localStorage.removeItem('digitsales_refreshToken');
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  // Sync user to localStorage + stores
+  useEffect(() => {
     if (user) {
       localStorage.setItem('digitsales-current-user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('digitsales-current-user');
-    }
-  }, [user]);
-
-  const login = async (email: string, password: string) => {
-    // Basic mock local login with multiple accounts support
-    const savedAccounts = JSON.parse(localStorage.getItem('digitsales-accounts') || '[]');
-    const account = savedAccounts.find((acc: any) => acc.email === email && acc.password === password);
-    
-    if (account) {
-      setUser(account.user);
-      return { success: true };
-    }
-    return { success: false, error: 'Invalid email or password.' };
-  };
-
-  const register = async (data: any) => {
-    const newUser: User = {
-      id: `admin-${Date.now()}`,
-      name: `${data.firstName} ${data.lastName}`,
-      email: data.email,
-      role: 'admin',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    };
-    
-    // Save to a list of accounts for multi-user simulation
-    const savedAccounts = JSON.parse(localStorage.getItem('digitsales-accounts') || '[]');
-    
-    if (savedAccounts.some((acc: any) => acc.email === data.email)) {
-      return { success: false, error: 'An account with this email already exists.' };
-    }
-
-    savedAccounts.push({
-      email: data.email,
-      password: data.password,
-      user: newUser,
-      company: data.companyName
-    });
-
-    localStorage.setItem('digitsales-accounts', JSON.stringify(savedAccounts));
-    setUser(newUser);
-
-    if (data.companyName) {
-      // For initial setup, we update the settings store
-      useSettingsStore.getState().updateBusiness({ 
-        name: data.companyName, 
-        tradingName: data.companyName,
-        email: data.email
-      });
-    }
-
-    return { success: true };
-  };
-
-  const logout = () => {
-    setUser(null);
-  };
-
-  useEffect(() => {
-    // Sync stores with current user for isolation
-    if (user?.id) {
       useSettingsStore.getState().setCurrentUser(user.id);
       useDataStore.getState().setCurrentUser(user.id);
     } else {
+      localStorage.removeItem('digitsales-current-user');
       useSettingsStore.getState().setCurrentUser(null);
       useDataStore.getState().setCurrentUser(null);
     }
   }, [user]);
 
-  const hasPermission = (allowedRoles: UserRole[]) => {
+  const login = useCallback(async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      // Try real backend first
+      const data = await authAPI.login(email, password);
+      if (data.tokens?.accessToken) {
+        localStorage.setItem('digitsales_token', data.tokens.accessToken);
+        if (data.tokens.refreshToken) {
+          localStorage.setItem('digitsales_refreshToken', data.tokens.refreshToken);
+        }
+      }
+      const mappedUser = mapBackendUser(data.user);
+      setUser(mappedUser);
+      return { success: true };
+    } catch (err: any) {
+      // If backend is unreachable, fall back to localStorage accounts
+      if (err.message?.includes('Network error') || err.message?.includes('Cannot connect')) {
+        console.warn('⚠️ Backend unreachable — falling back to local accounts');
+        const savedAccounts = JSON.parse(localStorage.getItem('digitsales-accounts') || '[]');
+        const account = savedAccounts.find((acc: any) => acc.email === email && acc.password === password);
+        if (account) {
+          setUser(account.user);
+          return { success: true };
+        }
+        return { success: false, error: 'Invalid email or password.' };
+      }
+      return { success: false, error: err.message || 'Login failed. Please try again.' };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const register = useCallback(async (data: any) => {
+    setIsLoading(true);
+    try {
+      // Try real backend first
+      const result = await authAPI.register({
+        email: data.email,
+        password: data.password,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+      });
+
+      if (result.tokens?.accessToken) {
+        localStorage.setItem('digitsales_token', result.tokens.accessToken);
+        if (result.tokens.refreshToken) {
+          localStorage.setItem('digitsales_refreshToken', result.tokens.refreshToken);
+        }
+      }
+
+      const mappedUser = mapBackendUser(result.user);
+      setUser(mappedUser);
+
+      if (data.companyName) {
+        useSettingsStore.getState().updateBusiness({
+          name: data.companyName,
+          tradingName: data.companyName,
+          email: data.email,
+        });
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      // Fallback: create local account
+      if (err.message?.includes('Network error') || err.message?.includes('Cannot connect')) {
+        console.warn('⚠️ Backend unreachable — creating local account');
+        const newUser: User = {
+          id: `local-${Date.now()}`,
+          name: `${data.firstName} ${data.lastName}`,
+          email: data.email,
+          role: 'admin',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        };
+        const savedAccounts = JSON.parse(localStorage.getItem('digitsales-accounts') || '[]');
+        if (savedAccounts.some((acc: any) => acc.email === data.email)) {
+          return { success: false, error: 'An account with this email already exists.' };
+        }
+        savedAccounts.push({ email: data.email, password: data.password, user: newUser, company: data.companyName });
+        localStorage.setItem('digitsales-accounts', JSON.stringify(savedAccounts));
+        setUser(newUser);
+        if (data.companyName) {
+          useSettingsStore.getState().updateBusiness({ name: data.companyName, tradingName: data.companyName, email: data.email });
+        }
+        return { success: true };
+      }
+      return { success: false, error: err.message || 'Registration failed.' };
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('digitsales_token');
+    localStorage.removeItem('digitsales_refreshToken');
+    setUser(null);
+  }, []);
+
+  const hasPermission = useCallback((allowedRoles: UserRole[]) => {
     if (!user) return false;
     return allowedRoles.includes(user.role);
-  };
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{
@@ -149,9 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }
 
@@ -168,4 +218,3 @@ export const rolePermissions: Record<UserRole, string[]> = {
 export const canAccessRoute = (role: UserRole, route: string): boolean => {
   return rolePermissions[role]?.includes(route) || false;
 };
-

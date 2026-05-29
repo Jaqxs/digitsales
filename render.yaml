@@ -1,0 +1,47 @@
+services:
+  # Database
+  - type: psql
+    name: digitsales-db
+    plan: free
+    region: frankfurt
+
+  # Backend Node.js API
+  - type: web
+    name: digitsales-api
+    env: node
+    plan: free
+    region: frankfurt
+    buildCommand: cd backend && npm install && npx prisma generate && npm run build
+    startCommand: cd backend && npx prisma migrate deploy && npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: digitsales-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        value: "*" # Set this to your frontend URL once deployed
+
+  # Frontend React App (Vite)
+  - type: web
+    name: digitsales-frontend
+    env: static
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: digitsales-api
+          property: host
+        # It's important to append /api/v1 to the backend host
+        # Note: Render doesn't natively support appending paths in fromService. 
+        # You may need to manually update VITE_API_URL in the Render dashboard
+        # to look like: https://digitsales-api.onrender.com/api/v1
