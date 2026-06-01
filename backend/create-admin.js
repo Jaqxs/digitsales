@@ -16,7 +16,7 @@ async function createAdminUser() {
     // Check if admin user already exists
     const existingUser = await client.query(
       'SELECT id FROM users WHERE email = $1',
-      ['admin@zantrix.co.tz']
+      ['admin@digisales.co.tz']
     );
 
     if (existingUser.rows.length > 0) {
@@ -32,7 +32,7 @@ async function createAdminUser() {
     await client.query(`
       INSERT INTO users (id, email, "passwordHash", role, "isActive", "createdAt", "updatedAt")
       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-    `, [userId, 'admin@zantrix.co.tz', hashedPassword, 'admin', true]);
+    `, [userId, 'admin@digisales.co.tz', hashedPassword, 'admin', true]);
 
     // Create user profile
     await client.query(`
@@ -41,7 +41,7 @@ async function createAdminUser() {
     `, [userId, 'Admin', 'User']);
 
     console.log('Admin user created successfully!');
-    console.log('Email: admin@zantrix.co.tz');
+    console.log('Email: admin@digisales.co.tz');
     console.log('Password: admin123');
 
   } catch (error) {

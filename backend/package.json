@@ -1,7 +1,7 @@
 {
-  "name": "zantrix-pos-backend",
+  "name": "digisales-pos-backend",
   "version": "1.0.0",
-  "description": "Backend API for Zantrix POS System",
+  "description": "Backend API for Digisales POS System",
   "main": "dist/server.js",
   "scripts": {
     "build": "npx prisma generate && tsc",
@@ -25,7 +25,7 @@
     "nodejs",
     "typescript"
   ],
-  "author": "Zantrix POS Team",
+  "author": "Digisales POS Team",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^5.22.0",

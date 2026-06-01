@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   preview: {
-    allowedHosts: ["zantrixpos.onrender.com"],
+    allowedHosts: ["digisales.co.tz", "digisales.onrender.com"],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

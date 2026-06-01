@@ -7,7 +7,7 @@ async function main() {
     console.log('🌱 Starting seeding...');
 
     // 1. Create Admin User
-    const adminEmail = 'admin@zantrix.co.tz';
+    const adminEmail = 'admin@digisales.co.tz';
     const hashedPassword = await bcrypt.hash('admin123', 10);
 
     const admin = await prisma.user.upsert({
@@ -34,7 +34,7 @@ async function main() {
     console.log(`✅ Admin user created: ${admin.email}`);
 
     // 1.1 Create Manager User
-    const managerEmail = 'manager@zantrix.co.tz';
+    const managerEmail = 'manager@digisales.co.tz';
     const managerHashedPassword = await bcrypt.hash('manager123', 10);
     await prisma.user.upsert({
         where: { email: managerEmail },
@@ -59,7 +59,7 @@ async function main() {
     console.log(`✅ Manager user created: ${managerEmail}`);
 
     // 1.2 Create Sales User
-    const salesEmail = 'sales@zantrix.co.tz';
+    const salesEmail = 'sales@digisales.co.tz';
     const salesHashedPassword = await bcrypt.hash('sales123', 10);
     await prisma.user.upsert({
         where: { email: salesEmail },

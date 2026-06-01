@@ -71,7 +71,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'online',
-    message: 'Zantrix Backend API is running',
+    message: 'Digisales Backend API is running',
     timestamp: new Date().toISOString()
   });
 });
@@ -95,7 +95,7 @@ app.use(errorHandler);
 
 // Start server
 const server = app.listen(config.PORT, config.HOST, () => {
-  console.log(`🚀 Zantrix POS API Server running on http://${config.HOST}:${config.PORT}`);
+  console.log(`🚀 Digisales POS API Server running on http://${config.HOST}:${config.PORT}`);
   console.log(`📚 API Documentation available at http://${config.HOST}:${config.PORT}${config.API_PREFIX}`);
   console.log(`🌍 Environment: ${config.NODE_ENV}`);
   console.log(`📊 Health check: http://${config.HOST}:${config.PORT}/health`);

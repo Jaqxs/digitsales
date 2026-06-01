@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_DB: zantrix_pos
+      POSTGRES_DB: digisales_pos
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     volumes:

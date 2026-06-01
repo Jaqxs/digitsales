@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-const SERVER_SIG = 'ZANTRIX-B-' + Date.now();
+const SERVER_SIG = 'DIGISALES-B-' + Date.now();
 console.log('Server Signature:', SERVER_SIG);
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';

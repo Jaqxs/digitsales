@@ -414,6 +414,7 @@ enum UserRole {
   sales
   inventory
   support
+  stock_keeper
 }
 
 enum CustomerType {
@@ -467,6 +468,7 @@ enum SaleStatus {
   cancelled
   refunded
   on_credit
+  awaiting_delivery
 }
 
 enum PurchaseOrderStatus {
