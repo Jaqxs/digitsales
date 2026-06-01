@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDataStore } from '@/stores/dataStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency, calculateVAT } from '@/lib/pos-utils';
@@ -32,7 +32,13 @@ interface RecordSaleModalProps {
 import { useSettingsStore } from '@/stores/settingsStore';
 
 export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
-  const { products, addSale } = useDataStore();
+  const { products, addSale, fetchProducts } = useDataStore();
+
+  useEffect(() => {
+    if (open) {
+      fetchProducts();
+    }
+  }, [open, fetchProducts]);
   const { user: currentUser } = useAuth();
   const { business } = useSettingsStore();
   const { toast } = useToast();
@@ -129,10 +135,10 @@ export function RecordSaleModal({ open, onOpenChange }: RecordSaleModalProps) {
                 <SelectValue placeholder="Select a product" />
               </SelectTrigger>
               <SelectContent>
-                {products.filter(p => p.quantity > 0).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
+                {products.map((p) => (
+                  <SelectItem key={p.id} value={p.id} disabled={p.quantity <= 0}>
                     <div className="flex flex-col">
-                      <span>{p.name} ({p.quantity} available)</span>
+                      <span>{p.name} {p.quantity <= 0 ? ' (Out of Stock)' : `(${p.quantity} available)`}</span>
                       <span className="text-[10px] text-muted-foreground">
                         Retail: {formatCurrency(p.sellingPrice)}
                         {p.wholesalePrice ? ` | Wholesale: ${formatCurrency(p.wholesalePrice)}` : ''}
@@ -232,7 +238,13 @@ interface RecordInventoryModalProps {
 }
 
 export function RecordInventoryModal({ open, onOpenChange }: RecordInventoryModalProps) {
-  const { products, updateStock, addStockRecord } = useDataStore();
+  const { products, updateStock, addStockRecord, fetchProducts } = useDataStore();
+
+  useEffect(() => {
+    if (open) {
+      fetchProducts();
+    }
+  }, [open, fetchProducts]);
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string>('');
