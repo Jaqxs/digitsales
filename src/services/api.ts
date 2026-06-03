@@ -1,6 +1,6 @@
 // API service for Digitsales POS backend integration
 
-const PRODUCTION_BACKEND = 'https://backend.digits.co.tz/api/v1';
+const PRODUCTION_BACKEND = 'https://api.digits.co.tz/api/v1';
 
 export const getApiBaseUrl = (): string => {
   const localUrl = localStorage.getItem('digitsales_api_url');

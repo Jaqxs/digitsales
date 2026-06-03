@@ -234,7 +234,7 @@ const Auth = () => {
                           <Label htmlFor="customApiUrl" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Backend API URL</Label>
                           <Input
                             id="customApiUrl"
-                            placeholder="e.g. https://backend.digits.co.tz/api/v1"
+                            placeholder="e.g. https://api.digits.co.tz/api/v1"
                             value={customApiUrl}
                             onChange={(e) => setCustomApiUrl(e.target.value)}
                             className="h-11 rounded-xl bg-muted/50 border-border"
