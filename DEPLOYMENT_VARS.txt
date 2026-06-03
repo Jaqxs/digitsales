@@ -12,7 +12,7 @@ PORT=3001
 NODE_ENV=production
 
 # Database Connection (If using Dokploy Database, use the internal connection string)
-DATABASE_URL=postgresql://postgres:password@postgres:5432/zantrix_pos
+DATABASE_URL=postgresql://postgres:password@postgres:5432/digisales_pos
 
 # Security
 JWT_SECRET=replace_this_with_a_long_random_string_xyz123

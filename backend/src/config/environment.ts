@@ -10,7 +10,7 @@ export const config = {
   HOST: '0.0.0.0', // Force binding to 0.0.0.0
 
   // Database Configuration
-  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/zantrix_pos',
+  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/digisales_pos',
 
   // JWT Configuration
   JWT_SECRET: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',

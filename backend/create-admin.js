@@ -4,10 +4,10 @@ const bcrypt = require('bcryptjs');
 async function createAdminUser() {
   const client = new Client({
     host: 'localhost',
-    port: 5432,
+    port: 5433,
     user: 'postgres',
-    password: 'password',
-    database: 'zantrix_pos'
+    password: 'Jackson@2024',
+    database: 'digisales_pos'
   });
 
   try {
