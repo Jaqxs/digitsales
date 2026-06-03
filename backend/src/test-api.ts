@@ -24,7 +24,7 @@ async function runApiTest() {
       body: JSON.stringify(loginPayload)
     });
 
-    const loginData = await loginRes.json();
+    const loginData = (await loginRes.json()) as any;
     if (!loginRes.ok || !loginData.success) {
       throw new Error(`Login failed: ${loginData.error?.message || loginData.message || loginRes.statusText}`);
     }
@@ -43,7 +43,7 @@ async function runApiTest() {
       }
     });
 
-    const productsData = await productsRes.json();
+    const productsData = (await productsRes.json()) as any;
     if (!productsRes.ok || !productsData.success) {
       throw new Error(`Fetch products failed: ${productsData.error?.message || productsData.message || productsRes.statusText}`);
     }
@@ -64,7 +64,7 @@ async function runApiTest() {
       }
     });
 
-    const customersData = await customersRes.json();
+    const customersData = (await customersRes.json()) as any;
     if (!customersRes.ok || !customersData.success) {
       throw new Error(`Fetch customers failed: ${customersData.error?.message || customersData.message || customersRes.statusText}`);
     }
