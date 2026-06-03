@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, LogIn, Loader2, Shield, Package, BarChart3, Users, Zap } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Loader2, Shield, Package, BarChart3, Users, Zap, Settings } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { getApiBaseUrl } from '@/services/api';
 
 const Auth = () => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -17,10 +19,46 @@ const Auth = () => {
   const [companyName, setCompanyName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [customApiUrl, setCustomApiUrl] = useState(localStorage.getItem('digitsales_api_url') || '');
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleSaveApiUrl = () => {
+    const trimmed = customApiUrl.trim();
+    if (trimmed) {
+      localStorage.setItem('digitsales_api_url', trimmed);
+      toast({
+        title: 'Settings Saved',
+        description: 'The backend API URL has been updated successfully. Reloading...',
+      });
+    } else {
+      localStorage.removeItem('digitsales_api_url');
+      toast({
+        title: 'Settings Reset',
+        description: 'Reset backend API URL to defaults. Reloading...',
+      });
+    }
+    setShowSettings(false);
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  };
+
+  const handleResetApiUrl = () => {
+    localStorage.removeItem('digitsales_api_url');
+    setCustomApiUrl('');
+    toast({
+      title: 'Settings Reset',
+      description: 'Reset backend API URL to defaults. Reloading...',
+    });
+    setShowSettings(false);
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,11 +212,48 @@ const Auth = () => {
 
             <div className="p-8 sm:p-10">
               <div className="mb-8">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Shield className="h-4 w-4 text-primary" />
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Shield className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-xs font-bold text-primary uppercase tracking-widest">Enterprise Security</span>
                   </div>
-                  <span className="text-xs font-bold text-primary uppercase tracking-widest">Enterprise Security</span>
+                  <Dialog open={showSettings} onOpenChange={setShowSettings}>
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md bg-card border-border shadow-2xl rounded-2xl">
+                      <DialogHeader>
+                        <DialogTitle className="text-lg font-bold">API Server Settings</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="customApiUrl" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Backend API URL</Label>
+                          <Input
+                            id="customApiUrl"
+                            placeholder="e.g. https://api.digisales.co.tz/api/v1"
+                            value={customApiUrl}
+                            onChange={(e) => setCustomApiUrl(e.target.value)}
+                            className="h-11 rounded-xl bg-muted/50 border-border"
+                          />
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            Specify the full URL to the backend API, including the prefix (usually <code>/api/v1</code>). Leave blank or reset to use the default configuration.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={handleResetApiUrl} className="rounded-xl">
+                          Reset to Default
+                        </Button>
+                        <Button type="button" onClick={handleSaveApiUrl} className="rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground font-bold">
+                          Save Settings
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
                 <h2 className="text-2xl font-display font-bold text-foreground">
                   {mode === 'login' ? 'Welcome back' : 'Start your journey'}

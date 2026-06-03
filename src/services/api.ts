@@ -1,8 +1,14 @@
 // API service for Digitsales POS backend integration
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+export const getApiBaseUrl = (): string => {
+  const localUrl = localStorage.getItem('digitsales_api_url');
+  if (localUrl) return localUrl;
+  return import.meta.env.VITE_API_URL || '/api/v1';
+};
+
 console.log('🔌 API Service Initialized');
-console.log('📡 Backend URL:', API_BASE_URL);
+console.log('📡 Default Backend URL:', import.meta.env.VITE_API_URL || '/api/v1');
+console.log('📡 Active Backend URL:', getApiBaseUrl());
 console.log('🌍 Mode:', import.meta.env.MODE);
 
 // Generic API request function
@@ -10,7 +16,8 @@ async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}${endpoint}`;
 
   const config: RequestInit = {
     headers: {
