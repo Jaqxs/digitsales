@@ -4,7 +4,7 @@ HOST=0.0.0.0
 
 # Database Configuration (Replace with your actual Dokploy PostgreSQL credentials)
 # Format: postgresql://<user>:<password>@<db-container-name>:<db-port>/<db-name>
-DATABASE_URL=postgresql://postgres:Jackson%402024@postgres:5432/digisales_pos
+DATABASE_URL=postgresql://postgres:Jackson%402024@digitssales-database-br4rx7:5432/digitsales
 
 # Security
 JWT_SECRET=digisales-pos-production-super-secret-key-9f8d7e6c5b4a
