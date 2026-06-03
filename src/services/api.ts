@@ -1,13 +1,15 @@
 // API service for Digitsales POS backend integration
 
+const PRODUCTION_BACKEND = 'https://backend.digits.co.tz/api/v1';
+
 export const getApiBaseUrl = (): string => {
   const localUrl = localStorage.getItem('digitsales_api_url');
   if (localUrl) return localUrl;
-  return import.meta.env.VITE_API_URL || '/api/v1';
+  return import.meta.env.VITE_API_URL || PRODUCTION_BACKEND;
 };
 
 console.log('🔌 API Service Initialized');
-console.log('📡 Default Backend URL:', import.meta.env.VITE_API_URL || '/api/v1');
+console.log('📡 Default Backend URL:', import.meta.env.VITE_API_URL || PRODUCTION_BACKEND);
 console.log('📡 Active Backend URL:', getApiBaseUrl());
 console.log('🌍 Mode:', import.meta.env.MODE);
 
