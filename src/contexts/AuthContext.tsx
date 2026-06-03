@@ -69,6 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Sync user to localStorage + stores
   useEffect(() => {
+    if (isLoading) return;
+    
     if (user) {
       localStorage.setItem('digitsales-current-user', JSON.stringify(user));
       useSettingsStore.getState().setCurrentUser(user.id);
@@ -78,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       useSettingsStore.getState().setCurrentUser(null);
       useDataStore.getState().setCurrentUser(null);
     }
-  }, [user]);
+  }, [user, isLoading]);
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);

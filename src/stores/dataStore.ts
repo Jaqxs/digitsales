@@ -267,29 +267,47 @@ export const useDataStore = create<DataStore>()(
           get().syncAndSet({
             products: get().products.map(p => p.id === tempId ? created : p),
           });
-        } catch {
-          /* keep optimistic — will sync on next fetch */
+        } catch (error: any) {
+          // Revert optimistic update
+          get().syncAndSet({
+            products: get().products.filter(p => p.id !== tempId),
+          });
+          throw error;
         }
       },
 
       updateProduct: async (id, updates) => {
+        const original = get().products.find(p => p.id === id);
         // Optimistic
         get().syncAndSet({
           products: get().products.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date() } : p),
         });
         try {
           await productAPI.updateProduct(id, updates);
-        } catch {
-          /* keep optimistic */
+        } catch (error: any) {
+          // Revert
+          if (original) {
+            get().syncAndSet({
+              products: get().products.map(p => p.id === id ? original : p),
+            });
+          }
+          throw error;
         }
       },
 
       deleteProduct: async (id) => {
+        const original = get().products.find(p => p.id === id);
         get().syncAndSet({ products: get().products.filter(p => p.id !== id) });
         try {
           await productAPI.deleteProduct(id);
-        } catch {
-          /* keep optimistic */
+        } catch (error: any) {
+          // Revert
+          if (original) {
+            get().syncAndSet({
+              products: [...get().products, original],
+            });
+          }
+          throw error;
         }
       },
 
@@ -363,17 +381,43 @@ export const useDataStore = create<DataStore>()(
           const res = await customerAPI.createCustomer(customerData);
           const created = mapCustomer(res.customer || res);
           get().syncAndSet({ customers: get().customers.map(c => c.id === tempId ? created : c) });
-        } catch { /* keep optimistic */ }
+        } catch (error: any) {
+          // Revert
+          get().syncAndSet({
+            customers: get().customers.filter(c => c.id !== tempId),
+          });
+          throw error;
+        }
       },
 
       updateCustomer: async (id, updates) => {
+        const original = get().customers.find(c => c.id === id);
         get().syncAndSet({ customers: get().customers.map(c => c.id === id ? { ...c, ...updates } : c) });
-        try { await customerAPI.updateCustomer(id, updates); } catch { /* keep */ }
+        try {
+          await customerAPI.updateCustomer(id, updates);
+        } catch (error: any) {
+          if (original) {
+            get().syncAndSet({
+              customers: get().customers.map(c => c.id === id ? original : c),
+            });
+          }
+          throw error;
+        }
       },
 
       deleteCustomer: async (id) => {
+        const original = get().customers.find(c => c.id === id);
         get().syncAndSet({ customers: get().customers.filter(c => c.id !== id) });
-        try { await customerAPI.deleteCustomer(id); } catch { /* keep */ }
+        try {
+          await customerAPI.deleteCustomer(id);
+        } catch (error: any) {
+          if (original) {
+            get().syncAndSet({
+              customers: [...get().customers, original],
+            });
+          }
+          throw error;
+        }
       },
 
       // ── Employees ─────────────────────────────────────────────
@@ -408,17 +452,42 @@ export const useDataStore = create<DataStore>()(
           const res = await employeeAPI.createEmployee(employeeData);
           const created = mapEmployee(res.employee || res);
           get().syncAndSet({ employees: get().employees.map(e => e.id === tempId ? created : e) });
-        } catch { /* keep optimistic */ }
+        } catch (error: any) {
+          get().syncAndSet({
+            employees: get().employees.filter(e => e.id !== tempId),
+          });
+          throw error;
+        }
       },
 
       updateEmployee: async (id, updates) => {
+        const original = get().employees.find(e => e.id === id);
         get().syncAndSet({ employees: get().employees.map(e => e.id === id ? { ...e, ...updates } : e) });
-        try { await employeeAPI.updateEmployee(id, updates); } catch { /* keep */ }
+        try {
+          await employeeAPI.updateEmployee(id, updates);
+        } catch (error: any) {
+          if (original) {
+            get().syncAndSet({
+              employees: get().employees.map(e => e.id === id ? original : e),
+            });
+          }
+          throw error;
+        }
       },
 
       deleteEmployee: async (id) => {
+        const original = get().employees.find(e => e.id === id);
         get().syncAndSet({ employees: get().employees.filter(e => e.id !== id) });
-        try { await employeeAPI.deleteEmployee(id); } catch { /* keep */ }
+        try {
+          await employeeAPI.deleteEmployee(id);
+        } catch (error: any) {
+          if (original) {
+            get().syncAndSet({
+              employees: [...get().employees, original],
+            });
+          }
+          throw error;
+        }
       },
 
       // ── Sales ─────────────────────────────────────────────────
@@ -463,8 +532,15 @@ export const useDataStore = create<DataStore>()(
           const created = mapSale(res.sale || res);
           get().syncAndSet({ sales: get().sales.map(s => s.id === tempId ? created : s) });
           return created;
-        } catch {
-          return optimistic;
+        } catch (error: any) {
+          // Revert optimistic sale and product stock levels
+          get().syncAndSet({
+            sales: get().sales.filter(s => s.id !== tempId),
+          });
+          saleData.items.forEach(item => {
+            get().updateStock(item.product.id, item.quantity, 'in', `POS Sale Revert ${tempId}`);
+          });
+          throw error;
         }
       },
 
