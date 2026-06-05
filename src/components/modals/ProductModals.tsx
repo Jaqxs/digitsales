@@ -150,68 +150,80 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[85vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="p-4 pb-1">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Package className="h-5 w-5 text-primary" />
-            {product ? 'Edit Product' : 'New Product'}
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none rounded-[28px] shadow-2xl bg-white">
+        <DialogHeader className="p-6 pb-4 border-b border-gray-100 flex-row items-center justify-between">
+          <DialogTitle className="flex items-center gap-3.5 text-xl font-bold tracking-tight text-gray-900">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-sm">
+              <Package className="h-6 w-6" />
+            </div>
+            <div className="flex flex-col text-left">
+              <span>{product ? 'Edit Product' : 'New Product'}</span>
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Catalog & Stock Settings</span>
+            </div>
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-y-auto p-4 pt-1">
+          <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-4 h-9">
-                <TabsTrigger value="general" className="text-[10px] py-1 px-2">
-                  General
+              <TabsList className="grid w-full grid-cols-4 mb-6 p-1.5 bg-gray-100/80 rounded-2xl h-12">
+                <TabsTrigger value="general" className="rounded-xl text-xs font-bold gap-2 py-2 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">
+                  <Package className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">General</span>
                 </TabsTrigger>
-                <TabsTrigger value="financials" className="text-[10px] py-1 px-2">
-                  Financials
+                <TabsTrigger value="financials" className="rounded-xl text-xs font-bold gap-2 py-2 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Financials</span>
                 </TabsTrigger>
-                <TabsTrigger value="inventory" className="text-[10px] py-1 px-2">
-                  Stock
+                <TabsTrigger value="inventory" className="rounded-xl text-xs font-bold gap-2 py-2 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">
+                  <Warehouse className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Stock</span>
                 </TabsTrigger>
-                <TabsTrigger value="logistics" className="text-[10px] py-1 px-2">
-                  Logistics
+                <TabsTrigger value="logistics" className="rounded-xl text-xs font-bold gap-2 py-2 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">
+                  <Truck className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Logistics</span>
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="general" className="space-y-4 pt-0">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Product Name *</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Product Name *</Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder=""
+                      placeholder="e.g. Designer Jacket"
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sku">SKU *</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="sku" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">SKU *</Label>
                     <Input
                       id="sku"
                       value={formData.sku}
                       onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                      placeholder=""
+                      placeholder="e.g. JKT-001"
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="barcode">Barcode</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="barcode" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Barcode</Label>
                     <Input
                       id="barcode"
                       value={formData.barcode}
                       onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                      placeholder=""
+                      placeholder="e.g. 192837465"
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="category" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Category</Label>
                     <Select
                       value={formData.category}
                       onValueChange={(value) => setFormData({ ...formData, category: value })}
                     >
-                      <SelectTrigger id="category">
+                      <SelectTrigger id="category" className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card">
                         <SelectValue placeholder="Select or add a category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -260,13 +272,13 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="unit">Base Unit</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="unit" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Base Unit</Label>
                     <Select
                       value={formData.unit}
                       onValueChange={(value) => setFormData({ ...formData, unit: value })}
                     >
-                      <SelectTrigger id="unit">
+                      <SelectTrigger id="unit" className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -280,64 +292,69 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="supplier">Primary Supplier</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="supplier" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Primary Supplier</Label>
                     <Input
                       id="supplier"
                       value={formData.supplier}
                       onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                      placeholder=""
+                      placeholder="e.g. Global Supplies Ltd"
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="description" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Description</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Product description and features..."
-                    rows={3}
+                    placeholder="Product description, features, materials..."
+                    className="rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
+                    rows={4}
                   />
                 </div>
               </TabsContent>
 
               <TabsContent value="financials" className="space-y-6 pt-0">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="costPrice">Cost Price (TZS)</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="costPrice" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Cost Price *</Label>
                     <Input
                       id="costPrice"
                       type="number"
                       value={formData.costPrice}
                       onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sellingPrice">Retail Price (TZS)</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="sellingPrice" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Retail Selling Price *</Label>
                     <Input
                       id="sellingPrice"
                       type="number"
                       value={formData.sellingPrice}
                       onChange={(e) => setFormData({ ...formData, sellingPrice: Number(e.target.value) })}
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="wholesalePrice">Wholesale Price (TZS)</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="wholesalePrice" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Wholesale Price</Label>
                     <Input
                       id="wholesalePrice"
                       type="number"
                       value={formData.wholesalePrice}
                       onChange={(e) => setFormData({ ...formData, wholesalePrice: Number(e.target.value) })}
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="taxRate">VAT / Tax Percentage (%)</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="taxRate" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">VAT / Tax Percentage (%)</Label>
                     <Select
                       value={formData.taxRate.toString()}
                       onValueChange={(value) => setFormData({ ...formData, taxRate: Number(value) })}
                     >
-                      <SelectTrigger id="taxRate">
+                      <SelectTrigger id="taxRate" className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -350,10 +367,10 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center justify-between space-x-2 rounded-lg border p-3 shadow-sm mt-6">
+                  <div className="flex items-center justify-between space-x-2 rounded-2xl border border-gray-100 bg-gray-50/50 p-4 shadow-sm sm:col-span-2">
                     <div className="space-y-0.5">
-                      <Label htmlFor="tax-inc">Price Includes Tax</Label>
-                      <p className="text-[0.8rem] text-muted-foreground">
+                      <Label htmlFor="tax-inc" className="text-xs font-bold uppercase tracking-wider text-gray-700">Price Includes Tax</Label>
+                      <p className="text-[11px] text-muted-foreground font-medium">
                         Toggle if the selling price already includes VAT.
                       </p>
                     </div>
@@ -368,51 +385,55 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
 
               <TabsContent value="inventory" className="space-y-4 pt-0">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity">Total Physical Quantity</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="quantity" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Total Physical Quantity</Label>
                     <Input
                       id="quantity"
                       type="number"
                       value={formData.quantity}
                       onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lowStockThreshold">Min. Stock Alert Threshold</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="lowStockThreshold" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Min. Stock Alert Threshold</Label>
                     <Input
                       id="lowStockThreshold"
                       type="number"
                       value={formData.lowStockThreshold}
                       onChange={(e) => setFormData({ ...formData, lowStockThreshold: Number(e.target.value) })}
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="reserved">Reserved Quantity</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="reserved" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Reserved Quantity</Label>
                     <Input
                       id="reserved"
                       type="number"
                       value={formData.reservedQuantity}
                       onChange={(e) => setFormData({ ...formData, reservedQuantity: Number(e.target.value) })}
                       placeholder="Promised to customers"
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bonus">Free / Bonus Quantity</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="bonus" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Free / Bonus Quantity</Label>
                     <Input
                       id="bonus"
                       type="number"
                       value={formData.bonusQuantity}
                       onChange={(e) => setFormData({ ...formData, bonusQuantity: Number(e.target.value) })}
                       placeholder="Sample / Bonus stock"
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="location">Warehouse / Storage Location</Label>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label htmlFor="location" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Warehouse / Storage Location</Label>
                     <Select
                       value={formData.defaultLocationId}
                       onValueChange={(value) => setFormData({ ...formData, defaultLocationId: value })}
                     >
-                      <SelectTrigger id="location">
+                      <SelectTrigger id="location" className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card">
                         <SelectValue placeholder="Select Warehouse Location" />
                       </SelectTrigger>
                       <SelectContent>
@@ -429,32 +450,34 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
 
               <TabsContent value="logistics" className="space-y-4 pt-0">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="packingUnit">Packing Type</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="packingUnit" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Packing Type</Label>
                     <Input
                       id="packingUnit"
                       value={formData.packingUnit}
                       onChange={(e) => setFormData({ ...formData, packingUnit: e.target.value })}
-                      placeholder=""
+                      placeholder="e.g. Box / Carton"
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="packingSize">Packing Level (Qty/Pkg)</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="packingSize" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Packing Level (Qty/Pkg)</Label>
                     <Input
                       id="packingSize"
                       type="number"
                       value={formData.packingSize}
                       onChange={(e) => setFormData({ ...formData, packingSize: Number(e.target.value) })}
-                      placeholder=""
+                      placeholder="e.g. 12"
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="salesRep">Assigned Promoter/Sales Rep</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="salesRep" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Assigned Promoter/Sales Rep</Label>
                     <Select
                       value={formData.salesRepId}
                       onValueChange={(value) => setFormData({ ...formData, salesRepId: value })}
                     >
-                      <SelectTrigger id="salesRep">
+                      <SelectTrigger id="salesRep" className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card">
                         <SelectValue placeholder="Select Employee" />
                       </SelectTrigger>
                       <SelectContent>
@@ -466,22 +489,23 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="expiry">Batch Expiry Date</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="expiry" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Batch Expiry Date</Label>
                     <Input
                       id="expiry"
                       type="date"
                       value={formData.expiryDate}
                       onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                      className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card focus-visible:ring-primary"
                     />
                   </div>
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="status">Product Approval Status</Label>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label htmlFor="status" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Product Approval Status</Label>
                     <Select
                       value={formData.status}
                       onValueChange={(value) => setFormData({ ...formData, status: value as ProductStatus })}
                     >
-                      <SelectTrigger id="status">
+                      <SelectTrigger id="status" className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -502,13 +526,22 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
             </Tabs>
           </div>
 
-          <DialogFooter className="p-4 border-t bg-muted/20">
-            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="p-6 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3 shrink-0">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              className="h-12 px-6 rounded-2xl font-bold border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            >
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={isSubmitting} className="min-w-[100px]">
-              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {product ? 'Save' : 'Create'}
+            <Button 
+              type="submit" 
+              disabled={isSubmitting} 
+              className="h-12 px-8 rounded-2xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all min-w-[120px]"
+            >
+              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin text-white" />}
+              {product ? 'Save Changes' : 'Create Product'}
             </Button>
           </DialogFooter>
         </form>

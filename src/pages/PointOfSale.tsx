@@ -256,101 +256,126 @@ const PointOfSale = () => {
 
           <div className="flex flex-1 overflow-hidden relative">
             {/* Left Sidebar - Categories (Filters) */}
-            <div className="hidden md:flex w-64 lg:w-72 bg-white border-r border-gray-200 flex-col h-full shrink-0 overflow-y-auto custom-scrollbar">
+            <div className="hidden md:flex w-64 lg:w-72 bg-white border-r border-gray-200/80 flex-col h-full shrink-0 overflow-y-auto custom-scrollbar">
               <div className="p-6">
                 <div className="flex items-center gap-2 mb-6">
-                  <Filter className="h-4 w-4 text-gray-400" />
+                  <Filter className="h-4 w-4 text-primary" />
                   <h2 className="font-semibold text-xs uppercase tracking-[0.15em] text-gray-900">Categories</h2>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={cn(
-                        "text-left px-4 py-3 rounded-xl text-sm font-medium transition-all group flex items-center justify-between",
-                        selectedCategory === cat.id
-                          ? "bg-primary/5 text-primary font-semibold"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                      )}
-                    >
-                      <span className="truncate pr-2">{cat.name}</span>
-                      {selectedCategory === cat.id && (
-                        <ChevronRight className="h-4 w-4 text-primary shrink-0" />
-                      )}
-                    </button>
-                  ))}
+                <div className="flex flex-col gap-2">
+                  {categories.map((cat) => {
+                    const isSelected = selectedCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={cn(
+                          "text-left px-4 py-3.5 rounded-2xl text-xs font-bold transition-all group flex items-center justify-between border-2",
+                          isSelected
+                            ? "bg-primary/5 border-primary/20 text-primary shadow-sm"
+                            : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5 truncate">
+                          <span className={cn(
+                            "h-2 w-2 rounded-full transition-all shrink-0",
+                            isSelected ? "bg-primary scale-125" : "bg-gray-300 group-hover:bg-gray-400"
+                          )} />
+                          <span className="truncate">{cat.name}</span>
+                        </div>
+                        {isSelected && (
+                          <ChevronRight className="h-4 w-4 text-primary shrink-0 animate-in slide-in-from-left-2 duration-300" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
             {/* Mobile Categories (Horizontal Scroll) */}
-            <div className="md:hidden flex gap-2 overflow-x-auto p-4 bg-white border-b border-gray-200 no-scrollbar shrink-0 absolute top-0 left-0 right-0 z-10">
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={cn(
-                    "px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all border",
-                    selectedCategory === cat.id
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-gray-50 text-gray-600 border-gray-200"
-                  )}
-                >
-                  {cat.name}
-                </button>
-              ))}
+            <div className="md:hidden flex gap-2 overflow-x-auto p-4 bg-white border-b border-gray-200/60 no-scrollbar shrink-0 absolute top-0 left-0 right-0 z-10">
+              {categories.map((cat) => {
+                const isSelected = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={cn(
+                      "px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border-2",
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary shadow-md"
+                        : "bg-gray-50 text-gray-600 border-gray-200/80 hover:bg-gray-100"
+                    )}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Main Product Grid */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar bg-gray-50/50 mt-[60px] md:mt-0">
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 max-w-[1600px] mx-auto pb-24">
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar bg-gray-50/50 mt-[60px] md:mt-0">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 max-w-[1600px] mx-auto pb-24">
                 {filteredProducts.map((product) => {
                   const price = priceType === 'wholesale' && product.wholesalePrice
                     ? Number(product.wholesalePrice)
                     : Number(product.sellingPrice);
+
+                  const quantity = Number(product.quantity);
+                  const isOutOfStock = quantity <= 0;
+                  const isLowStock = quantity > 0 && quantity <= 10;
 
                   return (
                     <button
                       key={product.id}
                       onClick={() => addToCart(product)}
                       className={cn(
-                        'group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-200 hover:shadow-xl hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 text-left relative',
-                        Number(product.quantity) <= 0 && 'opacity-60 cursor-not-allowed grayscale hover:shadow-none hover:-translate-y-0 hover:border-gray-200'
+                        'group flex flex-col bg-white rounded-3xl overflow-hidden border border-gray-200/80 hover:shadow-2xl hover:border-primary/20 hover:-translate-y-1.5 transition-all duration-300 text-left relative',
+                        isOutOfStock && 'opacity-60 cursor-not-allowed grayscale hover:shadow-none hover:-translate-y-0 hover:border-gray-200'
                       )}
-                      disabled={Number(product.quantity) <= 0}
+                      disabled={isOutOfStock}
                     >
-                      {/* Product Image Placeholder Area */}
-                      <div className="aspect-[4/3] bg-gray-50 flex flex-col items-center justify-center p-4 relative border-b border-gray-100/80">
-                        <Package className="h-10 w-10 md:h-14 md:w-14 text-gray-300 group-hover:text-primary/40 transition-colors duration-300" />
-                        <div className="absolute top-2 right-2 md:top-3 md:right-3">
+                      {/* Product Image Box */}
+                      <div className="aspect-[4/3] bg-gradient-to-br from-primary/5 to-violet-500/5 flex flex-col items-center justify-center p-4 relative border-b border-gray-100/60 overflow-hidden">
+                        <div className="h-16 w-16 rounded-3xl bg-white flex items-center justify-center shadow-lg border border-gray-100/50 group-hover:scale-110 transition-transform duration-300">
+                          <Package className="h-7 w-7 text-primary/70 group-hover:text-primary transition-colors" />
+                        </div>
+                        <div className="absolute top-3 right-3">
                           <span className={cn(
-                            "px-2 md:px-2.5 py-0.5 md:py-1 rounded-full text-[9px] md:text-[10px] font-bold shadow-sm backdrop-blur-md",
-                            Number(product.quantity) > 10 ? "bg-white/90 text-gray-600" : "bg-red-50/90 text-red-600 border border-red-100"
+                            "px-3 py-1.5 rounded-2xl text-[9px] md:text-[10px] font-bold shadow-sm backdrop-blur-md border",
+                            isOutOfStock 
+                              ? "bg-rose-50 text-rose-600 border-rose-100" 
+                              : isLowStock 
+                                ? "bg-amber-50 text-amber-600 border-amber-100 animate-pulse" 
+                                : "bg-emerald-50 text-emerald-600 border-emerald-100"
                           )}>
-                            Stock: {Number(product.quantity)}
+                            {isOutOfStock ? "Out of Stock" : `Stock: ${quantity}`}
                           </span>
                         </div>
                       </div>
 
                       {/* Product Info */}
-                      <div className="p-3 md:p-5 flex flex-col flex-1">
-                        <div className="mb-3">
-                          <p className="text-[9px] md:text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1 line-clamp-1">{product.category}</p>
-                          <h3 className="font-semibold text-gray-900 text-xs md:text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors min-h-[2.5em]">
+                      <div className="p-4 md:p-5 flex flex-col flex-1">
+                        <div className="mb-4">
+                          <span className="inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 mb-2">
+                            {product.category}
+                          </span>
+                          <h3 className="font-bold text-gray-900 text-xs md:text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors min-h-[2.5em]">
                             {product.name}
                           </h3>
                         </div>
                         
-                        <div className="mt-auto flex items-end justify-between">
+                        <div className="mt-auto flex items-end justify-between pt-2">
                           <div className="flex flex-col">
-                            <span className="text-lg md:text-xl font-bold text-gray-900 tracking-tight">
+                            <span className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Price</span>
+                            <span className="text-base md:text-lg font-bold text-gray-900 tracking-tight">
                               {formatCurrency(price)}
                             </span>
                           </div>
                           
-                          <div className="h-7 w-7 md:h-9 md:w-9 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-sm">
-                            <Plus className="h-3 w-3 md:h-4 md:w-4" />
+                          <div className="h-8 w-8 md:h-9 md:w-9 rounded-2xl bg-primary/5 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm border border-primary/10">
+                            <Plus className="h-4 w-4 stroke-[3px]" />
                           </div>
                         </div>
                       </div>
