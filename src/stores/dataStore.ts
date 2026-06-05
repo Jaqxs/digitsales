@@ -337,7 +337,9 @@ export const useDataStore = create<DataStore>()(
         });
 
         try {
-          await inventoryAPI.adjustStock({ productId, quantity: Math.abs(quantityChange), type, reason });
+          if (['damaged', 'lost', 'found', 'correction'].includes(type)) {
+            await inventoryAPI.adjustStock({ productId, quantity: Math.abs(quantityChange), type: type as any, reason });
+          }
         } catch {
           /* keep optimistic */
         }
@@ -510,23 +512,40 @@ export const useDataStore = create<DataStore>()(
 
         // Deduct stock locally first
         saleData.items.forEach(item => {
-          get().updateStock(item.product.id, -item.quantity, 'out', `POS Sale ${tempId}`);
+          const productId = item.product?.id || item.productId;
+          if (productId) {
+            get().updateStock(productId, -item.quantity, 'out', `POS Sale ${tempId}`);
+          }
         });
         get().syncAndSet({ sales: [optimistic, ...get().sales] });
 
         try {
           // Map to backend shape
           const payload = {
-            items: saleData.items.map(item => ({
-              productId: item.product.id,
-              quantity: item.quantity,
-              unitPrice: item.product.sellingPrice,
-              discount: item.discount || 0,
-            })),
+            employeeId: saleData.employeeId || get().currentUserId || null,
             customerId: saleData.customerId || null,
-            paymentMethod: saleData.paymentMethod,
-            discount: saleData.discount || 0,
+            subtotal: Number(saleData.subtotal || 0),
+            discountAmount: Number(saleData.discountAmount || saleData.discount || 0),
+            taxAmount: Number(saleData.taxAmount || saleData.tax || 0),
+            totalAmount: Number(saleData.totalAmount || saleData.total || 0),
+            paymentMethod: (saleData.paymentMethod === 'bank-transfer' ? 'bank_transfer' : saleData.paymentMethod),
             notes: saleData.notes || '',
+            items: saleData.items.map(item => {
+              const productId = item.product?.id || item.productId;
+              const unitPrice = item.unitPrice ?? item.product?.sellingPrice ?? 0;
+              const quantity = item.quantity;
+              const discountAmount = item.discountAmount ?? item.discount ?? 0;
+              const taxAmount = item.taxAmount ?? 0;
+              const lineTotal = item.lineTotal ?? (Number(unitPrice) * Number(quantity) - Number(discountAmount));
+              return {
+                productId,
+                quantity: Number(quantity),
+                unitPrice: Number(unitPrice),
+                taxAmount: Number(taxAmount),
+                discountAmount: Number(discountAmount),
+                lineTotal: Number(lineTotal),
+              };
+            }),
           };
           const res = await saleAPI.createSale(payload);
           const created = mapSale(res.sale || res);
@@ -538,7 +557,10 @@ export const useDataStore = create<DataStore>()(
             sales: get().sales.filter(s => s.id !== tempId),
           });
           saleData.items.forEach(item => {
-            get().updateStock(item.product.id, item.quantity, 'in', `POS Sale Revert ${tempId}`);
+            const productId = item.product?.id || item.productId;
+            if (productId) {
+              get().updateStock(productId, item.quantity, 'in', `POS Sale Revert ${tempId}`);
+            }
           });
           throw error;
         }
