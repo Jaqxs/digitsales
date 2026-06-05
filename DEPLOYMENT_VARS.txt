@@ -8,7 +8,7 @@
 # === BACKEND SERVICE ===
 # (Dokploy -> Applications -> zantrix-backend -> Environment)
 
-PORT=3001
+PORT=3000
 NODE_ENV=production
 
 # Database Connection (If using Dokploy Database, use the internal connection string)
