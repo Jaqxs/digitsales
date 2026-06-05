@@ -11,6 +11,7 @@ export const getAllSales = async (req: Request, res: Response, next: NextFunctio
             employeeId: employeeId as string,
             startDate: startDate ? new Date(startDate as string) : undefined,
             endDate: endDate ? new Date(endDate as string) : undefined,
+            storeId: req.user?.storeId,
         });
         res.json({ success: true, data: result });
     } catch (error) {
@@ -31,7 +32,7 @@ export const getSaleById = async (req: Request, res: Response, next: NextFunctio
 export const createSale = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) throw new Error('Unauthorized');
-        const sale = await SaleService.createSale(req.body, req.user.id);
+        const sale = await SaleService.createSale(req.body, req.user.id, req.user.storeId);
         res.status(201).json({ success: true, data: sale });
     } catch (error) {
         next(error);

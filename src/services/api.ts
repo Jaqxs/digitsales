@@ -123,7 +123,7 @@ export const authAPI = {
       body: JSON.stringify({ email, password }),
     }),
 
-  register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) =>
+  register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string; companyName: string }) =>
     apiRequest<{ user: any; tokens: any }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),

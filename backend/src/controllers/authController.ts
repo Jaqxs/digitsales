@@ -195,7 +195,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
     const { body } = createUserSchema.parse(req);
 
     // Create user
-    const user = await AuthService.createUser(body, req.user.id);
+    const user = await AuthService.createUser(body, req.user.id, req.user.storeId);
 
     res.status(201).json({
       success: true,
@@ -231,6 +231,7 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
       search,
       role,
       isActive,
+      storeId: req.user?.storeId,
     });
 
     res.status(200).json({

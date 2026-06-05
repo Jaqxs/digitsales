@@ -124,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
+        companyName: data.companyName,
       });
 
       if (result.tokens?.accessToken) {
@@ -141,6 +142,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           name: data.companyName,
           tradingName: data.companyName,
           email: data.email,
+          tin: data.tin || '',
+          currency: data.currency || 'TZS',
+          phone: data.phone || '',
         });
       }
 
@@ -165,7 +169,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('digitsales-accounts', JSON.stringify(savedAccounts));
         setUser(newUser);
         if (data.companyName) {
-          useSettingsStore.getState().updateBusiness({ name: data.companyName, tradingName: data.companyName, email: data.email });
+          useSettingsStore.getState().updateBusiness({
+            name: data.companyName,
+            tradingName: data.companyName,
+            email: data.email,
+            tin: data.tin || '',
+            currency: data.currency || 'TZS',
+            phone: data.phone || '',
+          });
         }
         return { success: true };
       }

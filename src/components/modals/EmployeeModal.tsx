@@ -182,7 +182,7 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
                 id="firstName"
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                placeholder="e.g. John"
+                placeholder=""
                 required
               />
             </div>
@@ -192,7 +192,7 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
                 id="lastName"
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                placeholder="e.g. Mwanga"
+                placeholder=""
                 required
               />
             </div>
@@ -203,7 +203,7 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="e.g. john@digitsales.io"
+                placeholder=""
                 required
               />
             </div>
@@ -245,7 +245,7 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="e.g. +255 712 345 678"
+                placeholder=""
               />
             </div>
 
@@ -256,7 +256,7 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
                 id="employeeId"
                 value={formData.employeeId}
                 onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                placeholder="e.g. EMP001"
+                placeholder=""
               />
             </div>
 
@@ -318,7 +318,7 @@ export function EmployeeModal({ open, onOpenChange, employee, onSuccess }: Emplo
                   min="0"
                   value={formData.salesTarget}
                   onChange={(e) => setFormData({ ...formData, salesTarget: Number(e.target.value) })}
-                  placeholder="e.g. 5000000"
+                  placeholder=""
                 />
               </div>
             )}

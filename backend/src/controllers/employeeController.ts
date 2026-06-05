@@ -33,6 +33,7 @@ export const getAllEmployees = async (req: Request, res: Response, next: NextFun
       search,
       role,
       isActive,
+      storeId: req.user?.storeId,
     });
 
     res.status(200).json({
@@ -117,7 +118,7 @@ export const createEmployee = async (req: Request, res: Response, next: NextFunc
     const { body } = createEmployeeSchema.parse(req);
 
     // Create employee
-    const employee = await EmployeeService.createEmployee(body, req.user.id);
+    const employee = await EmployeeService.createEmployee(body, req.user.id, req.user.storeId);
 
     res.status(201).json({
       success: true,

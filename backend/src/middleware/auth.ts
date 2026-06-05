@@ -11,6 +11,7 @@ declare global {
         id: string;
         email: string;
         role: UserRole;
+        storeId?: string | null;
       };
     }
   }
@@ -42,7 +43,7 @@ export const authenticate = async (
     // Check if user still exists and is active
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true, role: true, isActive: true }
+      select: { id: true, email: true, role: true, isActive: true, storeId: true }
     });
 
     if (!user || !user.isActive) {
@@ -61,6 +62,7 @@ export const authenticate = async (
       id: user.id,
       email: user.email,
       role: user.role,
+      storeId: user.storeId,
     };
 
     next();

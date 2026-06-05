@@ -45,6 +45,7 @@ export class EmployeeService {
     search?: string;
     role?: UserRole;
     isActive?: boolean;
+    storeId?: string | null;
   }): Promise<{
     employees: EmployeeWithTargets[];
     total: number;
@@ -58,12 +59,17 @@ export class EmployeeService {
       search,
       role,
       isActive,
+      storeId,
     } = options || {};
 
     const skip = (page - 1) * limit;
 
     // Build where clause
     const where: any = {};
+
+    if (storeId) {
+      where.storeId = storeId;
+    }
 
     if (search) {
       where.OR = [
@@ -132,7 +138,7 @@ export class EmployeeService {
   }
 
   // Create new employee
-  static async createEmployee(employeeData: CreateEmployeeData, createdBy: string): Promise<EmployeeWithTargets> {
+  static async createEmployee(employeeData: CreateEmployeeData, createdBy: string, storeId?: string | null): Promise<EmployeeWithTargets> {
     const { email, password, role, firstName, lastName, phone, employeeId } = employeeData;
 
     // Check if email already exists
@@ -165,6 +171,7 @@ export class EmployeeService {
         email,
         passwordHash,
         role,
+        storeId,
         userProfile: {
           create: {
             firstName,

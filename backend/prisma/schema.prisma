@@ -16,6 +16,7 @@ model User {
   lastLoginAt            DateTime?            @db.Timestamp(6)
   createdAt              DateTime             @default(now()) @db.Timestamp(6)
   updatedAt              DateTime             @default(now()) @updatedAt @db.Timestamp(6)
+  storeId                String?              @db.Uuid
   createdCustomers       Customer[]           @relation("CustomerCreatedBy")
   createdEmployeeTargets EmployeeTargets[]    @relation("TargetCreator")
   employeeTargets        EmployeeTargets[]    @relation("UserTargets")
@@ -33,6 +34,7 @@ model User {
   createdSuppliers       Supplier[]           @relation("SupplierCreatedBy")
   userProfile            UserProfile?
   userSessions           UserSession[]
+  store                  Store?               @relation(fields: [storeId], references: [id])
 
   @@map("users")
 }
@@ -98,6 +100,7 @@ model Product {
   createdBy          String              @db.Uuid
   createdAt          DateTime            @default(now()) @db.Timestamp(6)
   updatedAt          DateTime            @default(now()) @updatedAt @db.Timestamp(6)
+  storeId            String?             @db.Uuid
   suppliers          ProductSupplier[]
   variants           ProductVariant[]
   category           ProductCategory     @relation(fields: [categoryId], references: [id])
@@ -106,6 +109,7 @@ model Product {
   saleItems          SaleItem[]
   stockAdjustments   StockAdjustment[]
   stockLedger        StockLedger[]
+  store              Store?              @relation(fields: [storeId], references: [id])
 
   @@map("products")
 }
@@ -235,8 +239,10 @@ model Customer {
   createdBy      String       @db.Uuid
   createdAt      DateTime     @default(now()) @db.Timestamp(6)
   updatedAt      DateTime     @default(now()) @updatedAt @db.Timestamp(6)
+  storeId        String?      @db.Uuid
   creator        User         @relation("CustomerCreatedBy", fields: [createdBy], references: [id])
   sales          Sale[]
+  store          Store?       @relation(fields: [storeId], references: [id])
 
   @@map("customers")
 }
@@ -263,12 +269,14 @@ model Sale {
   createdBy           String               @db.Uuid
   createdAt           DateTime             @default(now()) @db.Timestamp(6)
   updatedAt           DateTime             @default(now()) @updatedAt @db.Timestamp(6)
+  storeId             String?              @db.Uuid
   paymentTransactions PaymentTransaction[]
   saleItems           SaleItem[]
   creator             User                 @relation("SaleCreatedBy", fields: [createdBy], references: [id])
   customer            Customer?            @relation(fields: [customerId], references: [id])
   employee            User                 @relation("SaleEmployee", fields: [employeeId], references: [id])
   location            StockLocation?       @relation(fields: [locationId], references: [id])
+  store               Store?               @relation(fields: [storeId], references: [id])
 
   @@map("sales")
 }
@@ -501,4 +509,17 @@ enum TargetPeriod {
   monthly
   quarterly
   yearly
+}
+
+model Store {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  users     User[]
+  products  Product[]
+  customers Customer[]
+  sales     Sale[]
+
+  @@map("stores")
 }

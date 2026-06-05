@@ -69,6 +69,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       role: user.role,
+      storeId: user.storeId,
     });
 
     return { user, tokens };
@@ -99,6 +100,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       role: user.role,
+      storeId: user.storeId,
     });
 
     return { user, tokens };
@@ -111,12 +113,13 @@ export class AuthService {
     firstName: string;
     lastName: string;
     phone?: string;
+    companyName: string;
   }): Promise<{
     user: UserWithProfile;
     tokens: AuthTokens;
   }> {
     const email = userData.email.toLowerCase();
-    const { password, firstName, lastName, phone } = userData;
+    const { password, firstName, lastName, phone, companyName } = userData;
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
@@ -127,6 +130,13 @@ export class AuthService {
       throw new Error('Email already registered');
     }
 
+    // Create the store/shop first
+    const store = await prisma.store.create({
+      data: {
+        name: companyName,
+      },
+    });
+
     // Hash password
     const passwordHash = await hashPassword(password);
 
@@ -135,8 +145,9 @@ export class AuthService {
       data: {
         email,
         passwordHash,
-        role: UserRole.sales, // Default role for new registrations
+        role: UserRole.admin, // The registering person is the Admin/Owner of the store
         isActive: true,
+        storeId: store.id,
         userProfile: {
           create: {
             firstName,
@@ -155,6 +166,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       role: user.role,
+      storeId: user.storeId,
     });
 
     return { user, tokens };
@@ -167,7 +179,7 @@ export class AuthService {
     lastName: string;
     phone?: string;
     employeeId?: string;
-  }, createdBy: string): Promise<UserWithProfile> {
+  }, createdBy: string, storeId?: string | null): Promise<UserWithProfile> {
     const email = userData.email.toLowerCase();
     const { password, role, firstName, lastName, phone, employeeId } = userData;
 
@@ -200,6 +212,7 @@ export class AuthService {
         email,
         passwordHash,
         role,
+        storeId,
         userProfile: {
           create: {
             firstName,
@@ -303,6 +316,7 @@ export class AuthService {
     search?: string;
     role?: UserRole;
     isActive?: boolean;
+    storeId?: string | null;
   }): Promise<{
     users: UserWithProfile[];
     total: number;
@@ -316,12 +330,17 @@ export class AuthService {
       search,
       role,
       isActive,
+      storeId,
     } = options || {};
 
     const skip = (page - 1) * limit;
 
     // Build where clause
     const where: any = {};
+
+    if (storeId) {
+      where.storeId = storeId;
+    }
 
     if (search) {
       where.OR = [

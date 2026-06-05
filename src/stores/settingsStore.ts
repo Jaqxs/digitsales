@@ -106,10 +106,29 @@ export const useSettingsStore = create<MultiUserSettingsState>()(
             set({ currentUserId: null, ...DEFAULT_SETTINGS });
             return;
         }
-        const { userSettings } = get();
-        const settings = userSettings[userId] || DEFAULT_SETTINGS;
+        const state = get();
+        const { userSettings } = state;
+        
+        let settings = userSettings[userId];
+        let newSettingsObject = userSettings;
+        
+        if (!settings) {
+            settings = {
+                business: { ...state.business },
+                notifications: { ...state.notifications },
+                pos: { ...state.pos },
+                security: { ...state.security },
+                categories: [...state.categories],
+            };
+            newSettingsObject = {
+                ...userSettings,
+                [userId]: settings
+            };
+        }
+        
         set({ 
             currentUserId: userId,
+            userSettings: newSettingsObject,
             business: settings.business,
             notifications: settings.notifications,
             pos: settings.pos,

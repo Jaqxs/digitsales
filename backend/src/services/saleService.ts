@@ -10,6 +10,7 @@ export class SaleService {
         startDate?: Date;
         endDate?: Date;
         status?: string;
+        storeId?: string | null;
     }) {
         const {
             page = 1,
@@ -19,11 +20,13 @@ export class SaleService {
             startDate,
             endDate,
             status,
+            storeId,
         } = options || {};
 
         const skip = (page - 1) * limit;
         const where: any = {};
 
+        if (storeId) where.storeId = storeId;
         if (customerId) where.customerId = customerId;
         if (employeeId) where.employeeId = employeeId;
         if (status) where.status = status;
@@ -69,7 +72,7 @@ export class SaleService {
         });
     }
 
-    static async createSale(saleData: any, createdBy: string) {
+    static async createSale(saleData: any, createdBy: string, storeId?: string | null) {
         const {
             employeeId,
             customerId,
@@ -95,6 +98,7 @@ export class SaleService {
                     paymentMethod,
                     notes,
                     createdBy,
+                    storeId,
                     saleNumber: `SL-${Date.now()}`,
                     status: 'completed', // or 'pending' depending on the original logic
                     saleItems: {

@@ -161,7 +161,7 @@ const Settings = () => {
                       id="accountNumber"
                       value={business.accountNumber}
                       onChange={(e) => updateBusiness({ accountNumber: e.target.value })}
-                      placeholder="e.g. 0123456789"
+                      placeholder=""
                     />
                   </div>
                   <div className="space-y-2">
@@ -170,7 +170,7 @@ const Settings = () => {
                       id="bankName"
                       value={business.bankName}
                       onChange={(e) => updateBusiness({ bankName: e.target.value })}
-                      placeholder="e.g. National Bank"
+                      placeholder=""
                     />
                   </div>
                   <div className="space-y-2">
@@ -179,7 +179,7 @@ const Settings = () => {
                       id="branchName"
                       value={business.branchName}
                       onChange={(e) => updateBusiness({ branchName: e.target.value })}
-                      placeholder="e.g. Main Branch"
+                      placeholder=""
                     />
                   </div>
                   <div className="space-y-2">
@@ -188,7 +188,7 @@ const Settings = () => {
                       id="website"
                       value={business.website}
                       onChange={(e) => updateBusiness({ website: e.target.value })}
-                      placeholder="e.g. www.yourcompany.com"
+                      placeholder=""
                     />
                   </div>
                   <div className="space-y-2 sm:col-span-2">

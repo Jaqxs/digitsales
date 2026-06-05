@@ -9,6 +9,7 @@ export class ProductService {
         search?: string;
         categoryId?: string;
         isActive?: boolean;
+        storeId?: string | null;
     }) {
         const {
             page = 1,
@@ -16,11 +17,16 @@ export class ProductService {
             search,
             categoryId,
             isActive,
+            storeId,
         } = options || {};
 
         const skip = (page - 1) * limit;
 
         const where: any = {};
+
+        if (storeId) {
+            where.storeId = storeId;
+        }
 
         if (search) {
             where.OR = [
@@ -72,7 +78,7 @@ export class ProductService {
     }
 
     // Create product
-    static async createProduct(data: any, createdBy: string) {
+    static async createProduct(data: any, createdBy: string, storeId?: string | null) {
         // Resolve category
         let categoryId = data.categoryId;
         const categoryInput = data.category;
@@ -117,6 +123,7 @@ export class ProductService {
                 isActive: true,
                 categoryId: categoryId,
                 createdBy: createdBy,
+                storeId: storeId,
                 taxRate: data.taxRate !== undefined ? Number(data.taxRate) : 18.00,
             },
             include: {

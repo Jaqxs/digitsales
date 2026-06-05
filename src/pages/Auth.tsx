@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, LogIn, Loader2, Shield, Package, BarChart3, Users, Zap, Settings } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Loader2, Shield, Package, BarChart3, Users, Zap, Settings, Store, Building2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getApiBaseUrl } from '@/services/api';
 
 const Auth = () => {
@@ -17,6 +18,8 @@ const Auth = () => {
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [tin, setTin] = useState('');
+  const [currency, setCurrency] = useState('TZS');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -101,7 +104,7 @@ const Auth = () => {
       }
 
       setIsSubmitting(true);
-      const result = await register({ email, password, firstName, lastName, phone, companyName });
+      const result = await register({ email, password, firstName, lastName, phone, companyName, tin, currency });
       setIsSubmitting(false);
 
       if (result.success) {
@@ -234,7 +237,7 @@ const Auth = () => {
                           <Label htmlFor="customApiUrl" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Backend API URL</Label>
                           <Input
                             id="customApiUrl"
-                            placeholder="e.g. https://api.digits.co.tz/api/v1"
+                            placeholder=""
                             value={customApiUrl}
                             onChange={(e) => setCustomApiUrl(e.target.value)}
                             className="h-11 rounded-xl bg-muted/50 border-border"
@@ -267,101 +270,183 @@ const Auth = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {mode === 'register' && (
-                  <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div className="space-y-2 col-span-2">
-                       <Label htmlFor="companyName" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Company Name</Label>
-                       <Input
-                         id="companyName"
-                         placeholder="e.g. Acme Corporation"
-                         value={companyName}
-                         onChange={(e) => setCompanyName(e.target.value)}
-                         className="h-12 rounded-xl bg-muted/50 border-border focus:bg-card"
-                       />
-                    </div>
+                {mode === 'login' ? (
+                  <>
                     <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">First Name</Label>
+                      <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Email Address</Label>
                       <Input
-                        id="firstName"
-                        placeholder="John"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
+                        id="email"
+                        type="email"
+                        placeholder="admin@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        autoComplete="email"
                         className="h-12 rounded-xl bg-muted/50 border-border focus:bg-card"
+                        required
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        placeholder="Doe"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        className="h-12 rounded-xl bg-muted/50 border-border focus:bg-card"
-                      />
+                      <div className="flex items-center justify-between ml-1">
+                        <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Password</Label>
+                        <button type="button" className="text-xs font-semibold text-primary hover:underline">Forgot password?</button>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          autoComplete="current-password"
+                          className="h-12 rounded-xl bg-muted/50 border-border focus:bg-card pr-12"
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Section 1: Shop Registration */}
+                    <div className="rounded-2xl border border-border bg-card/40 p-4 space-y-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                      <div className="flex items-center gap-2 border-b border-border/60 pb-2 mb-2">
+                        <Store className="h-5 w-5 text-primary animate-pulse" />
+                        <h3 className="text-sm font-bold text-foreground">1. Shop / Store Registration</h3>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label htmlFor="companyName" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Shop / Company Name *</Label>
+                          <Input
+                            id="companyName"
+                            placeholder="e.g. My Retail Shop"
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card"
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor="tin" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">TIN Number (Optional)</Label>
+                            <Input
+                              id="tin"
+                              placeholder="e.g. 123-456-789"
+                              value={tin}
+                              onChange={(e) => setTin(e.target.value)}
+                              className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="currency" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Store Currency</Label>
+                            <Input
+                              id="currency"
+                              value="TZS (Tanzanian Shilling)"
+                              disabled
+                              className="h-11 rounded-xl bg-muted/10 border-border cursor-not-allowed font-medium text-foreground/70"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 2: Account Owner Details */}
+                    <div className="rounded-2xl border border-border bg-card/40 p-4 space-y-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                      <div className="flex items-center gap-2 border-b border-border/60 pb-2 mb-2">
+                        <Users className="h-5 w-5 text-primary" />
+                        <h3 className="text-sm font-bold text-foreground">2. Account Owner Details</h3>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor="firstName" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">First Name *</Label>
+                            <Input
+                              id="firstName"
+                              placeholder="John"
+                              value={firstName}
+                              onChange={(e) => setFirstName(e.target.value)}
+                              className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="lastName" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Last Name *</Label>
+                            <Input
+                              id="lastName"
+                              placeholder="Doe"
+                              value={lastName}
+                              onChange={(e) => setLastName(e.target.value)}
+                              className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Email Address *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="owner@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            autoComplete="email"
+                            className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card"
+                            required
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Phone Number (Optional)</Label>
+                          <Input
+                            id="phone"
+                            type="tel"
+                            placeholder="+255 --- --- ---"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Password *</Label>
+                          <div className="relative">
+                            <Input
+                              id="password"
+                              type={showPassword ? 'text' : 'password'}
+                              placeholder="••••••••"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              autoComplete="new-password"
+                              className="h-11 rounded-xl bg-muted/30 border-border focus:bg-card pr-12"
+                              required
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-1 ml-1">
+                            Must be 8+ chars with uppercase, lowercase, number & symbol.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="admin@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    className="h-12 rounded-xl bg-muted/50 border-border focus:bg-card"
-                  />
-                </div>
-
-                {mode === 'register' && (
-                  <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-500">
-                    <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Phone Number (Optional)</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+255 --- --- ---"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="h-12 rounded-xl bg-muted/50 border-border focus:bg-card"
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between ml-1">
-                    <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Password</Label>
-                    {mode === 'login' && (
-                      <button type="button" className="text-xs font-semibold text-primary hover:underline">Forgot password?</button>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                      className="h-12 rounded-xl bg-muted/50 border-border focus:bg-card pr-12"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  {mode === 'register' && (
-                    <p className="text-[10px] text-muted-foreground mt-1 ml-1">
-                      Must be 8+ chars with uppercase, number & symbol.
-                    </p>
-                  )}
-                </div>
 
                 <div className="pt-4">
                   <Button

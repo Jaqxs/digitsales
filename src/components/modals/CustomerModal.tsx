@@ -93,7 +93,7 @@ export function CustomerModal({ open, onOpenChange, customer }: CustomerModalPro
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g. Mwanza Construction Ltd"
+              placeholder=""
             />
           </div>
           <div className="space-y-2">
@@ -102,7 +102,7 @@ export function CustomerModal({ open, onOpenChange, customer }: CustomerModalPro
               id="phone"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="e.g. +255 712 345 678"
+              placeholder=""
             />
           </div>
           <div className="space-y-2">
@@ -112,7 +112,7 @@ export function CustomerModal({ open, onOpenChange, customer }: CustomerModalPro
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="e.g. orders@company.co.tz"
+              placeholder=""
             />
           </div>
           <div className="space-y-2">
@@ -121,7 +121,7 @@ export function CustomerModal({ open, onOpenChange, customer }: CustomerModalPro
               id="address"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="e.g. Kariakoo, Dar es Salaam"
+              placeholder=""
             />
           </div>
 

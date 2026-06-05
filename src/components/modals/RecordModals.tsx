@@ -375,7 +375,7 @@ export function RecordInventoryModal({ open, onOpenChange }: RecordInventoryModa
               id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. New shipment from supplier"
+              placeholder=""
             />
           </div>
 
@@ -496,7 +496,7 @@ export function RecordExpenseModal({ open, onOpenChange }: RecordExpenseModalPro
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Shop Rent - May"
+                placeholder=""
                 className="pl-10"
               />
             </div>

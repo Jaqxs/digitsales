@@ -9,6 +9,7 @@ export const getAllCustomers = async (req: Request, res: Response, next: NextFun
             limit: limit ? parseInt(limit as string) : undefined,
             search: search as string,
             isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+            storeId: req.user?.storeId,
         });
         res.json({ success: true, data: result });
     } catch (error) {
@@ -29,7 +30,7 @@ export const getCustomerById = async (req: Request, res: Response, next: NextFun
 export const createCustomer = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) throw new Error('Unauthorized');
-        const customer = await CustomerService.createCustomer(req.body, req.user.id);
+        const customer = await CustomerService.createCustomer(req.body, req.user.id, req.user.storeId);
         res.status(201).json({ success: true, data: customer });
     } catch (error) {
         next(error);

@@ -6,16 +6,22 @@ export class CustomerService {
         limit?: number;
         search?: string;
         isActive?: boolean;
+        storeId?: string | null;
     }) {
         const {
             page = 1,
             limit = 10,
             search,
             isActive,
+            storeId,
         } = options || {};
 
         const skip = (page - 1) * limit;
         const where: any = {};
+
+        if (storeId) {
+            where.storeId = storeId;
+        }
 
         if (search) {
             where.OR = [
@@ -62,11 +68,12 @@ export class CustomerService {
         });
     }
 
-    static async createCustomer(data: any, createdBy: string) {
+    static async createCustomer(data: any, createdBy: string, storeId?: string | null) {
         return prisma.customer.create({
             data: {
                 ...data,
                 createdBy,
+                storeId,
             },
         });
     }

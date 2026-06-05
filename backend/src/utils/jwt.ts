@@ -7,6 +7,7 @@ export interface JWTPayload {
   email: string;
   role: UserRole;
   type: 'access' | 'refresh';
+  storeId?: string | null;
 }
 
 export interface AccessTokenPayload extends JWTPayload {
@@ -34,17 +35,19 @@ export const generateRefreshToken = (payload: Omit<RefreshTokenPayload, 'type'>)
 };
 
 // Generate both tokens
-export const generateTokens = (user: { id: string; email: string; role: UserRole }) => {
+export const generateTokens = (user: { id: string; email: string; role: UserRole; storeId?: string | null }) => {
   const accessToken = generateAccessToken({
     userId: user.id,
     email: user.email,
     role: user.role,
+    storeId: user.storeId,
   });
 
   const refreshToken = generateRefreshToken({
     userId: user.id,
     email: user.email,
     role: user.role,
+    storeId: user.storeId,
   });
 
   return { accessToken, refreshToken };

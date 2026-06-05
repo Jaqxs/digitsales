@@ -138,6 +138,10 @@ export const registerSchema = z.object({
     phone: z
       .string()
       .optional(),
+    companyName: z
+      .string()
+      .min(1, 'Store or company name is required')
+      .max(150, 'Store name must be less than 150 characters'),
   }),
 });
 export const updateUserProfileSchema = z.object({

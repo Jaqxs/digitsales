@@ -184,7 +184,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g. Stanley Hammer 20oz"
+                      placeholder=""
                     />
                   </div>
                   <div className="space-y-2">
@@ -193,7 +193,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                       id="sku"
                       value={formData.sku}
                       onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                      placeholder="e.g. HND-000001"
+                      placeholder=""
                     />
                   </div>
                   <div className="space-y-2">
@@ -202,7 +202,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                       id="barcode"
                       value={formData.barcode}
                       onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                      placeholder="e.g. 8901234567890"
+                      placeholder=""
                     />
                   </div>
                   <div className="space-y-2">
@@ -286,7 +286,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                       id="supplier"
                       value={formData.supplier}
                       onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                      placeholder="e.g. BuildPro Supplies"
+                      placeholder=""
                     />
                   </div>
                 </div>
@@ -435,7 +435,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                       id="packingUnit"
                       value={formData.packingUnit}
                       onChange={(e) => setFormData({ ...formData, packingUnit: e.target.value })}
-                      placeholder="e.g. Master Carton / Box"
+                      placeholder=""
                     />
                   </div>
                   <div className="space-y-2">
@@ -445,7 +445,7 @@ export function ProductModal({ open, onOpenChange, product }: ProductModalProps)
                       type="number"
                       value={formData.packingSize}
                       onChange={(e) => setFormData({ ...formData, packingSize: Number(e.target.value) })}
-                      placeholder="e.g. 12"
+                      placeholder=""
                     />
                   </div>
                   <div className="space-y-2">
@@ -631,7 +631,7 @@ export function StockAdjustmentModal({ open, onOpenChange, product }: StockAdjus
               id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. New shipment received"
+              placeholder=""
             />
           </div>
 

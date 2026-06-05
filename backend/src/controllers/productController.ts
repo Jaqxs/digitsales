@@ -10,6 +10,7 @@ export const getAllProducts = async (req: Request, res: Response, next: NextFunc
             search: search as string,
             categoryId: categoryId as string,
             isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+            storeId: req.user?.storeId,
         });
 
         res.json({
@@ -39,7 +40,7 @@ export const getProductById = async (req: Request, res: Response, next: NextFunc
 export const createProduct = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) throw new Error('Unauthorized');
-        const product = await ProductService.createProduct(req.body, req.user.id);
+        const product = await ProductService.createProduct(req.body, req.user.id, req.user.storeId);
         res.status(201).json({
             success: true,
             data: product,
